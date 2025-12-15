@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ancient Vault Webshop</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+
+ <!-- Favicon -->
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="container nav-content">
+    <h1 class="logo">Tingusfactory</h1>
+
+    <ul class="nav-links">
+      <li id="nav-admin" style="display:none;">
+        <a href="#" onclick="showSection('admin')">Admin</a>
+      </li>
+      <li><a href="#" onclick="showSection('products')">Home</a></li>
+      <li><a href="#" onclick="showSection('products')" class="active">Shop</a></li>
+      <li>
+        <a href="#" onclick="showSection('cart')">
+          Cart <span id="cart-count" class="cart-badge">0</span>
+        </a>
+      </li>
+      <li><a href="#" onclick="showSection('auth')" id="login-link">Login</a></li>
+      <li><a href="#" id="logout-btn" style="display:none;" onclick="logout()">Logout</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="shop-hero">
+  <h2>The Vault of Wonders</h2>
+  <p>Explore treasures and artifacts, ancient texts, and rare collectibles.</p>
+</header>
+
+<!-- AUTH -->
+<section id="auth" class="container" style="display:none;">
+  <h2>Login</h2>
+
+  <input id="login-user" placeholder="Username">
+  <input id="login-pass" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+
+  <h3>Register</h3>
+  <input id="reg-user" placeholder="Username">
+  <input id="reg-pass" type="password" placeholder="Password">
+  <button onclick="register()">Register</button>
+</section>
+
+<!-- PRODUCTS -->
+<section id="products" class="container">
+  <div id="products-list" class="product-grid"></div>
+</section>
+
+<!-- CART -->
+<section id="cart" class="container" style="display:none;">
+  <h2>Your Cart</h2>
+  <ul id="cart-list"></ul>
+  <p id="cart-total">Total: €0.00</p>
+  <button onclick="checkout()" class="checkout-btn">Checkout</button>
+  <button onclick="emptyCart()" class="empty-btn">Empty Cart</button>
+</section>
+
+<!-- ADMIN -->
+<section id="admin" class="container" style="display:none;">
+  <h2>Admin Panel</h2>
+
+  <!-- ADD PRODUCT FORM -->
+  <div id="admin-add-product">
+    <h3>Add New Product</h3>
+    <input id="prod-name" placeholder="Product Name">
+    <input id="prod-price" type="number" placeholder="Price">
+    <input id="prod-stock" type="number" placeholder="Stock">
+    <input id="prod-image" placeholder="Image URL">
+    <button onclick="adminAddProduct()">Add Product</button>
+  </div>
+
+  <hr>
+
+  <!-- LIST OF ORDERS -->
+  <div id="admin-orders">
+    <h3>Orders</h3>
+    <!-- Orders loaded dynamically by script.js -->
+  </div>
+</section>
+
+<!-- ORDER SUMMARY -->
+<section id="order-summary" class="container" style="display:none;">
+  <ul id="order-summary-items"></ul>
+  <p id="order-summary-total"></p>
+</section>
+
+<script src="script.js"></script>
+</body>
+
+</html>

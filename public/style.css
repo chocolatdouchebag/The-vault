@@ -1,0 +1,272 @@
+/* ==============================
+   FONTS & BASE
+============================== */
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  background: #f3e6d8; /* parchment color */
+  color: #3a2f1c; /* deep brown text */
+}
+
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: auto;
+}
+
+/* ==============================
+   NAVBAR
+============================== */
+.navbar {
+  background-color: #3a2f1c;
+  color: #f0d87c;
+  padding: 1rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+.navbar .nav-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar .logo {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 1.8rem;
+  color: #f0d87c;
+  text-shadow: 1px 1px 2px #00000088;
+}
+
+.navbar .nav-links {
+  list-style: none;
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.navbar .nav-links a {
+  text-decoration: none;
+  color: #f0d87c;
+  font-weight: 500;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.navbar .nav-links a.active,
+.navbar .nav-links a:hover {
+  color: #ffd700;
+}
+
+.cart-badge {
+  background: #ffd700;
+  color: #3a2f1c;
+  border-radius: 50%;
+  padding: 2px 7px;
+  font-size: 0.8rem;
+  margin-left: 4px;
+}
+
+/* ==============================
+   HERO SECTION
+============================== */
+.shop-hero {
+  background: linear-gradient(135deg, #f0d87c, #b8860b);
+  color: #3a2f1c;
+  text-align: center;
+  padding: 4rem 1rem;
+  border-radius: 0 0 30px 30px;
+  box-shadow: inset 0 -4px 20px rgba(0,0,0,0.15);
+}
+
+.shop-hero h2 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.shop-hero p {
+  font-size: 1.1rem;
+}
+
+/* ===========================
+   AUTH SECTION
+=========================== */
+.auth-box {
+  display: flex;
+  gap: 2rem;
+  max-width: 600px;
+  margin: 2rem auto;
+}
+
+.auth-card {
+  flex: 1;
+  background: #111;
+  padding: 1.5rem;
+  border-radius: 10px;
+}
+
+.auth-card h3 {
+  margin-bottom: 1rem;
+}
+
+.auth-card input {
+  width: 100%;
+  padding: 0.6rem;
+  margin-bottom: 0.8rem;
+}
+
+.auth-card button {
+  width: 100%;
+  padding: 0.6rem;
+  cursor: pointer;
+}
+
+/* ==============================
+   PRODUCT GRID
+============================== */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.product {
+  background: #fff8e1;
+  padding: 1rem;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.product:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+
+.product img {
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+}
+
+.product .title {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.3rem;
+}
+
+.product .meta {
+  color: #5a4527;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.product button {
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: #b8860b;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.product button:hover {
+  background-color: #ffd700;
+  color: #3a2f1c;
+  transform: translateY(-2px);
+}
+
+/* ==============================
+   CART MODAL
+============================== */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+  z-index: 500;
+}
+
+.modal-content {
+  background: #fff8e1;
+  padding: 2rem;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+.modal .close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* Buttons inside modal */
+.checkout-btn, .empty-btn {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-right: 0.5rem;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.checkout-btn {
+  background: #b8860b;
+  color: #fff;
+}
+
+.checkout-btn:hover {
+  background: #ffd700;
+  color: #3a2f1c;
+  transform: translateY(-2px);
+}
+
+.empty-btn {
+  background: #c0392b;
+  color: #fff;
+}
+
+.empty-btn:hover {
+  background: #e74c3c;
+  transform: translateY(-2px);
+}
+
+/* ==============================
+   RESPONSIVE
+============================== */
+@media (max-width: 768px) {
+  .navbar .nav-links {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .shop-hero h2 {
+    font-size: 1.8rem;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+}
