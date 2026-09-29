@@ -3,107 +3,647 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ancient Vault Webshop</title>
 
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <title>Fligaliga — Treasures, Curiosities & Oddities</title>
 
-  <!-- Styles -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap"
+    rel="stylesheet"
+  >
+
   <link rel="stylesheet" href="style.css">
-
- <!-- Favicon -->
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
-
 </head>
 
 <body>
 
-<!-- NAVBAR -->
-<nav class="navbar">
-  <div class="container nav-content">
-    <h1 class="logo">Tingusfactory</h1>
+<!-- =========================================================
+     NAVIGATION
+========================================================= -->
 
-    <ul class="nav-links">
-      <li id="nav-admin" style="display:none;">
-        <a href="#" onclick="showSection('admin')">Admin</a>
-      </li>
-      <li><a href="#" onclick="showSection('products')">Home</a></li>
-      <li><a href="#" onclick="showSection('products')" class="active">Shop</a></li>
-      <li>
-        <a href="#" onclick="showSection('cart')">
-          Cart <span id="cart-count" class="cart-badge">0</span>
-        </a>
-      </li>
-      <li><a href="#" onclick="showSection('auth')" id="login-link">Login</a></li>
-      <li><a href="#" id="logout-btn" style="display:none;" onclick="logout()">Logout</a></li>
-    </ul>
+<nav class="navbar">
+
+  <div class="nav-inner">
+
+    <div class="brand">
+      <div class="brand-mark">✦</div>
+
+      <div>
+        <div class="logo">FLIGALIGA</div>
+        <div class="brand-subtitle">
+          TREASURES · CURIOSITIES · ODDITIES
+        </div>
+      </div>
+    </div>
+
+
+    <div class="nav-links">
+
+      <a href="#" class="active" onclick="showSection('products')">
+        THE VAULT
+      </a>
+
+      <a href="#" onclick="showSection('products')">
+        TREASURES
+      </a>
+
+      <a href="#" onclick="showSection('products')">
+        NEW ARRIVALS
+      </a>
+
+      <a href="#">
+        THE LEDGER
+      </a>
+
+      <a href="#">
+        ABOUT THE MERCHANT
+      </a>
+
+    </div>
+
+
+    <div class="nav-actions">
+
+      <div class="search-box">
+        <span>⌕</span>
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Search treasures..."
+        >
+      </div>
+
+      <button class="nav-icon" title="Wishlist">
+        ♡
+      </button>
+
+      <button
+        class="nav-icon"
+        title="Account"
+        onclick="showSection('auth')"
+      >
+        ♙
+      </button>
+
+      <button
+        class="nav-icon cart-icon"
+        title="Collection"
+        onclick="showSection('cart')"
+      >
+        🛒
+        <span id="cart-count" class="cart-badge">0</span>
+      </button>
+
+      <button
+        type="button"
+        id="logout-btn"
+        class="logout-nav"
+        style="display:none;"
+        onclick="logout()"
+      >
+        Leave
+      </button>
+
+      <button
+        type="button"
+        id="login-link"
+        class="login-nav"
+        onclick="showSection('auth')"
+      >
+        Enter
+      </button>
+
+      <button
+        type="button"
+        id="nav-admin"
+        class="admin-nav"
+        style="display:none;"
+        onclick="showSection('admin')"
+      >
+        Admin
+      </button>
+
+    </div>
+
   </div>
+
 </nav>
 
-<!-- HERO -->
-<header class="shop-hero">
-  <h2>The Vault of Wonders</h2>
-  <p>Explore treasures and artifacts, ancient texts, and rare collectibles.</p>
+
+<!-- =========================================================
+     HERO
+========================================================= -->
+
+<header class="vault-hero">
+
+  <div class="hero-overlay"></div>
+
+  <div class="hero-content">
+
+    <div class="hero-kicker">
+      WELCOME TO
+    </div>
+
+    <h1>
+      THE VAULT
+    </h1>
+
+    <p>
+      Treasures collected from places<br>
+      better left forgotten.
+    </p>
+
+    <button
+      class="vault-button"
+      onclick="showSection('products')"
+    >
+      <span>✦</span>
+      ENTER THE VAULT
+    </button>
+
+  </div>
+
 </header>
 
-<!-- AUTH -->
-<section id="auth" class="container" style="display:none;">
-  <h2>Login</h2>
 
-  <input id="login-user" placeholder="Username">
-  <input id="login-pass" type="password" placeholder="Password">
-  <button onclick="login()">Login</button>
+<!-- =========================================================
+     CATEGORY STRIP
+========================================================= -->
 
-  <h3>Register</h3>
-  <input id="reg-user" placeholder="Username">
-  <input id="reg-pass" type="password" placeholder="Password">
-  <button onclick="register()">Register</button>
+<section class="category-strip">
+
+  <div class="category-line"></div>
+
+  <button onclick="showSection('products')">
+    <span class="category-icon">✦</span>
+    <span>ALL TREASURES</span>
+  </button>
+
+  <button onclick="showSection('products')">
+    <span class="category-icon">♜</span>
+    <span>ARTIFACTS</span>
+  </button>
+
+  <button onclick="showSection('products')">
+    <span class="category-icon">◉</span>
+    <span>COLLECTIBLES</span>
+  </button>
+
+  <button onclick="showSection('products')">
+    <span class="category-icon">☠</span>
+    <span>ODDITIES</span>
+  </button>
+
+  <button onclick="showSection('products')">
+    <span class="category-icon">◇</span>
+    <span>MYSTERY BOXES</span>
+  </button>
+
+  <div class="category-line"></div>
+
 </section>
 
-<!-- PRODUCTS -->
-<section id="products" class="container">
+
+<!-- =========================================================
+     PRODUCTS / THE VAULT
+========================================================= -->
+
+<section id="products" class="products-section">
+
+  <div class="section-heading">
+
+    <div class="ornament-line"></div>
+
+    <div>
+      <div class="section-kicker">
+        RECENTLY DISCOVERED
+      </div>
+
+      <h2>
+        FEATURED TREASURES
+      </h2>
+    </div>
+
+    <div class="ornament-line"></div>
+
+  </div>
+
+
+  <div class="section-top-row">
+
+    <p>
+      A selection from the merchant's latest acquisitions.
+    </p>
+
+    <button
+      class="view-all"
+      onclick="showSection('products')"
+    >
+      VIEW ALL TREASURES →
+    </button>
+
+  </div>
+
+
   <div id="products-list" class="product-grid"></div>
+
 </section>
 
-<!-- CART -->
-<section id="cart" class="container" style="display:none;">
-  <h2>Your Cart</h2>
-  <ul id="cart-list"></ul>
-  <p id="cart-total">Total: €0.00</p>
-  <button onclick="checkout()" class="checkout-btn">Checkout</button>
-  <button onclick="emptyCart()" class="empty-btn">Empty Cart</button>
-</section>
 
-<!-- ADMIN -->
-<section id="admin" class="container" style="display:none;">
-  <h2>Admin Panel</h2>
+<!-- =========================================================
+     AUTH
+========================================================= -->
 
-  <!-- ADD PRODUCT FORM -->
-  <div id="admin-add-product">
-    <h3>Add New Product</h3>
-    <input id="prod-name" placeholder="Product Name">
-    <input id="prod-price" type="number" placeholder="Price">
-    <input id="prod-stock" type="number" placeholder="Stock">
-    <input id="prod-image" placeholder="Image URL">
-    <button onclick="adminAddProduct()">Add Product</button>
+<section
+  id="auth"
+  class="page-section"
+  style="display:none;"
+>
+
+  <div class="section-heading">
+    <div class="ornament-line"></div>
+
+    <div>
+      <div class="section-kicker">THE MERCHANT'S DESK</div>
+      <h2>ENTER THE VAULT</h2>
+    </div>
+
+    <div class="ornament-line"></div>
   </div>
 
-  <hr>
+  <div class="auth-box">
 
-  <!-- LIST OF ORDERS -->
-  <div id="admin-orders">
-    <h3>Orders</h3>
-    <!-- Orders loaded dynamically by script.js -->
+    <div class="auth-card">
+
+      <h3>RETURNING COLLECTOR</h3>
+
+      <p>
+        Enter your credentials to access your collection.
+      </p>
+
+      <input
+        id="login-user"
+        placeholder="Username"
+      >
+
+      <input
+        id="login-pass"
+        type="password"
+        placeholder="Password"
+      >
+
+      <button onclick="login()">
+        ENTER
+      </button>
+
+    </div>
+
+
+    <div class="auth-card">
+
+      <h3>NEW TO THE VAULT?</h3>
+
+      <p>
+        Create your collector's account.
+      </p>
+
+      <input
+        id="reg-user"
+        placeholder="Username"
+      >
+
+      <input
+        id="reg-pass"
+        type="password"
+        placeholder="Password"
+      >
+
+      <button onclick="register()">
+        JOIN THE LEDGER
+      </button>
+
+    </div>
+
   </div>
+
 </section>
 
-<!-- ORDER SUMMARY -->
-<section id="order-summary" class="container" style="display:none;">
+
+<!-- =========================================================
+     CART
+========================================================= -->
+
+<section
+  id="cart"
+  class="page-section"
+  style="display:none;"
+>
+
+  <div class="section-heading">
+
+    <div class="ornament-line"></div>
+
+    <div>
+      <div class="section-kicker">
+        YOUR ACQUISITIONS
+      </div>
+
+      <h2>
+        YOUR COLLECTION
+      </h2>
+    </div>
+
+    <div class="ornament-line"></div>
+
+  </div>
+
+
+  <div class="cart-panel">
+
+    <ul id="cart-list"></ul>
+
+    <div class="cart-total" id="cart-total">
+      Total: €0.00
+    </div>
+
+    <div class="cart-actions">
+
+      <button
+        onclick="checkout()"
+        class="vault-button"
+      >
+        PROCEED TO CHECKOUT
+      </button>
+
+      <button
+        onclick="emptyCart()"
+        class="empty-btn"
+      >
+        EMPTY COLLECTION
+      </button>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     ADMIN
+========================================================= -->
+
+<section
+  id="admin"
+  class="page-section"
+  style="display:none;"
+>
+
+  <div class="section-heading">
+
+    <div class="ornament-line"></div>
+
+    <div>
+      <div class="section-kicker">THE MERCHANT</div>
+      <h2>ADMINISTRATION</h2>
+    </div>
+
+    <div class="ornament-line"></div>
+
+  </div>
+
+
+  <div id="admin-add-product" class="admin-panel">
+
+    <h3>ADD NEW TREASURE</h3>
+
+    <input
+      id="prod-name"
+      placeholder="Treasure Name"
+    >
+
+    <input
+      id="prod-price"
+      type="number"
+      placeholder="Price"
+    >
+
+    <input
+      id="prod-stock"
+      type="number"
+      placeholder="Stock"
+    >
+
+    <input
+      id="prod-image"
+      placeholder="Image URL"
+    >
+
+    <button onclick="adminAddProduct()">
+      ADD TO THE VAULT
+    </button>
+
+  </div>
+
+
+  <div
+    id="admin-orders"
+    class="admin-orders"
+  >
+    <h3>ORDERS</h3>
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     ORDER SUMMARY
+========================================================= -->
+
+<section
+  id="order-summary"
+  class="page-section"
+  style="display:none;"
+>
+
+  <div class="section-heading">
+
+    <div class="ornament-line"></div>
+
+    <div>
+      <div class="section-kicker">THE LEDGER</div>
+      <h2>ORDER SUMMARY</h2>
+    </div>
+
+    <div class="ornament-line"></div>
+
+  </div>
+
   <ul id="order-summary-items"></ul>
+
   <p id="order-summary-total"></p>
+
 </section>
+
+
+<!-- =========================================================
+     FEATURES
+========================================================= -->
+
+<section class="features-section">
+
+  <div class="feature">
+
+    <div class="feature-icon">⚓</div>
+
+    <h3>FAST & SECURE SHIPPING</h3>
+
+    <p>
+      Your treasures, safely delivered.
+    </p>
+
+  </div>
+
+
+  <div class="feature">
+
+    <div class="feature-icon">◈</div>
+
+    <h3>SECURE PAYMENTS</h3>
+
+    <p>
+      Multiple payment options.
+    </p>
+
+  </div>
+
+
+  <div class="feature">
+
+    <div class="feature-icon">✦</div>
+
+    <h3>UNIQUE & AUTHENTIC</h3>
+
+    <p>
+      Every item has a story.
+    </p>
+
+  </div>
+
+
+  <div class="feature">
+
+    <div class="feature-icon">▤</div>
+
+    <h3>THE LEDGER</h3>
+
+    <p>
+      Explore past expeditions and sold treasures.
+    </p>
+
+  </div>
+
+
+  <div class="feature">
+
+    <div class="feature-icon">✉</div>
+
+    <h3>CONTACT THE MERCHANT</h3>
+
+    <p>
+      Have a question? We're here.
+    </p>
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     FOOTER
+========================================================= -->
+
+<footer class="site-footer">
+
+  <div class="footer-inner">
+
+    <div class="footer-brand">
+
+      <div class="logo">
+        FLIGALIGA
+      </div>
+
+      <div class="brand-subtitle">
+        TREASURES · CURIOSITIES · ODDITIES
+      </div>
+
+      <p>
+        Some treasures are not meant<br>
+        to be found...
+      </p>
+
+    </div>
+
+
+    <div class="footer-links">
+
+      <h4>THE VAULT</h4>
+
+      <a href="#">Treasures</a>
+      <a href="#">New Arrivals</a>
+      <a href="#">The Ledger</a>
+      <a href="#">About the Merchant</a>
+
+    </div>
+
+
+    <div class="footer-links">
+
+      <h4>INFORMATION</h4>
+
+      <a href="#">FAQ</a>
+      <a href="#">Contact</a>
+      <a href="#">Shipping</a>
+      <a href="#">Returns</a>
+      <a href="#">Privacy</a>
+
+    </div>
+
+
+    <div class="footer-links">
+
+      <h4>FOLLOW THE TRAIL</h4>
+
+      <div class="social-links">
+        <a href="#">◎</a>
+        <a href="#">◉</a>
+        <a href="#">✦</a>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="footer-bottom">
+
+    <span>
+      © 2026 Fligaliga. All rights reserved.
+    </span>
+
+    <span>
+      EST. 2026 · THE VAULT
+    </span>
+
+  </div>
+
+</footer>
+
 
 <script src="script.js"></script>
-</body>
 
+</body>
 </html>

@@ -2,12 +2,127 @@ document.addEventListener("DOMContentLoaded", init);
 
 // ---------- HELPERS ----------
 function $id(id) { return document.getElementById(id); }
+
 function fmtPrice(v) { return '€' + Number(v).toFixed(2); }
+
 function showSection(name) {
-  ['auth', 'products', 'cart', 'admin', 'order-summary'].forEach(s => {
+  // Save the current shop position before leaving the products section
+  if (name !== 'products' && window.currentSection === 'products') {
+    window.productsScrollPosition = window.scrollY;
+  }
+
+  // Show the requested section and hide the others
+  [
+    'home',
+    'auth',
+    'products',
+    'cart',
+    'admin',
+    'admin-orders',
+    'order-summary',
+    'product-examination'
+  ].forEach(s => {
     const el = $id(s);
-    if (el) el.style.display = (s === name ? '' : 'none');
+
+    if (el) {
+      el.style.display = (s === name ? '' : 'none');
+    }
   });
+
+  // Homepage-only elements
+  const hero = document.querySelector('.shop-hero');
+  const merchantIntro = document.querySelector('.merchant-intro');
+
+  const isHome = name === 'home';
+
+  if (hero) {
+    hero.style.display = isHome ? '' : 'none';
+  }
+
+  if (merchantIntro) {
+    merchantIntro.style.display = isHome ? '' : 'none';
+  }
+
+  // Remember which section we're currently viewing
+  window.currentSection = name;
+
+  // Returning to the shop
+  if (name === 'products') {
+    window.requestAnimationFrame(() => {
+      window.scrollTo({
+        top: window.productsScrollPosition || 0,
+        behavior: 'instant'
+      });
+    });
+  }
+
+  // Everything else starts at the top
+  else {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    }); 
+  }
+}
+
+function showSection(name) {
+  // Save the current shop position before leaving the products section
+  if (name !== 'products' && window.currentSection === 'products') {
+    window.productsScrollPosition = window.scrollY;
+  }
+
+  // Show the requested section and hide the others
+  [
+    'home',
+    'auth',
+    'products',
+    'cart',
+    'admin',
+    'admin-orders',
+    'order-summary',
+    'product-examination'
+  ].forEach(s => {
+    const el = $id(s);
+
+    if (el) {
+      el.style.display = (s === name ? '' : 'none');
+    }
+  });
+
+  // Homepage-only elements
+  const hero = document.querySelector('.shop-hero');
+  const merchantIntro = document.querySelector('.merchant-intro');
+
+  const isHome = name === 'home';
+
+  if (hero) {
+    hero.style.display = isHome ? '' : 'none';
+  }
+
+  if (merchantIntro) {
+    merchantIntro.style.display = isHome ? '' : 'none';
+  }
+
+  // Remember which section we're currently viewing
+  window.currentSection = name;
+
+  // Returning to the shop
+  if (name === 'products') {
+    window.requestAnimationFrame(() => {
+      window.scrollTo({
+        top: window.productsScrollPosition || 0,
+        behavior: 'instant'
+      });
+    });
+  }
+
+  // Everything else starts at the top
+  else {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }
 }
 
 // ---------- STATE ----------
@@ -96,25 +211,130 @@ async function loadProducts() {
     if (!container) return;
 
     container.innerHTML = '';
-    products.forEach(p => {
-      const price = Number(p.price || 0);
-      const el = document.createElement('div');
-      el.className = 'product';
-      const img = p.image_url ? `<img src="${p.image_url}" alt="${p.name}">` : '';
-      el.innerHTML = `
-        ${img}
-        <div class="title">${p.name}</div>
-        <div class="meta">${p.description || ''}</div>
-        <div class="product-footer">
-          <div class="meta">${fmtPrice(price)}</div>
-          <div>
-            <button onclick="addToCart(${p.id})">Add to Cart</button>
-            ${isAdmin ? `<button onclick="adminDeleteProduct(${p.id})" class="delete-btn">Delete</button>` : ''}
-          </div>
+products.forEach((p, index) => {
+  const price = Number(p.price || 0);
+
+  const el = document.createElement('div');
+  el.className = 'product';
+
+  const catalogueNumber =
+    String(index + 1).padStart(3, '0');
+
+  const img = p.image_url
+    ? `
+      <div class="product-image-wrap">
+        <img
+          src="${p.image_url}"
+          alt="${p.name}"
+        >
+
+        <div class="product-image-overlay">
+          <span>✦</span>
+          <span>EXAMINE</span>
         </div>
+      </div>
+      `
+    : `
+      <div class="product-image-wrap product-no-image">
+        <div class="no-image-symbol">
+          ◈
+        </div>
+
+        <span>
+          IMAGE UNRECORDED
+        </span>
+      </div>
       `;
-      container.appendChild(el);
-    });
+
+  const description =
+    p.description ||
+    'The merchant has recorded no description for this particular treasure.';
+
+  el.innerHTML = `
+    ${img}
+
+    <div class="product-content">
+
+      <div class="product-catalogue-header">
+        <span class="product-catalogue-number">
+          CAT. ${catalogueNumber}
+        </span>
+
+        <span class="product-status">
+          ${p.stock > 0 ? 'AVAILABLE' : 'UNAVAILABLE'}
+        </span>
+      </div>
+
+      <h3>
+        ${p.name}
+      </h3>
+
+      <p class="product-description">
+        ${description}
+      </p>
+
+      <div class="product-footer">
+
+        <div class="product-price">
+          ${fmtPrice(price)}
+        </div>
+
+        <div class="product-actions">
+
+          <button
+            class="acquire-btn"
+            onclick="event.stopPropagation(); addToCart(${p.id})"
+            ${p.stock <= 0 ? 'disabled' : ''}
+          >
+            ${p.stock > 0 ? 'ACQUIRE' : 'GONE'}
+          </button>
+
+          ${
+            isAdmin
+              ? `
+                <button
+                  onclick="event.stopPropagation(); adminDeleteProduct(${p.id})"
+                  class="delete-btn"
+                >
+                  DELETE
+                </button>
+              `
+              : ''
+          }
+
+        </div>
+      </div>
+
+      <div class="product-record">
+        <span>
+          RECORD ${catalogueNumber}
+        </span>
+
+        <span>
+          ${
+            p.stock > 0
+              ? `${p.stock} REMAINING`
+              : 'NO LONGER IN VAULT'
+          }
+        </span>
+      </div>
+
+    </div>
+  `;
+
+  // Make the entire treasure card clickable
+  el.onclick = function () {
+    openProduct(p.id);
+  };
+
+  el.setAttribute(
+    'title',
+    'Examine this treasure'
+  );
+
+  container.appendChild(el);
+});
+
   } catch (e) {
     console.error('loadProducts', e);
   }
@@ -310,4 +530,359 @@ async function init() {
   } catch (e) { console.error('init', e); }
 
   showSection('products');
+}
+
+// =========================================================
+// TREASURE COLLECTION NAVIGATION
+// =========================================================
+
+function initTreasureCollection() {
+
+  const track = document.getElementById('collection-track');
+  const windowEl = document.getElementById('collection-window');
+  const prevButton = document.getElementById('collection-prev');
+  const nextButton = document.getElementById('collection-next');
+
+  if (!track || !windowEl || !prevButton || !nextButton) {
+    return;
+  }
+
+  let position = 0;
+
+  const scrollAmount = 220;
+
+
+  // -------------------------------------------------------
+  // UPDATE SLIDER
+  // -------------------------------------------------------
+
+  function updateSlider() {
+
+    const maxPosition =
+      Math.max(
+        0,
+        track.scrollWidth - windowEl.clientWidth
+      );
+
+    position =
+      Math.max(
+        0,
+        Math.min(position, maxPosition)
+      );
+
+    track.style.transform =
+      `translateX(-${position}px)`;
+
+
+    // LEFT ARROW
+
+    prevButton.disabled =
+      position <= 0;
+
+
+    // RIGHT ARROW
+
+    nextButton.disabled =
+      position >= maxPosition;
+
+
+    prevButton.style.opacity =
+      prevButton.disabled ? '0.35' : '1';
+
+    nextButton.style.opacity =
+      nextButton.disabled ? '0.35' : '1';
+
+  }
+
+
+  // -------------------------------------------------------
+  // PREVIOUS
+  // -------------------------------------------------------
+
+  prevButton.onclick = function () {
+
+    position -= scrollAmount;
+
+    updateSlider();
+
+  };
+
+
+  // -------------------------------------------------------
+  // NEXT
+  // -------------------------------------------------------
+
+  nextButton.onclick = function () {
+
+    position += scrollAmount;
+
+    updateSlider();
+
+  };
+
+
+  // -------------------------------------------------------
+  // CATEGORY SELECTION
+  // -------------------------------------------------------
+
+  const categories =
+    document.querySelectorAll('.collection-item');
+
+
+  categories.forEach(category => {
+
+    category.onclick = function () {
+
+      categories.forEach(item => {
+        item.classList.remove('active');
+      });
+
+      category.classList.add('active');
+
+      console.log(
+        'Selected collection:',
+        category.dataset.category
+      );
+
+    };
+
+  });
+
+
+  // -------------------------------------------------------
+  // INITIALISE
+  // -------------------------------------------------------
+
+  updateSlider();
+
+
+  // -------------------------------------------------------
+  // RESIZE
+  // -------------------------------------------------------
+
+  window.addEventListener('resize', updateSlider);
+
+}
+
+
+// ---------------------------------------------------------
+// START COLLECTION NAVIGATION
+// ---------------------------------------------------------
+
+if (document.readyState === 'loading') {
+
+  document.addEventListener(
+    'DOMContentLoaded',
+    initTreasureCollection
+  );
+
+} else {
+
+  initTreasureCollection();
+
+}
+
+async function openProduct(productId) {
+  try {
+    const res = await fetch('/api/products');
+
+    if (!res.ok) {
+      throw new Error('Could not load products');
+    }
+
+    const products = await res.json();
+
+    const product = products.find(
+      p => Number(p.id) === Number(productId)
+    );
+
+    if (!product) {
+      alert('This treasure could not be found.');
+      return;
+    }
+
+    // Catalogue number
+    const productIndex = products.findIndex(
+      p => Number(p.id) === Number(productId)
+    );
+
+    const catalogueNumber =
+      String(productIndex + 1).padStart(3, '0');
+
+    // Basic product information
+    $id('examination-number').textContent =
+      `CAT. ${catalogueNumber}`;
+
+    $id('examination-record-number').textContent =
+      catalogueNumber;
+
+    $id('examination-name').textContent =
+      product.name || 'Unknown Treasure';
+
+    $id('examination-description').textContent =
+      product.description ||
+      'The merchant has recorded no description for this particular treasure.';
+
+    $id('examination-price').textContent =
+      fmtPrice(product.price);
+
+    // Stock
+    const stock = Number(product.stock || 0);
+
+    $id('examination-stock').textContent =
+      stock > 0 ? stock : 'NONE REMAINING';
+
+    // Status
+    const status =
+      stock > 0 ? 'AVAILABLE' : 'UNAVAILABLE';
+
+    $id('examination-status').textContent =
+      status;
+
+    $id('examination-record-status').textContent =
+      stock > 0 ? 'AVAILABLE' : 'UNAVAILABLE';
+
+    // Product image
+    const imageContainer =
+      $id('examination-image');
+
+    if (product.image_url) {
+      imageContainer.innerHTML = `
+        <img
+          src="${product.image_url}"
+          alt="${product.name || 'Treasure'}"
+        >
+      `;
+    } else {
+      imageContainer.innerHTML = `
+        <div class="no-image-symbol">◈</div>
+        <span class="examination-no-image-text">
+          IMAGE UNRECORDED
+        </span>
+      `;
+    }
+
+    // Acquire button
+    const acquireButton =
+      $id('examination-acquire');
+
+    acquireButton.disabled = stock <= 0;
+
+    acquireButton.textContent =
+      stock > 0
+        ? 'Acquire Treasure'
+        : 'Treasure Unavailable';
+
+    acquireButton.onclick = function () {
+      if (stock > 0) {
+        addToCart(product.id);
+      }
+    };
+
+    // Open examination page
+    showSection('product-examination');
+
+  } catch (error) {
+    console.error(
+      'Error opening product:',
+      error
+    );
+
+    alert(
+      'The merchant could not retrieve this treasure.'
+    );
+  }
+}
+
+/* =========================================
+   TREASURY SEARCH
+   ========================================= */
+
+function initTreasureSearch() {
+  const input = document.getElementById(
+    'treasure-search-input'
+  );
+
+  const button = document.getElementById(
+    'treasure-search-button'
+  );
+
+  if (!input || !button) {
+    return;
+  }
+
+  function performSearch() {
+    const searchTerm =
+      input.value.trim().toLowerCase();
+
+    const products =
+      document.querySelectorAll('#products-list .product');
+
+    let visibleCount = 0;
+
+    products.forEach(product => {
+      const text =
+        product.textContent.toLowerCase();
+
+      const matches =
+        searchTerm === '' ||
+        text.includes(searchTerm);
+
+      product.style.display =
+        matches ? '' : 'none';
+
+      if (matches) {
+        visibleCount++;
+      }
+    });
+
+    const emptyMessage =
+      document.getElementById('collection-empty');
+
+    if (emptyMessage) {
+      emptyMessage.style.display =
+        visibleCount === 0 ? '' : 'none';
+    }
+
+    const count =
+      document.getElementById('collection-count');
+
+    if (count) {
+      if (searchTerm === '') {
+        count.textContent =
+          'THE COMPLETE COLLECTION';
+      } else {
+        count.textContent =
+          `${visibleCount} TREASURE${visibleCount === 1 ? '' : 'S'} FOUND`;
+      }
+    }
+  }
+
+  button.addEventListener(
+    'click',
+    performSearch
+  );
+
+  input.addEventListener(
+    'keydown',
+    event => {
+      if (event.key === 'Enter') {
+        performSearch();
+      }
+    }
+  );
+
+  input.addEventListener(
+    'input',
+    performSearch
+  );
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener(
+    'DOMContentLoaded',
+    initTreasureSearch
+  );
+} else {
+  initTreasureSearch();
 }
