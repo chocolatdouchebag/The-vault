@@ -1,649 +1,108 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Fligaliga — Treasures, Curiosities & Oddities</title>
-
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080807">
+  <meta name="description" content="FLIGALIGA — treasures, curiosities and oddities collected from places better left forgotten.">
+  <title>FLIGALIGA — The Vault</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link
-    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap"
-    rel="stylesheet"
-  >
-
-  <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
 </head>
-
 <body>
+  <div class="grain"></div>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="FLIGALIGA home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="18"/><path d="M24 3v42M3 24h42M10 10l28 28M38 10L10 38M24 6l5 18-5 18-5-18 5-18Z"/><circle cx="24" cy="24" r="3"/></svg>
+      </span>
+      <span class="brand-copy"><strong>FLIGALIGA</strong><small>TREASURES · CURIOSITIES · ODDITIES</small></span>
+    </a>
+    <nav class="main-nav" aria-label="Primary navigation">
+      <a href="/" data-page="vault">THE VAULT</a>
+      <a href="/treasures" data-page="treasures">TREASURES</a>
+      <a href="/new-arrivals" data-page="new-arrivals">NEW ARRIVALS</a>
+      <a href="/ledger" data-page="ledger">THE LEDGER</a>
+      <a href="/merchant" data-page="merchant">ABOUT THE MERCHANT</a>
+    </nav>
+    <div class="header-actions">
+      <form id="search-form" class="search-box" role="search">
+        <span aria-hidden="true">⌕</span><input id="search-input" type="search" name="treasure-search" placeholder="Search treasures..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      </form>
+      <button class="icon-btn" id="wishlist-btn" aria-label="Wishlist">♡</button>
+      <button class="icon-btn" id="account-btn" aria-label="Account">♙</button>
+      <button class="icon-btn cart-btn" id="cart-btn" aria-label="Cart">♧<b id="cart-count">0</b></button>
+      <button class="enter-btn" id="login-link">ENTER</button>
+      <button class="enter-btn hidden" id="logout-btn">LEAVE</button>
+    </div>
+  </header>
 
-<!-- =========================================================
-     NAVIGATION
-========================================================= -->
+  <main>
+    <section id="home-view">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">WELCOME TO</p>
+          <h1>THE VAULT</h1>
+          <p class="hero-sub">Treasures collected from places<br>better left forgotten.</p>
+          <a href="/treasures" class="ornate-btn">✧ &nbsp; ENTER THE VAULT</a>
+        </div>
+      </section>
 
-<nav class="navbar">
+      <section class="category-bar" aria-label="Treasure categories">
+        <button data-category="all"><span class="category-icon">✧</span>ALL TREASURES</button>
+        <button data-category="artifacts"><span class="category-icon">♜</span>ARTIFACTS</button>
+        <button data-category="collectibles"><span class="category-icon">◉</span>COLLECTIBLES</button>
+        <button data-category="oddities"><span class="category-icon">☠</span>ODDITIES</button>
+        <button data-category="mystery"><span class="category-icon">◇</span>MYSTERY BOXES</button>
+      </section>
 
-  <div class="nav-inner">
+      <section class="treasures section-shell" id="treasures">
+        <div class="section-heading">
+          <div class="line"></div><div><p id="treasure-kicker">RECENTLY DISCOVERED</p><h2 id="treasure-title">FEATURED TREASURES</h2></div><div class="line"></div>
+        </div>
+        <div class="section-tools"><span id="result-count"></span><button id="clear-filter" class="text-link hidden">CLEAR FILTER ×</button></div>
+        <div id="products-list" class="product-grid"></div>
+      </section>
 
-    <div class="brand">
-      <div class="brand-mark">✦</div>
+      <section class="service-strip">
+        <a href="/shipping"><span>♧</span><h3>FAST & SECURE SHIPPING</h3><p>Your treasures, safely delivered.</p></a>
+        <a href="/returns"><span>♢</span><h3>SECURE RETURNS</h3><p>A clear path when plans change.</p></a>
+        <a href="/treasures"><span>✧</span><h3>UNIQUE & AUTHENTIC</h3><p>Each item has a story.</p></a>
+        <a href="/ledger"><span>▤</span><h3>THE LEDGER</h3><p>Explore expeditions and discoveries.</p></a>
+        <a href="/contact"><span>✉</span><h3>CONTACT THE MERCHANT</h3><p>Have a question? We're here.</p></a>
+      </section>
+    </section>
 
-      <div>
-        <div class="logo">FLIGALIGA</div>
-        <div class="brand-subtitle">
-          TREASURES · CURIOSITIES · ODDITIES
+    <section id="content-view" class="page-panel hidden"></section>
+    <section id="product-view" class="product-page hidden"></section>
+
+    <section id="auth-view" class="page-panel hidden">
+      <div class="panel-inner auth-panel">
+        <p class="eyebrow">THE MERCHANT'S OFFICE</p><h2>ENTER THE VAULT</h2>
+        <div class="auth-grid">
+          <form id="login-form"><h3>RETURNING TRAVELER</h3><input id="login-user" autocomplete="username" placeholder="Username"><input id="login-pass" type="password" autocomplete="current-password" placeholder="Password"><button class="ornate-btn" type="submit">ENTER</button></form>
+          <form id="register-form"><h3>NEW ARRIVAL</h3><input id="reg-user" autocomplete="username" placeholder="Choose a username"><input id="reg-pass" type="password" autocomplete="new-password" placeholder="Choose a password"><button class="ornate-btn" type="submit">CREATE ACCOUNT</button></form>
         </div>
       </div>
-    </div>
+    </section>
 
+    <section id="cart-view" class="page-panel hidden"><div class="panel-inner"><p class="eyebrow">YOUR LEDGER</p><h2>THE CART</h2><div id="cart-list" class="cart-list"></div><div class="cart-footer"><strong id="cart-total">€0,00</strong><div><button class="ghost-btn" id="empty-cart">EMPTY CART</button><button class="ornate-btn" id="checkout-btn">CHECKOUT</button></div></div></div></section>
+    <section id="admin-view" class="page-panel hidden"><div class="panel-inner"><p class="eyebrow">THE MERCHANT</p><h2>ADMIN LEDGER</h2><div class="admin-grid"><form id="admin-product-form"><h3>ADD TREASURE</h3><input id="prod-name" placeholder="Name"><textarea id="prod-description" placeholder="Description"></textarea><input id="prod-price" type="number" step="0.01" placeholder="Price"><input id="prod-stock" type="number" placeholder="Stock"><input id="prod-image" placeholder="Image URL"><input id="prod-category" placeholder="Category"><button class="ornate-btn" type="submit">CATALOGUE TREASURE</button></form><div><h3>ORDERS</h3><div id="admin-orders"></div></div></div></div></section>
+    <section id="order-view" class="page-panel hidden"><div class="panel-inner"><p class="eyebrow">THE LEDGER HAS BEEN UPDATED</p><h2>ORDER PLACED</h2><p id="order-result"></p><a href="/" class="ornate-btn">RETURN TO THE VAULT</a></div></section>
+  </main>
 
-    <div class="nav-links">
-
-      <a href="#" class="active" onclick="showSection('products')">
-        THE VAULT
-      </a>
-
-      <a href="#" onclick="showSection('products')">
-        TREASURES
-      </a>
-
-      <a href="#" onclick="showSection('products')">
-        NEW ARRIVALS
-      </a>
-
-      <a href="#">
-        THE LEDGER
-      </a>
-
-      <a href="#">
-        ABOUT THE MERCHANT
-      </a>
-
-    </div>
-
-
-    <div class="nav-actions">
-
-      <div class="search-box">
-        <span>⌕</span>
-        <input
-          type="text"
-          id="search-input"
-          placeholder="Search treasures..."
-        >
-      </div>
-
-      <button class="nav-icon" title="Wishlist">
-        ♡
-      </button>
-
-      <button
-        class="nav-icon"
-        title="Account"
-        onclick="showSection('auth')"
-      >
-        ♙
-      </button>
-
-      <button
-        class="nav-icon cart-icon"
-        title="Collection"
-        onclick="showSection('cart')"
-      >
-        🛒
-        <span id="cart-count" class="cart-badge">0</span>
-      </button>
-
-      <button
-        type="button"
-        id="logout-btn"
-        class="logout-nav"
-        style="display:none;"
-        onclick="logout()"
-      >
-        Leave
-      </button>
-
-      <button
-        type="button"
-        id="login-link"
-        class="login-nav"
-        onclick="showSection('auth')"
-      >
-        Enter
-      </button>
-
-      <button
-        type="button"
-        id="nav-admin"
-        class="admin-nav"
-        style="display:none;"
-        onclick="showSection('admin')"
-      >
-        Admin
-      </button>
-
-    </div>
-
-  </div>
-
-</nav>
-
-
-<!-- =========================================================
-     HERO
-========================================================= -->
-
-<header class="vault-hero">
-
-  <div class="hero-overlay"></div>
-
-  <div class="hero-content">
-
-    <div class="hero-kicker">
-      WELCOME TO
-    </div>
-
-    <h1>
-      THE VAULT
-    </h1>
-
-    <p>
-      Treasures collected from places<br>
-      better left forgotten.
-    </p>
-
-    <button
-      class="vault-button"
-      onclick="showSection('products')"
-    >
-      <span>✦</span>
-      ENTER THE VAULT
-    </button>
-
-  </div>
-
-</header>
-
-
-<!-- =========================================================
-     CATEGORY STRIP
-========================================================= -->
-
-<section class="category-strip">
-
-  <div class="category-line"></div>
-
-  <button onclick="showSection('products')">
-    <span class="category-icon">✦</span>
-    <span>ALL TREASURES</span>
-  </button>
-
-  <button onclick="showSection('products')">
-    <span class="category-icon">♜</span>
-    <span>ARTIFACTS</span>
-  </button>
-
-  <button onclick="showSection('products')">
-    <span class="category-icon">◉</span>
-    <span>COLLECTIBLES</span>
-  </button>
-
-  <button onclick="showSection('products')">
-    <span class="category-icon">☠</span>
-    <span>ODDITIES</span>
-  </button>
-
-  <button onclick="showSection('products')">
-    <span class="category-icon">◇</span>
-    <span>MYSTERY BOXES</span>
-  </button>
-
-  <div class="category-line"></div>
-
-</section>
-
-
-<!-- =========================================================
-     PRODUCTS / THE VAULT
-========================================================= -->
-
-<section id="products" class="products-section">
-
-  <div class="section-heading">
-
-    <div class="ornament-line"></div>
-
-    <div>
-      <div class="section-kicker">
-        RECENTLY DISCOVERED
-      </div>
-
-      <h2>
-        FEATURED TREASURES
-      </h2>
-    </div>
-
-    <div class="ornament-line"></div>
-
-  </div>
-
-
-  <div class="section-top-row">
-
-    <p>
-      A selection from the merchant's latest acquisitions.
-    </p>
-
-    <button
-      class="view-all"
-      onclick="showSection('products')"
-    >
-      VIEW ALL TREASURES →
-    </button>
-
-  </div>
-
-
-  <div id="products-list" class="product-grid"></div>
-
-</section>
-
-
-<!-- =========================================================
-     AUTH
-========================================================= -->
-
-<section
-  id="auth"
-  class="page-section"
-  style="display:none;"
->
-
-  <div class="section-heading">
-    <div class="ornament-line"></div>
-
-    <div>
-      <div class="section-kicker">THE MERCHANT'S DESK</div>
-      <h2>ENTER THE VAULT</h2>
-    </div>
-
-    <div class="ornament-line"></div>
-  </div>
-
-  <div class="auth-box">
-
-    <div class="auth-card">
-
-      <h3>RETURNING COLLECTOR</h3>
-
-      <p>
-        Enter your credentials to access your collection.
-      </p>
-
-      <input
-        id="login-user"
-        placeholder="Username"
-      >
-
-      <input
-        id="login-pass"
-        type="password"
-        placeholder="Password"
-      >
-
-      <button onclick="login()">
-        ENTER
-      </button>
-
-    </div>
-
-
-    <div class="auth-card">
-
-      <h3>NEW TO THE VAULT?</h3>
-
-      <p>
-        Create your collector's account.
-      </p>
-
-      <input
-        id="reg-user"
-        placeholder="Username"
-      >
-
-      <input
-        id="reg-pass"
-        type="password"
-        placeholder="Password"
-      >
-
-      <button onclick="register()">
-        JOIN THE LEDGER
-      </button>
-
-    </div>
-
-  </div>
-
-</section>
-
-
-<!-- =========================================================
-     CART
-========================================================= -->
-
-<section
-  id="cart"
-  class="page-section"
-  style="display:none;"
->
-
-  <div class="section-heading">
-
-    <div class="ornament-line"></div>
-
-    <div>
-      <div class="section-kicker">
-        YOUR ACQUISITIONS
-      </div>
-
-      <h2>
-        YOUR COLLECTION
-      </h2>
-    </div>
-
-    <div class="ornament-line"></div>
-
-  </div>
-
-
-  <div class="cart-panel">
-
-    <ul id="cart-list"></ul>
-
-    <div class="cart-total" id="cart-total">
-      Total: €0.00
-    </div>
-
-    <div class="cart-actions">
-
-      <button
-        onclick="checkout()"
-        class="vault-button"
-      >
-        PROCEED TO CHECKOUT
-      </button>
-
-      <button
-        onclick="emptyCart()"
-        class="empty-btn"
-      >
-        EMPTY COLLECTION
-      </button>
-
-    </div>
-
-  </div>
-
-</section>
-
-
-<!-- =========================================================
-     ADMIN
-========================================================= -->
-
-<section
-  id="admin"
-  class="page-section"
-  style="display:none;"
->
-
-  <div class="section-heading">
-
-    <div class="ornament-line"></div>
-
-    <div>
-      <div class="section-kicker">THE MERCHANT</div>
-      <h2>ADMINISTRATION</h2>
-    </div>
-
-    <div class="ornament-line"></div>
-
-  </div>
-
-
-  <div id="admin-add-product" class="admin-panel">
-
-    <h3>ADD NEW TREASURE</h3>
-
-    <input
-      id="prod-name"
-      placeholder="Treasure Name"
-    >
-
-    <input
-      id="prod-price"
-      type="number"
-      placeholder="Price"
-    >
-
-    <input
-      id="prod-stock"
-      type="number"
-      placeholder="Stock"
-    >
-
-    <input
-      id="prod-image"
-      placeholder="Image URL"
-    >
-
-    <button onclick="adminAddProduct()">
-      ADD TO THE VAULT
-    </button>
-
-  </div>
-
-
-  <div
-    id="admin-orders"
-    class="admin-orders"
-  >
-    <h3>ORDERS</h3>
-  </div>
-
-</section>
-
-
-<!-- =========================================================
-     ORDER SUMMARY
-========================================================= -->
-
-<section
-  id="order-summary"
-  class="page-section"
-  style="display:none;"
->
-
-  <div class="section-heading">
-
-    <div class="ornament-line"></div>
-
-    <div>
-      <div class="section-kicker">THE LEDGER</div>
-      <h2>ORDER SUMMARY</h2>
-    </div>
-
-    <div class="ornament-line"></div>
-
-  </div>
-
-  <ul id="order-summary-items"></ul>
-
-  <p id="order-summary-total"></p>
-
-</section>
-
-
-<!-- =========================================================
-     FEATURES
-========================================================= -->
-
-<section class="features-section">
-
-  <div class="feature">
-
-    <div class="feature-icon">⚓</div>
-
-    <h3>FAST & SECURE SHIPPING</h3>
-
-    <p>
-      Your treasures, safely delivered.
-    </p>
-
-  </div>
-
-
-  <div class="feature">
-
-    <div class="feature-icon">◈</div>
-
-    <h3>SECURE PAYMENTS</h3>
-
-    <p>
-      Multiple payment options.
-    </p>
-
-  </div>
-
-
-  <div class="feature">
-
-    <div class="feature-icon">✦</div>
-
-    <h3>UNIQUE & AUTHENTIC</h3>
-
-    <p>
-      Every item has a story.
-    </p>
-
-  </div>
-
-
-  <div class="feature">
-
-    <div class="feature-icon">▤</div>
-
-    <h3>THE LEDGER</h3>
-
-    <p>
-      Explore past expeditions and sold treasures.
-    </p>
-
-  </div>
-
-
-  <div class="feature">
-
-    <div class="feature-icon">✉</div>
-
-    <h3>CONTACT THE MERCHANT</h3>
-
-    <p>
-      Have a question? We're here.
-    </p>
-
-  </div>
-
-</section>
-
-
-<!-- =========================================================
-     FOOTER
-========================================================= -->
-
-<footer class="site-footer">
-
-  <div class="footer-inner">
-
+  <footer>
     <div class="footer-brand">
-
-      <div class="logo">
-        FLIGALIGA
-      </div>
-
-      <div class="brand-subtitle">
-        TREASURES · CURIOSITIES · ODDITIES
-      </div>
-
-      <p>
-        Some treasures are not meant<br>
-        to be found...
-      </p>
-
+      <a href="/" class="footer-brand-link"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="18"/><path d="M24 3v42M3 24h42M10 10l28 28M38 10L10 38M24 6l5 18-5 18-5-18 5-18Z"/><circle cx="24" cy="24" r="3"/></svg></span><span><strong>FLIGALIGA</strong><small>TREASURES · CURIOSITIES · ODDITIES</small></span></a>
     </div>
-
-
     <div class="footer-links">
-
-      <h4>THE VAULT</h4>
-
-      <a href="#">Treasures</a>
-      <a href="#">New Arrivals</a>
-      <a href="#">The Ledger</a>
-      <a href="#">About the Merchant</a>
-
+      <a href="/">THE VAULT</a><a href="/treasures">TREASURES</a><a href="/new-arrivals">NEW ARRIVALS</a><a href="/ledger">THE LEDGER</a><a href="/merchant">ABOUT THE MERCHANT</a>
+      <a href="/faq">FAQ</a><a href="/contact">CONTACT</a><a href="/shipping">SHIPPING</a><a href="/returns">RETURNS</a><a href="/privacy">PRIVACY</a>
     </div>
-
-
-    <div class="footer-links">
-
-      <h4>INFORMATION</h4>
-
-      <a href="#">FAQ</a>
-      <a href="#">Contact</a>
-      <a href="#">Shipping</a>
-      <a href="#">Returns</a>
-      <a href="#">Privacy</a>
-
-    </div>
-
-
-    <div class="footer-links">
-
-      <h4>FOLLOW THE TRAIL</h4>
-
-      <div class="social-links">
-        <a href="#">◎</a>
-        <a href="#">◉</a>
-        <a href="#">✦</a>
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <div class="footer-bottom">
-
-    <span>
-      © 2026 Fligaliga. All rights reserved.
-    </span>
-
-    <span>
-      EST. 2026 · THE VAULT
-    </span>
-
-  </div>
-
-</footer>
-
-
-<script src="script.js"></script>
-
+    <p>Some treasures are not meant to be found...</p>
+  </footer>
+  <script src="/script.js"></script>
 </body>
 </html>
