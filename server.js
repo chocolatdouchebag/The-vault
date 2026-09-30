@@ -95,18 +95,17 @@ app.get("/api/products", async (req, res) => {
 app.get("/api/products/:idOrSlug", async (req, res) => {
   const key = req.params.idOrSlug;
   try {
-    let result;
-    if (/^\d+(?:-.*)?$/.test(key)) {
-      const id = Number(key.match(/^\d+/)[0]);
-      result = await pool.query("SELECT * FROM products WHERE id = $1", [id]);
+    const idMatch = key.match(/(?:^|-)(\d+)$/);
+    let product;
+    if (idMatch) {
+      const result = await pool.query("SELECT * FROM products WHERE id = $1", [Number(idMatch[1])]);
+      product = result.rows[0];
     } else {
-      result = await pool.query(
-        "SELECT * FROM products WHERE lower(regexp_replace(name, '[^a-zA-Z0-9]+', '-', 'g')) = $1 LIMIT 1",
-        [key.toLowerCase()]
-      );
+      const result = await pool.query("SELECT * FROM products");
+      product = result.rows.find(p => productSlug(p.name) === key.toLowerCase());
     }
-    if (!result.rows.length) return res.status(404).json({ error: "Treasure not found" });
-    res.json({ ...result.rows[0], slug: productSlug(result.rows[0].name) });
+    if (!product) return res.status(404).json({ error: "Treasure not found" });
+    res.json({ ...product, slug: productSlug(product.name) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to load treasure" });
