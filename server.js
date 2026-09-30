@@ -9,13 +9,18 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const publicDir = path.join(__dirname, "public");
+const isProduction = process.env.NODE_ENV === "production";
+if (isProduction && !process.env.SESSION_SECRET) throw new Error("SESSION_SECRET must be set in production");
+app.disable("x-powered-by");
+if (isProduction) app.set("trust proxy", 1);
 
 app.use(bodyParser.json());
 app.use(session({
+  name: isProduction ? "__Host-fligaliga" : "fligaliga.sid",
   secret: process.env.SESSION_SECRET || "fligaliga-development-secret-change-me",
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, sameSite: "lax", secure: false }
+  cookie: { httpOnly: true, sameSite: "lax", secure: isProduction, path: "/", maxAge: 1000 * 60 * 60 * 24 * 7 }
 }));
 
 app.use((req, res, next) => {
@@ -81,6 +86,7 @@ app.post("/api/login", async (req, res) => {
 
 app.post("/api/logout", (req, res) => req.session.destroy(() => res.sendStatus(200)));
 app.get("/api/me", (req, res) => res.json(req.session.user || null));
+app.get("/api/health", async (req, res) => { try { await pool.query("SELECT 1"); res.json({ ok: true }); } catch (err) { res.status(503).json({ ok: false }); } });
 
 app.get("/api/products", async (req, res) => {
   try {
