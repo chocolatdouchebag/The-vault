@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+  <script>document.documentElement.lang=localStorage.getItem("fligaliga-language")||"en";</script>
   <div class="grain"></div>
   <header class="site-header">
     <a class="brand" href="/" aria-label="FLIGALIGA home">
@@ -21,20 +22,21 @@
       <span class="brand-copy"><strong>FLIGALIGA</strong><small>TREASURES · CURIOSITIES · ODDITIES</small></span>
     </a>
     <nav class="main-nav" aria-label="Primary navigation">
-      <a href="/" data-page="vault">THE VAULT</a>
-      <a href="/treasures" data-page="treasures">TREASURES</a>
-      <a href="/new-arrivals" data-page="new-arrivals">NEW ARRIVALS</a>
-      <a href="/ledger" data-page="ledger">THE LEDGER</a>
-      <a href="/merchant" data-page="merchant">ABOUT THE MERCHANT</a>
+      <a href="/" data-page="vault" data-i18n="navVault">THE VAULT</a>
+      <a href="/treasures" data-page="treasures" data-i18n="navTreasures">TREASURES</a>
+      <a href="/new-arrivals" data-page="new-arrivals" data-i18n="navNew">NEW ARRIVALS</a>
+      <a href="/ledger" data-page="ledger" data-i18n="navLedger">THE LEDGER</a>
+      <a href="/merchant" data-page="merchant" data-i18n="navMerchant">ABOUT THE MERCHANT</a>
     </nav>
     <div class="header-actions">
+      <button class="language-btn" id="language-toggle" type="button" aria-label="Switch language">NL</button>
       <form id="search-form" class="search-box" role="search">
-        <span aria-hidden="true">⌕</span><input id="search-input" type="search" name="treasure-search" placeholder="Search treasures..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <span aria-hidden="true">⌕</span><input id="search-input" type="search" name="treasure-search" data-i18n-placeholder="searchPlaceholder" placeholder="Search treasures..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
       </form>
       <button class="icon-btn cart-btn" id="cart-btn" aria-label="Cart" title="Your ledger">♧<b id="cart-count">0</b></button>
-      <button class="enter-btn hidden" id="admin-link">ADMIN</button>
-      <button class="enter-btn" id="login-link">ENTER</button>
-      <button class="enter-btn hidden" id="logout-btn">LEAVE</button>
+      <button class="enter-btn hidden" id="admin-link" data-i18n="admin">ADMIN</button>
+      <button class="enter-btn" id="login-link" data-i18n="enter">ENTER</button>
+      <button class="enter-btn hidden" id="logout-btn" data-i18n="leave">LEAVE</button>
     </div>
   </header>
 
@@ -42,26 +44,26 @@
     <section id="home-view">
       <section class="hero">
         <div class="hero-copy">
-          <p class="eyebrow">WELCOME TO</p>
-          <h1>THE VAULT</h1>
-          <p class="hero-sub">Treasures collected from places<br>better left forgotten.</p>
-          <a href="/treasures" class="ornate-btn">✧ &nbsp; ENTER THE VAULT</a>
+          <p class="eyebrow" data-i18n="welcomeTo">WELCOME TO</p>
+          <h1 data-i18n="vault">THE VAULT</h1>
+          <p class="hero-sub"><span data-i18n="heroSub">Treasures collected from places<br>better left forgotten.</span></p>
+          <a href="/treasures" class="ornate-btn">✧ &nbsp; <span data-i18n="enterVault">ENTER THE VAULT</span></a>
         </div>
       </section>
 
       <section class="category-bar" aria-label="Treasure categories">
-        <button data-category="all"><span class="category-icon">✧</span>ALL TREASURES</button>
-        <button data-category="artifacts"><span class="category-icon">♜</span>ARTIFACTS</button>
-        <button data-category="collectibles"><span class="category-icon">◉</span>COLLECTIBLES</button>
-        <button data-category="oddities"><span class="category-icon">☠</span>ODDITIES</button>
-        <button data-category="mystery"><span class="category-icon">◇</span>MYSTERY BOXES</button>
+        <button data-category="all"><span class="category-icon">✧</span><span data-i18n="allTreasures">ALL TREASURES</span></button>
+        <button data-category="artifacts"><span class="category-icon">♜</span><span data-i18n="artifacts">ARTIFACTS</span></button>
+        <button data-category="collectibles"><span class="category-icon">◉</span><span data-i18n="collectibles">COLLECTIBLES</span></button>
+        <button data-category="oddities"><span class="category-icon">☠</span><span data-i18n="oddities">ODDITIES</span></button>
+        <button data-category="mystery"><span class="category-icon">◇</span><span data-i18n="mysteryBoxes">MYSTERY BOXES</span></button>
       </section>
 
       <section class="treasures section-shell" id="treasures">
         <div class="section-heading">
-          <div class="line"></div><div><p id="treasure-kicker">RECENTLY DISCOVERED</p><h2 id="treasure-title">FEATURED TREASURES</h2></div><div class="line"></div>
+          <div class="line"></div><div><p id="treasure-kicker" data-i18n="recentlyDiscovered">RECENTLY DISCOVERED</p><h2 id="treasure-title" data-i18n="featuredTreasures">FEATURED TREASURES</h2></div><div class="line"></div>
         </div>
-        <div class="section-tools"><span id="result-count"></span><button id="clear-filter" class="text-link hidden">CLEAR FILTER ×</button></div>
+        <div class="section-tools"><span id="result-count"></span><button id="clear-filter" class="text-link hidden" data-i18n="clearFilter">CLEAR FILTER ×</button></div>
         <div id="products-list" class="product-grid"></div>
       </section>
 
@@ -87,7 +89,7 @@
       </div>
     </section>
 
-    <section id="cart-view" class="page-panel hidden"><div class="panel-inner"><p class="eyebrow">YOUR LEDGER</p><h2>THE CART</h2><div id="cart-list" class="cart-list"></div><div class="cart-footer"><strong id="cart-total">€0,00</strong><div><button class="ghost-btn" id="empty-cart">EMPTY CART</button><button class="ornate-btn" id="checkout-btn">CHECKOUT</button></div></div><div id="checkout-panel" class="checkout-panel hidden"><div class="section-heading"><div class="line"></div><div><p>DELIVERY DETAILS</p><h2>COMPLETE YOUR ORDER</h2></div><div class="line"></div></div><p class="muted-note">Your details are required to prepare delivery. Payment will be added before the shop accepts live orders.</p><form id="checkout-form" class="checkout-form"><input id="checkout-name" autocomplete="name" required maxlength="120" placeholder="Full name"><input id="checkout-email" type="email" autocomplete="email" required maxlength="254" placeholder="Email address"><input id="checkout-address" autocomplete="street-address" required maxlength="200" placeholder="Street and house number"><div class="checkout-row"><input id="checkout-postcode" autocomplete="postal-code" required maxlength="30" placeholder="Postcode"><input id="checkout-city" autocomplete="address-level2" required maxlength="100" placeholder="City"></div><input id="checkout-country" autocomplete="country" value="NL" required maxlength="2" placeholder="Country code (NL)"><label class="checkout-consent"><input id="checkout-terms" type="checkbox" required> I confirm that I have read the <a href="/terms">terms</a> and <a href="/withdrawal">withdrawal information</a>.</label><button class="ornate-btn" type="submit">PLACE ORDER</button><button class="ghost-btn" id="cancel-checkout" type="button">CANCEL</button><p id="checkout-message" class="muted-note"></p></form></div></div></section>
+    <section id="cart-view" class="page-panel hidden"><div class="panel-inner"><p class="eyebrow">YOUR LEDGER</p><h2 data-i18n="cart">THE CART</h2><div id="cart-list" class="cart-list"></div><div class="cart-footer"><strong id="cart-total">€0,00</strong><div><button class="ghost-btn" id="empty-cart" data-i18n="emptyCart">EMPTY CART</button><button class="ornate-btn" id="checkout-btn" data-i18n="checkout">CHECKOUT</button></div></div><div id="checkout-panel" class="checkout-panel hidden"><div class="section-heading"><div class="line"></div><div><p>DELIVERY DETAILS</p><h2>COMPLETE YOUR ORDER</h2></div><div class="line"></div></div><p class="muted-note">Your details are required to prepare delivery. Payment will be added before the shop accepts live orders.</p><form id="checkout-form" class="checkout-form"><input id="checkout-name" autocomplete="name" required maxlength="120" placeholder="Full name"><input id="checkout-email" type="email" autocomplete="email" required maxlength="254" placeholder="Email address"><input id="checkout-address" autocomplete="street-address" required maxlength="200" placeholder="Street and house number"><div class="checkout-row"><input id="checkout-postcode" autocomplete="postal-code" required maxlength="30" placeholder="Postcode"><input id="checkout-city" autocomplete="address-level2" required maxlength="100" placeholder="City"></div><input id="checkout-country" autocomplete="country" value="NL" required maxlength="2" placeholder="Country code (NL)"><label class="checkout-consent"><input id="checkout-terms" type="checkbox" required> I confirm that I have read the <a href="/terms">terms</a> and <a href="/withdrawal">withdrawal information</a>.</label><button class="ornate-btn" type="submit">PLACE ORDER</button><button class="ghost-btn" id="cancel-checkout" type="button">CANCEL</button><p id="checkout-message" class="muted-note"></p></form></div></div></section>
     <section id="admin-view" class="page-panel hidden"><div class="panel-inner"><p class="eyebrow">THE MERCHANT</p><h2>ADMIN LEDGER</h2><div class="admin-grid"><form id="admin-product-form"><h3>ADD TREASURE</h3><input id="prod-name" placeholder="Name"><textarea id="prod-description" placeholder="Description"></textarea><input id="prod-price" type="number" step="0.01" placeholder="Price"><input id="prod-stock" type="number" placeholder="Stock"><input id="prod-image" placeholder="Image URL"><input id="prod-category" placeholder="Category"><select id="prod-rarity"><option value="">Rarity</option><option>Common</option><option>Uncommon</option><option>Rare</option><option>Very Rare</option><option>Unique</option></select><input id="prod-origin" placeholder="Origin"><input id="prod-condition" placeholder="Condition"><textarea id="prod-provenance" placeholder="Provenance"></textarea><label><input id="prod-featured" type="checkbox"> Featured treasure</label><label><input id="prod-new" type="checkbox"> New arrival</label><button class="ornate-btn" type="submit">CATALOGUE TREASURE</button></form><div><h3>ORDERS</h3><div id="admin-orders"></div></div></div></div></section>
     <section id="order-view" class="page-panel hidden"><div class="panel-inner"><p class="eyebrow">THE LEDGER HAS BEEN UPDATED</p><h2>ORDER PLACED</h2><p id="order-result"></p><a href="/" class="ornate-btn">RETURN TO THE VAULT</a></div></section>
   </main>
@@ -100,7 +102,7 @@
       <a href="/">THE VAULT</a><a href="/treasures">TREASURES</a><a href="/new-arrivals">NEW ARRIVALS</a><a href="/ledger">THE LEDGER</a><a href="/merchant">ABOUT THE MERCHANT</a>
       <a href="/faq">FAQ</a><a href="/contact">CONTACT</a><a href="/shipping">SHIPPING</a><a href="/returns">RETURNS</a><a href="/privacy">PRIVACY</a><a href="/terms">TERMS</a><a href="/withdrawal">WITHDRAWAL</a><a href="/accessibility">ACCESSIBILITY</a>
     </div>
-    <p>Some treasures are not meant to be found...</p>
+    <p data-i18n="footerTagline">Some treasures are not meant to be found...</p>
   </footer>
   <script src="/script.js"></script>
 </body>
