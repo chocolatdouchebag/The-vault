@@ -119,13 +119,13 @@ app.get("/api/products/:idOrSlug", async (req, res) => {
 });
 
 app.post("/api/admin/product", requireAdmin, async (req, res) => {
-  const { name, description, price, stock, image_url, category } = req.body || {};
+  const { name, description, price, stock, image_url, category, rarity, origin, condition, provenance, is_featured, is_new_arrival } = req.body || {};
   if (!name || price === undefined) return res.status(400).json({ error: "Name and price required" });
   try {
     await pool.query(
-      `INSERT INTO products (name, description, price, stock, image_url, category)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [name, description || "", price, stock || 0, image_url || null, category || "Artifacts"]
+      `INSERT INTO products (name, description, price, stock, image_url, category, rarity, origin, condition, provenance, is_featured, is_new_arrival)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [name, description || "", price, stock ?? 0, image_url || null, category || "Artifacts", rarity || null, origin || null, condition || null, provenance || null, is_featured === true, is_new_arrival === true]
     );
     res.sendStatus(200);
   } catch (err) {
