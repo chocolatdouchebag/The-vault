@@ -248,38 +248,61 @@ body{background:var(--bg);color:var(--text)}
 :root[data-theme="light"] .category-bar button:hover{background:#d5c7b2}
 :root[data-theme="light"] .category-icon{color:#725029}
 
-/* User-selected antique symbol sheet */
+/* User-selected antique symbol artwork — individually bounded */
 .symbol-sprite{
   display:block;
   background-image:url("/assets/ChatGPT%20Image%20Oct%201,%202026,%2003_32_42%20PM.png");
   background-repeat:no-repeat;
-  background-size:500% auto;
-  background-position-y:center;
+  background-size:265.2px 100px;
   flex:0 0 auto;
+  transform:none;
 }
 .brand-mark .symbol-sprite{
-  width:46px;
-  height:52px;
-  background-position-x:0%;
+  width:62px;
+  height:68px;
+  background-position:0.2px -17px;
 }
-.symbol-compass{background-position-x:0%}
-.symbol-artifact{background-position-x:25%}
-.symbol-collectible{background-position-x:50%}
-.symbol-oddity{background-position-x:75%}
-.symbol-mystery{background-position-x:100%}
+.symbol-compass{
+  width:46px;
+  height:68px;
+  background-position:0.2px -17px;
+}
+.symbol-artifact{
+  width:40px;
+  height:65px;
+  background-position:-58.5px -16.1px;
+}
+.symbol-collectible{
+  width:46px;
+  height:46px;
+  background-position:-102.5px -26.5px;
+}
+.symbol-oddity{
+  width:50px;
+  height:68px;
+  background-position:-149px -16.8px;
+}
+.symbol-mystery{
+  width:46px;
+  height:57px;
+  background-position:-199px -24.7px;
+}
 
 .category-icon{
-  width:92px;
-  height:54px;
   margin:0;
-  display:block;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   filter:drop-shadow(0 0 8px rgba(199,155,87,.18));
 }
 .category-icon.symbol-sprite{display:block}
-
 @media(max-width:700px){
-  .brand-mark .symbol-sprite{width:38px;height:44px}
-  .category-icon{width:72px;height:44px}
+  .brand-mark .symbol-sprite{width:50px;height:58px;background-size:229.4px 86.5px;background-position:0.2px -14.7px}
+  .symbol-compass{width:40px;height:58px;background-position:0.2px -14.7px}
+  .symbol-artifact{width:35px;height:56px;background-position:-50.6px -13.9px}
+  .symbol-collectible{width:40px;height:40px;background-position:-88.7px -22.9px}
+  .symbol-oddity{width:43px;height:58px;background-position:-128.8px -14.5px}
+  .symbol-mystery{width:40px;height:49px;background-position:-172.3px -21.4px}
 }
 :root[data-theme="light"] .cart-btn b{
   background:#684b27;
