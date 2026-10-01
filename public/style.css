@@ -253,33 +253,34 @@ body{background:var(--bg);color:var(--text)}
   display:block;
   background-image:url("/assets/ChatGPT%20Image%20Oct%201,%202026,%2003_32_42%20PM.png");
   background-repeat:no-repeat;
-  background-size:auto 100%;
+  background-size:500% auto;
+  background-position-y:center;
   flex:0 0 auto;
 }
 .brand-mark .symbol-sprite{
-  width:36px;
+  width:48px;
   height:52px;
-  background-position:0 center;
+  background-position-x:0%;
 }
-.symbol-compass{background-position:left center}
-.symbol-artifact{background-position:25% center}
-.symbol-collectible{background-position:50% center}
-.symbol-oddity{background-position:75% center}
-.symbol-mystery{background-position:right center}
+.symbol-compass{background-position-x:0%}
+.symbol-artifact{background-position-x:25%}
+.symbol-collectible{background-position-x:50%}
+.symbol-oddity{background-position-x:75%}
+.symbol-mystery{background-position-x:100%}
 
 .category-icon{
-  width:36px;
-  height:62px;
+  width:72px;
+  height:72px;
   margin:0;
   display:block;
-  filter:drop-shadow(0 0 7px rgba(199,155,87,.16));
+  filter:drop-shadow(0 0 8px rgba(199,155,87,.18));
 }
 .category-icon.symbol-sprite{display:block}
-@media(max-width:700px){
-  .brand-mark .symbol-sprite{width:31px;height:45px}
-  .category-icon{width:31px;height:54px}
-}
 
+@media(max-width:700px){
+  .brand-mark .symbol-sprite{width:40px;height:46px}
+  .category-icon{width:58px;height:58px}
+}
 :root[data-theme="light"] .cart-btn b{
   background:#684b27;
   color:#fff8eb;
