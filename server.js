@@ -1,5 +1,6 @@
 const express = require("express");
 const session = require("express-session");
+const PgSessionStore = require("./session-store");
 const bcrypt = require("bcrypt");
 const bodyParser = require("body-parser");
 const path = require("path");
@@ -16,6 +17,7 @@ if (isProduction) app.set("trust proxy", 1);
 
 app.use(bodyParser.json());
 app.use(session({
+  store: new PgSessionStore(pool),
   name: isProduction ? "__Host-fligaliga" : "fligaliga.sid",
   secret: process.env.SESSION_SECRET || "fligaliga-development-secret-change-me",
   resave: false,
@@ -31,8 +33,13 @@ app.use((req, res, next) => {
     "script-src 'self'; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com; " +
-    "connect-src 'self';"
+    "connect-src 'self'; " +
+    "base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
   );
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  if (isProduction) res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   next();
 });
 
@@ -40,10 +47,17 @@ function requireLogin(req, res, next) {
   if (!req.session.userId) return res.status(401).json({ error: "Login required" });
   next();
 }
-function requireAdmin(req, res, next) {
+async function requireAdmin(req, res, next) {
   if (!req.session.userId) return res.status(401).json({ error: "Login required" });
-  if (!req.session.isAdmin) return res.status(403).json({ error: "Admin only" });
-  next();
+  try {
+    const result = await pool.query("SELECT is_admin FROM users WHERE id = $1", [req.session.userId]);
+    if (!result.rows[0]?.is_admin) return res.status(403).json({ error: "Admin only" });
+    req.session.isAdmin = true;
+    next();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Admin check failed" });
+  }
 }
 
 function productSlug(name) {
@@ -74,10 +88,13 @@ app.post("/api/login", async (req, res) => {
     if (!result.rows.length) return res.status(401).send("Invalid login");
     const user = result.rows[0];
     if (!(await bcrypt.compare(password || "", user.password))) return res.status(401).send("Invalid login");
-    req.session.userId = user.id;
-    req.session.isAdmin = user.is_admin;
-    req.session.user = { id: user.id, username: user.username, isAdmin: user.is_admin };
-    res.sendStatus(200);
+    req.session.regenerate(err => {
+      if (err) return res.status(500).json({ error: "Login failed" });
+      req.session.userId = user.id;
+      req.session.isAdmin = !!user.is_admin;
+      req.session.user = { id: user.id, username: user.username, isAdmin: !!user.is_admin };
+      res.sendStatus(204);
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send("Login failed");
@@ -85,12 +102,25 @@ app.post("/api/login", async (req, res) => {
 });
 
 app.post("/api/logout", (req, res) => req.session.destroy(() => res.sendStatus(200)));
-app.get("/api/me", (req, res) => res.json(req.session.user || null));
+app.get("/api/me", async (req, res) => {
+  if (!req.session.userId) return res.json(null);
+  try {
+    const result = await pool.query("SELECT id, username, is_admin FROM users WHERE id = $1", [req.session.userId]);
+    if (!result.rows.length) return res.json(null);
+    const user = result.rows[0];
+    req.session.isAdmin = !!user.is_admin;
+    req.session.user = { id: user.id, username: user.username, isAdmin: !!user.is_admin };
+    res.json(req.session.user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Could not load account" });
+  }
+});
 app.get("/api/health", async (req, res) => { try { await pool.query("SELECT 1"); res.json({ ok: true }); } catch (err) { res.status(503).json({ ok: false }); } });
 
 app.get("/api/products", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM products ORDER BY id DESC");
+    const result = await pool.query("SELECT * FROM products WHERE is_active = TRUE AND status = 'active' ORDER BY is_featured DESC, is_new_arrival DESC, id DESC");
     res.json(result.rows.map(p => ({ ...p, slug: productSlug(p.name) })));
   } catch (err) {
     console.error(err);
@@ -104,10 +134,10 @@ app.get("/api/products/:idOrSlug", async (req, res) => {
     const idMatch = key.match(/(?:^|-)(\d+)$/);
     let product;
     if (idMatch) {
-      const result = await pool.query("SELECT * FROM products WHERE id = $1", [Number(idMatch[1])]);
+      const result = await pool.query("SELECT * FROM products WHERE id = $1 AND is_active = TRUE AND status = 'active'", [Number(idMatch[1])]);
       product = result.rows[0];
     } else {
-      const result = await pool.query("SELECT * FROM products");
+      const result = await pool.query("SELECT * FROM products WHERE is_active = TRUE AND status = 'active'");
       product = result.rows.find(p => productSlug(p.name) === key.toLowerCase());
     }
     if (!product) return res.status(404).json({ error: "Treasure not found" });
@@ -146,7 +176,7 @@ app.delete("/api/admin/product/:id", requireAdmin, async (req, res) => {
 
 app.post("/api/cart", requireLogin, async (req, res) => {
   const productId = Number(req.body?.product_id);
-  if (!productId) return res.status(400).json({ error: "Invalid product" });
+  if (!Number.isInteger(productId) || productId <= 0) return res.status(400).json({ error: "Invalid product" });
   const userId = req.session.userId;
   try {
     const existing = await pool.query("SELECT id FROM cart WHERE user_id = $1 AND product_id = $2", [userId, productId]);
@@ -178,8 +208,12 @@ app.get("/api/cart", requireLogin, async (req, res) => {
 
 app.post("/api/cart/update", requireLogin, async (req, res) => {
   const id = Number(req.body?.id), quantity = Number(req.body?.quantity);
+  if (!Number.isInteger(id) || id <= 0 || !Number.isInteger(quantity)) return res.status(400).json({ error: "Invalid cart update" });
   try {
+    const row = await pool.query("SELECT c.id, p.stock FROM cart c JOIN products p ON c.product_id = p.id WHERE c.id = $1 AND c.user_id = $2 AND p.is_active = TRUE AND p.status = 'active'", [id, req.session.userId]);
+    if (!row.rows.length) return res.status(404).json({ error: "Cart item not found" });
     if (quantity <= 0) await pool.query("DELETE FROM cart WHERE id = $1 AND user_id = $2", [id, req.session.userId]);
+    else if (quantity > row.rows[0].stock) return res.status(409).json({ error: "Requested quantity exceeds available stock" });
     else await pool.query("UPDATE cart SET quantity = $1 WHERE id = $2 AND user_id = $3", [quantity, id, req.session.userId]);
     res.sendStatus(200);
   } catch (err) {
@@ -194,6 +228,7 @@ app.post("/api/cart/empty", requireLogin, async (req, res) => {
 });
 
 app.post("/api/checkout", requireLogin, async (req, res) => {
+  if (isProduction && process.env.PAYMENTS_ENABLED !== "true") return res.status(503).json({ error: "Online checkout is not configured yet." });
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
