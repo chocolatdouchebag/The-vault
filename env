@@ -1,5 +1,0 @@
-DB_USER=grey
-DB_PASS=hound
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=webshop
