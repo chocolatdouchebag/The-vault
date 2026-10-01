@@ -62,7 +62,70 @@ async function loadOrders(){if(!state.isAdmin)return;const r=await fetch('/api/a
 async function adminAdd(e){e.preventDefault();const body={name:$('prod-name').value.trim(),description:$('prod-description').value.trim(),price:Number($('prod-price').value),stock:Number($('prod-stock').value),image_url:$('prod-image').value.trim()||null,category:$('prod-category').value.trim()||'Artifacts',rarity:$('prod-rarity').value.trim()||null,origin:$('prod-origin').value.trim()||null,condition:$('prod-condition').value.trim()||null,provenance:$('prod-provenance').value.trim()||null,is_featured:$('prod-featured').checked,is_new_arrival:$('prod-new').checked};const r=await fetch('/api/admin/product',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)return alert(await r.text());e.target.reset();await loadProducts();await loadOrders();alert('Treasure catalogued.');}
 function applySearchFromUrl(){const q=new URLSearchParams(location.search);state.search=q.get('q')||'';if($('search-input'))$('search-input').value=state.search;}
 document.addEventListener('click',e=>{const nav=e.target.closest('[data-navigate]');if(nav){navigate(nav.dataset.navigate);return;}const add=e.target.closest('[data-add-to-cart]');if(add){addToCart(Number(add.dataset.addToCart));return;}const qty=e.target.closest('[data-cart-id]');if(qty){updateCart(Number(qty.dataset.cartId),Number(qty.dataset.cartQty));return;}const copy=e.target.closest('[data-copy-link]');if(copy){copyProductLink();return;}const cardEl=e.target.closest('.product-card');if(cardEl){navigate(cardEl.dataset.productUrl);}});document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const cardEl=e.target.closest('.product-card');if(cardEl){navigate(cardEl.dataset.productUrl);}}});document.addEventListener('submit',e=>{if(e.target.matches('.contact-form')){e.preventDefault();alert('Contact form placeholder — connect this form to your email service before launch.');}});document.addEventListener('error',e=>{if(e.target?.matches?.('[data-image-fallback]')){const img=e.target;const wrapper=img.parentElement;if(wrapper)wrapper.innerHTML=placeholder({name:img.alt||'UNCATALOGUED TREASURE'});}},true);window.addEventListener('popstate',route);
-document.addEventListener('DOMContentLoaded',async()=>{await me();await loadProducts();await loadCart();if(state.isAdmin)await loadOrders();applySearchFromUrl();
+function applyLanguage(){
+  const lang = localStorage.getItem('fligaliga-language') || 'en';
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (translations[lang]?.[key] !== undefined) el.innerHTML = translations[lang][key];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.dataset.i18nPlaceholder;
+    if (translations[lang]?.[key] !== undefined) el.placeholder = translations[lang][key];
+  });
+  const toggle = $('language-toggle');
+  if (toggle) {
+    toggle.textContent = lang === 'en' ? 'NL' : 'EN';
+    toggle.title = lang === 'en' ? 'Switch to Dutch' : 'Switch to English';
+    toggle.setAttribute('aria-label', toggle.title);
+  }
+}
+
+function applyTheme(){
+  const theme = localStorage.getItem('fligaliga-theme') || 'dark';
+  document.documentElement.dataset.theme = theme;
+  const toggle = $('theme-toggle');
+  if (toggle) {
+    toggle.textContent = theme === 'dark' ? '☀' : '☾';
+    toggle.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+    toggle.setAttribute('aria-label', toggle.title);
+  }
+}
+
+const translations = {
+  en: {
+    navVault:'THE VAULT',navTreasures:'TREASURES',navNew:'NEW ARRIVALS',navLedger:'THE LEDGER',navMerchant:'ABOUT THE MERCHANT',
+    searchPlaceholder:'Search treasures...',admin:'ADMIN',enter:'ENTER',leave:'LEAVE',welcomeTo:'WELCOME TO',vault:'THE VAULT',
+    heroSub:'Treasures collected from places<br>better left forgotten.',enterVault:'ENTER THE VAULT',allTreasures:'ALL TREASURES',
+    artifacts:'ARTIFACTS',collectibles:'COLLECTIBLES',oddities:'ODDITIES',mysteryBoxes:'MYSTERY BOXES',
+    recentlyDiscovered:'RECENTLY DISCOVERED',featuredTreasures:'FEATURED TREASURES',clearFilter:'CLEAR FILTER ×',
+    fastShipping:'FAST & SECURE SHIPPING',shippingSub:'Your treasures, safely delivered.',secureReturns:'SECURE RETURNS',
+    returnsSub:'A clear path when plans change.',uniqueAuthentic:'UNIQUE & AUTHENTIC',uniqueSub:'Each item has a story.',
+    contactMerchant:'CONTACT THE MERCHANT',contactSub:"Have a question? We're here.",merchantOffice:"THE MERCHANT'S OFFICE",
+    enterTheVault:'ENTER THE VAULT',returningTraveler:'RETURNING TRAVELER',newArrival:'NEW ARRIVAL',
+    username:'Username',password:'Password',chooseUsername:'Choose a username',choosePassword:'Choose a password',
+    yourLedger:'YOUR LEDGER',deliveryDetails:'DELIVERY DETAILS',completeOrder:'COMPLETE YOUR ORDER',placeOrder:'PLACE ORDER',
+    cancel:'CANCEL',merchant:'THE MERCHANT',adminLedger:'ADMIN LEDGER',addTreasure:'ADD TREASURE',orders:'ORDERS',
+    cart:'THE CART',emptyCart:'EMPTY CART',checkout:'CHECKOUT',footerTagline:'Some treasures are not meant to be found...'
+  },
+  nl: {
+    navVault:'DE KLUIS',navTreasures:'SCHATTEN',navNew:'NIEUW BINNEN',navLedger:'HET GROOTBOEK',navMerchant:'OVER DE HANDELAAR',
+    searchPlaceholder:'Zoek schatten...',admin:'BEHEER',enter:'BINNENKOMEN',leave:'VERLATEN',welcomeTo:'WELKOM BIJ',vault:'DE KLUIS',
+    heroSub:'Schatten verzameld van plaatsen<br>die beter vergeten hadden kunnen blijven.',enterVault:'BETREED DE KLUIS',allTreasures:'ALLE SCHATTEN',
+    artifacts:'ARTEFACTEN',collectibles:'VERZAMELOBJECTEN',oddities:'RARITEITEN',mysteryBoxes:'MYSTERYBOXEN',
+    recentlyDiscovered:'RECENT ONTDEKT',featuredTreasures:'UITGELICHTE SCHATTEN',clearFilter:'FILTER WISSEN ×',
+    fastShipping:'SNEL & VEILIG VERZONDEN',shippingSub:'Je schatten veilig bij je thuis.',secureReturns:'VEILIG RETOURNEREN',
+    returnsSub:'Een duidelijk pad als plannen veranderen.',uniqueAuthentic:'UNIEK & AUTHENTIEK',uniqueSub:'Elk voorwerp heeft een verhaal.',
+    contactMerchant:'CONTACT MET DE HANDELAAR',contactSub:'Een vraag? We helpen je graag.',merchantOffice:'HET KANTOOR VAN DE HANDELAAR',
+    enterTheVault:'BETREED DE KLUIS',returningTraveler:'TERUGKERENDE BEZOEKER',newArrival:'NIEUWE BEZOEKER',
+    username:'Gebruikersnaam',password:'Wachtwoord',chooseUsername:'Kies een gebruikersnaam',choosePassword:'Kies een wachtwoord',
+    yourLedger:'JOUW GROOTBOEK',deliveryDetails:'BEZORGGEGEVENS',completeOrder:'BESTELLING AFRONDEN',placeOrder:'BESTELLING PLAATSEN',
+    cancel:'ANNULEREN',merchant:'DE HANDELAAR',adminLedger:'BEHEERDER',addTreasure:'SCHAT TOEVOEGEN',orders:'BESTELLINGEN',
+    cart:'DE WINKELWAGEN',emptyCart:'WINKELWAGEN LEGEN',checkout:'AFREKENEN',footerTagline:'Sommige schatten zijn niet bedoeld om gevonden te worden...'
+  }
+};
+
+document.addEventListener('DOMContentLoaded', async()=>{await me();await loadProducts();await loadCart();if(state.isAdmin)await loadOrders();applySearchFromUrl();
   $('search-form').addEventListener('submit',e=>{e.preventDefault();const q=$('search-input').value.trim();navigate(q?`/treasures?q=${encodeURIComponent(q)}`:'/treasures');});
   $('search-input').addEventListener('input',e=>{state.search=e.target.value;});
   document.querySelectorAll('[data-category]').forEach(b=>b.addEventListener('click',()=>{state.category=b.dataset.category;state.newOnly=false;renderProducts();document.getElementById('treasures').scrollIntoView({behavior:'smooth'});}));
