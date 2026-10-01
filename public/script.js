@@ -18,7 +18,14 @@ function curatedImage(p){if(p.image_url)return p.image_url;const n=String(p.name
 function show(view){['home-view','content-view','product-view','auth-view','cart-view','admin-view','order-view'].forEach(id=>$(id)?.classList.toggle('hidden',id!==view));window.scrollTo({top:0,behavior:'smooth'});}
 function productUrl(p){return `/product/${p.slug||slug(p.name)}-${p.id}`;}
 function placeholder(p){return `<div class="placeholder"><div><span class="placeholder-glyph">✧</span><br><br>${escapeHtml(p.name||'UNCATALOGUED TREASURE')}<br><small>ARTIFACT IMAGE BEING PREPARED</small></div></div>`;}
-function imageMarkup(p,detail=false){const src=curatedImage(p);if(!src)return placeholder(p);return `<img src="${escapeAttr(src)}" alt="${escapeAttr(p.name)}" loading="${detail?'eager':'lazy'}" data-image-fallback>`;}
+function imageMarkup(p,detail=false){
+  const explicit=String(p.image_url||'').trim();
+  const curated=curatedImages.find(x=>x.keys.some(k=>String(p.name||'').toLowerCase().includes(k)))?.src||null;
+  const src=explicit||curated;
+  if(!src)return placeholder(p);
+  const fallback=explicit&&curated&&explicit!==curated?curated:'';
+  return `<img src="${escapeAttr(src)}" alt="${escapeAttr(p.name)}" loading="${detail?'eager':'lazy'}" data-image-fallback="${escapeAttr(fallback)}">`;
+}
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
 function escapeAttr(s){return escapeHtml(s);}
 function badgeFor(p,i){const n=String(p.name||'').toLowerCase();if(n.includes('whisper')||n.includes('cursed'))return ['CURSED','cursed'];if(n.includes('box')||n.includes('mystery'))return ['UNKNOWN',''];if(p.is_new_arrival)return ['NEW',''];if(p.is_featured)return ['FEATURED',''];if(p.rarity)return [String(p.rarity).toUpperCase(),''];return i===0?['DISCOVERY','']:['ARTIFACT',''];}
@@ -61,7 +68,18 @@ async function emptyCart(){if(!confirm('Empty your cart?'))return;await fetch('/
 async function loadOrders(){if(!state.isAdmin)return;const r=await fetch('/api/admin/orders');if(!r.ok)return;$('admin-orders').innerHTML=(await r.json()).map(o=>`<div class="admin-order"><strong>Order #${o.id}</strong> — ${escapeHtml(o.username)} — ${money(o.total)}<br>${o.items.map(i=>`${escapeHtml(i.name)} × ${i.quantity}`).join(', ')}</div>`).join('')||'<p>No orders yet.</p>';}
 async function adminAdd(e){e.preventDefault();const body={name:$('prod-name').value.trim(),description:$('prod-description').value.trim(),price:Number($('prod-price').value),stock:Number($('prod-stock').value),image_url:$('prod-image').value.trim()||null,category:$('prod-category').value.trim()||'Artifacts',rarity:$('prod-rarity').value.trim()||null,origin:$('prod-origin').value.trim()||null,condition:$('prod-condition').value.trim()||null,provenance:$('prod-provenance').value.trim()||null,is_featured:$('prod-featured').checked,is_new_arrival:$('prod-new').checked};const r=await fetch('/api/admin/product',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)return alert(await r.text());e.target.reset();await loadProducts();await loadOrders();alert('Treasure catalogued.');}
 function applySearchFromUrl(){const q=new URLSearchParams(location.search);state.search=q.get('q')||'';if($('search-input'))$('search-input').value=state.search;}
-document.addEventListener('click',e=>{const nav=e.target.closest('[data-navigate]');if(nav){navigate(nav.dataset.navigate);return;}const add=e.target.closest('[data-add-to-cart]');if(add){addToCart(Number(add.dataset.addToCart));return;}const qty=e.target.closest('[data-cart-id]');if(qty){updateCart(Number(qty.dataset.cartId),Number(qty.dataset.cartQty));return;}const copy=e.target.closest('[data-copy-link]');if(copy){copyProductLink();return;}const cardEl=e.target.closest('.product-card');if(cardEl){navigate(cardEl.dataset.productUrl);}});document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const cardEl=e.target.closest('.product-card');if(cardEl){navigate(cardEl.dataset.productUrl);}}});document.addEventListener('submit',e=>{if(e.target.matches('.contact-form')){e.preventDefault();alert('Contact form placeholder — connect this form to your email service before launch.');}});document.addEventListener('error',e=>{if(e.target?.matches?.('[data-image-fallback]')){const img=e.target;const wrapper=img.parentElement;if(wrapper)wrapper.innerHTML=placeholder({name:img.alt||'UNCATALOGUED TREASURE'});}},true);window.addEventListener('popstate',route);
+document.addEventListener('click',e=>{const nav=e.target.closest('[data-navigate]');if(nav){navigate(nav.dataset.navigate);return;}const add=e.target.closest('[data-add-to-cart]');if(add){addToCart(Number(add.dataset.addToCart));return;}const qty=e.target.closest('[data-cart-id]');if(qty){updateCart(Number(qty.dataset.cartId),Number(qty.dataset.cartQty));return;}const copy=e.target.closest('[data-copy-link]');if(copy){copyProductLink();return;}const cardEl=e.target.closest('.product-card');if(cardEl){navigate(cardEl.dataset.productUrl);}});document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const cardEl=e.target.closest('.product-card');if(cardEl){navigate(cardEl.dataset.productUrl);}}});document.addEventListener('submit',e=>{if(e.target.matches('.contact-form')){e.preventDefault();alert('Contact form placeholder — connect this form to your email service before launch.');}});document.addEventListener('error',e=>{
+  if(!e.target?.matches?.('[data-image-fallback]'))return;
+  const img=e.target;
+  const fallback=img.dataset.imageFallback;
+  if(fallback){
+    img.dataset.imageFallback='';
+    img.src=fallback;
+    return;
+  }
+  const wrapper=img.parentElement;
+  if(wrapper)wrapper.innerHTML=placeholder({name:img.alt||'UNCATALOGUED TREASURE'});
+},true);window.addEventListener('popstate',route);
 function applyLanguage(){
   const lang = localStorage.getItem('fligaliga-language') || 'en';
   document.documentElement.lang = lang;
