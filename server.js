@@ -16,6 +16,7 @@ app.disable("x-powered-by");
 if (isProduction) app.set("trust proxy", 1);
 
 app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(session({
   store: new PgSessionStore(pool),
   name: isProduction ? "__Host-fligaliga" : "fligaliga.sid",
@@ -243,7 +244,14 @@ app.post("/api/cart/empty", requireLogin, async (req, res) => {
 });
 
 app.post("/api/checkout", requireLogin, async (req, res) => {
-  if (isProduction && process.env.PAYMENTS_ENABLED !== "true") return res.status(503).json({ error: "Online checkout is not configured yet." });
+  const paymentsEnabled = process.env.PAYMENTS_ENABLED === "true";
+  const apiKey = process.env.MOLLIE_API_KEY;
+  const baseUrl = String(process.env.PUBLIC_BASE_URL || "").replace(/\/$/, "");
+
+  if (!paymentsEnabled || !apiKey || !baseUrl)
+    return res.status(503).json({ error: "Online checkout is not configured yet." });
+  if (isProduction && !baseUrl.startsWith("https://"))
+    return res.status(503).json({ error: "Secure PUBLIC_BASE_URL is required in production." });
 
   const {
     customer_name,
@@ -270,6 +278,8 @@ app.post("/api/checkout", requireLogin, async (req, res) => {
   if (req.body?.accept_terms !== true) return res.status(400).json({ error: "Please confirm the terms and withdrawal information" });
 
   const client = await pool.connect();
+  let orderId = null;
+
   try {
     await client.query("BEGIN");
     const cart = await client.query(`
@@ -279,38 +289,208 @@ app.post("/api/checkout", requireLogin, async (req, res) => {
       WHERE c.user_id = $1
         AND p.is_active = TRUE
         AND p.status = 'active'
-      FOR UPDATE
+      FOR UPDATE OF p
     `, [req.session.userId]);
+
     if (!cart.rows.length) {
       await client.query("ROLLBACK");
       return res.status(400).json({ error: "Cart empty" });
     }
-    for (const item of cart.rows) if (item.quantity > item.stock) {
-      await client.query("ROLLBACK");
-      return res.status(400).json({ error: `Not enough stock for ${item.name}` });
+
+    for (const item of cart.rows) {
+      if (item.quantity > item.stock) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ error: `Not enough stock for ${item.name}` });
+      }
     }
+
     const total = cart.rows.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
+    if (!Number.isFinite(total) || total <= 0) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Invalid order total" });
+    }
+
     const order = await client.query(
       `INSERT INTO orders (
-        user_id, total, customer_name, customer_email,
+        user_id, total, status, customer_name, customer_email,
         shipping_address_line1, shipping_postcode, shipping_city, shipping_country
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      ) VALUES ($1, $2, 'payment_pending', $3, $4, $5, $6, $7, $8)
        RETURNING id`,
       [req.session.userId, total, name, email, address, postcode, city, country]
     );
-    const orderId = order.rows[0].id;
+    orderId = order.rows[0].id;
+
     for (const item of cart.rows) {
-      await client.query("INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)", [orderId, item.product_id, item.quantity, item.price]);
-      await client.query("UPDATE products SET stock = stock - $1 WHERE id = $2", [item.quantity, item.product_id]);
+      await client.query(
+        "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)",
+        [orderId, item.product_id, item.quantity, item.price]
+      );
+      await client.query(
+        "UPDATE products SET stock = stock - $1 WHERE id = $2 AND stock >= $1",
+        [item.quantity, item.product_id]
+      );
     }
+
     await client.query("DELETE FROM cart WHERE user_id = $1", [req.session.userId]);
     await client.query("COMMIT");
-    res.json({ success: true, orderId, total });
+
+    const paymentResponse = await fetch("https://api.mollie.com/v2/payments", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({
+        amount: { currency: "EUR", value: total.toFixed(2) },
+        description: `FLIGALIGA Order #${orderId}`,
+        redirectUrl: `${baseUrl}/payment-result?order=${orderId}`,
+        cancelUrl: `${baseUrl}/payment-result?order=${orderId}&cancelled=1`,
+        webhookUrl: `${baseUrl}/api/payments/mollie-webhook`,
+        metadata: { order_id: String(orderId) }
+      })
+    });
+
+    const payment = await paymentResponse.json().catch(() => null);
+    if (!paymentResponse.ok || !payment?.id || !payment?._links?.checkout?.href) {
+      await releaseReservedStock(orderId, "payment_creation_failed");
+      return res.status(502).json({ error: "Could not start the payment. Your reserved stock has been released." });
+    }
+
+    await pool.query(
+      "UPDATE orders SET payment_id = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
+      [payment.id, orderId]
+    );
+
+    res.json({ success: true, orderId, total, checkoutUrl: payment._links.checkout.href });
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
+    if (orderId) await releaseReservedStock(orderId, "checkout_error").catch(() => {});
     console.error(err);
     res.status(500).json({ error: "Checkout failed" });
-  } finally { client.release(); }
+  } finally {
+    client.release();
+  }
+});
+
+async function releaseReservedStock(orderId, status = "payment_failed") {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const order = await client.query(
+      "SELECT status, stock_released_at FROM orders WHERE id = $1 FOR UPDATE",
+      [orderId]
+    );
+    if (!order.rows.length) {
+      await client.query("ROLLBACK");
+      return;
+    }
+    if (order.rows[0].stock_released_at || order.rows[0].status === "paid") {
+      await client.query("COMMIT");
+      return;
+    }
+
+    const items = await client.query(
+      "SELECT product_id, quantity FROM order_items WHERE order_id = $1",
+      [orderId]
+    );
+    for (const item of items.rows) {
+      await client.query(
+        "UPDATE products SET stock = stock + $1 WHERE id = $2",
+        [item.quantity, item.product_id]
+      );
+    }
+    await client.query(
+      "UPDATE orders SET status = $1, stock_released_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
+      [status, orderId]
+    );
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+app.post("/api/payments/mollie-webhook", async (req, res) => {
+  const apiKey = process.env.MOLLIE_API_KEY;
+  const paymentId = String(req.body?.id || req.query?.id || "").trim();
+  if (!apiKey || !paymentId) return res.sendStatus(400);
+
+  try {
+    const response = await fetch(`https://api.mollie.com/v2/payments/${encodeURIComponent(paymentId)}`, {
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Accept": "application/json"
+      }
+    });
+    const payment = await response.json().catch(() => null);
+    if (!response.ok || !payment?.id) return res.sendStatus(502);
+
+    const metadataOrderId = payment.metadata?.order_id ? Number(payment.metadata.order_id) : null;
+    const orderResult = await pool.query(
+      metadataOrderId
+        ? "SELECT id, total, status, stock_released_at FROM orders WHERE payment_id = $1 OR id = $2 LIMIT 1"
+        : "SELECT id, total, status, stock_released_at FROM orders WHERE payment_id = $1 LIMIT 1",
+      metadataOrderId ? [paymentId, metadataOrderId] : [paymentId]
+    );
+    if (!orderResult.rows.length) return res.sendStatus(404);
+
+    const order = orderResult.rows[0];
+    const paymentAmount = payment.amount?.currency === "EUR" ? Number(payment.amount.value) : NaN;
+    if (!Number.isFinite(paymentAmount) || Math.abs(paymentAmount - Number(order.total)) > 0.005)
+      return res.sendStatus(409);
+
+    switch (payment.status) {
+      case "paid":
+        await pool.query(
+          `UPDATE orders
+           SET status = 'paid', paid_at = COALESCE(paid_at, CURRENT_TIMESTAMP), updated_at = CURRENT_TIMESTAMP
+           WHERE id = $1 AND status <> 'paid'`,
+          [order.id]
+        );
+        break;
+      case "failed":
+        await releaseReservedStock(order.id, "payment_failed");
+        break;
+      case "canceled":
+        await releaseReservedStock(order.id, "canceled");
+        break;
+      case "expired":
+        await releaseReservedStock(order.id, "expired");
+        break;
+      default:
+        await pool.query(
+          "UPDATE orders SET status = 'payment_pending', updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND status <> 'paid'",
+          [order.id]
+        );
+        break;
+    }
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(500);
+  }
+});
+
+app.get("/api/orders/:id", requireLogin, async (req, res) => {
+  const orderId = Number(req.params.id);
+  if (!Number.isInteger(orderId) || orderId <= 0) return res.status(400).json({ error: "Invalid order number" });
+  try {
+    const result = await pool.query(
+      `SELECT id, total, status, created_at, customer_name, customer_email
+       FROM orders
+       WHERE id = $1 AND user_id = $2`,
+      [orderId, req.session.userId]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: "Order not found" });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Could not load order" });
+  }
 });
 
 app.get("/api/admin/orders", requireAdmin, async (req, res) => {
@@ -372,6 +552,6 @@ app.post("/api/withdrawal", async (req, res) => {
 // SPA routes: product URLs are real, shareable URLs, while the client loads the product data.
 app.use(express.static(publicDir));
 app.get("/product/:idOrSlug", (req, res) => res.sendFile(path.join(publicDir, "index.html")));
-app.get(["/", "/treasures", "/new-arrivals", "/ledger", "/merchant", "/faq", "/contact", "/shipping", "/returns", "/privacy", "/terms", "/withdrawal", "/accessibility"], (req, res) => res.sendFile(path.join(publicDir, "index.html")));
+app.get(["/", "/treasures", "/new-arrivals", "/ledger", "/merchant", "/faq", "/contact", "/shipping", "/returns", "/privacy", "/terms", "/withdrawal", "/accessibility", "/payment-result"], (req, res) => res.sendFile(path.join(publicDir, "index.html")));
 
 app.listen(PORT, () => console.log(`🧭 FLIGALIGA Vault running at http://localhost:${PORT}`));
