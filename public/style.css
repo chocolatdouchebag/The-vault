@@ -1,3 +1,42 @@
+/* Theme system */
+:root{
+  --bg:#090908;
+  --surface:#11110f;
+  --surface-2:#171713;
+  --text:#e7dfcf;
+  --muted:#a79f90;
+  --line:rgba(199,155,87,.28);
+  --accent:#c79b57;
+  --shadow:rgba(0,0,0,.45);
+}
+:root[data-theme="light"]{
+  --bg:#f1eee7;
+  --surface:#fffdf8;
+  --surface-2:#e8e2d6;
+  --text:#211f1a;
+  --muted:#686257;
+  --line:rgba(112,79,34,.28);
+  --accent:#8b642e;
+  --shadow:rgba(35,29,20,.16);
+}
+html{background:var(--bg);color-scheme:dark}
+html[data-theme="light"]{color-scheme:light}
+body{background:var(--bg);color:var(--text)}
+.site-header,.site-footer,.category-bar,.product-card,.auth-card,.cart-panel,.checkout-panel,.admin-panel,.page-card{background-color:var(--surface);color:var(--text)}
+.muted,.product-meta,.eyebrow,.page-copy{color:var(--muted)}
+.theme-btn,.language-btn{
+  min-width:42px;height:38px;padding:0 10px;border:1px solid var(--line);
+  background:transparent;color:var(--accent);font:inherit;cursor:pointer;
+}
+.theme-btn:hover,.language-btn:hover{background:var(--surface-2);color:var(--text)}
+:root[data-theme="light"] .hero{
+  background-blend-mode:soft-light;
+}
+:root[data-theme="light"] .hero::after{
+  background:linear-gradient(90deg,rgba(255,253,248,.9),rgba(255,253,248,.35),rgba(255,253,248,.05));
+}
+:root[data-theme="light"] img{filter:none}
+
 :root{
   --bg:#080807;--panel:#0d0e0c;--panel2:#12130f;
   --gold:#c79b57;--gold2:#e6c47f;--gold3:#f0d79c;
