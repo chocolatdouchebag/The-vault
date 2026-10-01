@@ -269,8 +269,9 @@ body{background:var(--bg);color:var(--text)}
 .symbol-mystery{background-position-x:100%}
 
 .category-icon{
-  width:72px;
-  height:72px;
+  width:80px;
+  height:80px;
+  transform:scale(.88);
   margin:0;
   display:block;
   filter:drop-shadow(0 0 8px rgba(199,155,87,.18));
