@@ -27,3 +27,8 @@ footer{min-height:205px;border-top:1px solid var(--line);padding:32px 5%;display
 
 /* Launch polish */
 .product-card:focus-visible,.ghost-btn:focus-visible,.ornate-btn:focus-visible,.icon-btn:focus-visible,.enter-btn:focus-visible,.text-link:focus-visible,.copy-link:focus-visible,.qty button:focus-visible{outline:2px solid var(--gold3);outline-offset:3px}.product-card{user-select:none}.ornate-btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}.muted-note{color:#a99e8c;font-size:15px;line-height:1.5}.detail-copy .ornate-btn{margin-top:6px;min-width:230px}@media(max-width:700px){.detail-copy .ornate-btn{width:100%}}
+
+/* Launch polish */
+.admin-grid select{width:100%;padding:13px;margin:0 0 12px;background:#090a09;border:1px solid #554a39;color:#f3e8d5}.admin-grid label{display:flex;align-items:center;gap:9px;margin:0 0 12px;color:#cfc3b0}.admin-grid label input[type=checkbox]{width:18px;height:18px;margin:0}.contact-card .placeholder-copy{color:#b8ab98}.muted-note{color:#a99d8b;line-height:1.7}
+@media(max-width:1150px){.main-nav{display:flex;overflow-x:auto;grid-column:1/-1;gap:24px;justify-content:flex-start}.main-nav a{flex:0 0 auto}}
+@media(max-width:700px){.main-nav{width:100%;padding-bottom:2px}.main-nav a{font-size:9px}.hero-copy{padding-top:120px}}
