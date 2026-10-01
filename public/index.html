@@ -34,7 +34,10 @@
       <form id="search-form" class="search-box" role="search">
         <span aria-hidden="true">⌕</span><input id="search-input" type="search" name="treasure-search" data-i18n-placeholder="searchPlaceholder" placeholder="Search treasures..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
       </form>
-      <button class="icon-btn cart-btn" id="cart-btn" aria-label="Cart" title="Your ledger">♧<b id="cart-count">0</b></button>
+      <button class="icon-btn cart-btn" id="cart-btn" aria-label="Cart" title="Your ledger">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 7h3l2.3 13.2a2 2 0 0 0 2 1.8h10.9a2 2 0 0 0 1.9-1.5L28 11H10"/><circle cx="13" cy="26" r="1.7"/><circle cx="24" cy="26" r="1.7"/></svg>
+        <b id="cart-count">0</b>
+      </button>
       <button class="enter-btn hidden" id="admin-link" data-i18n="admin">ADMIN</button>
       <button class="enter-btn" id="login-link" data-i18n="enter">ENTER</button>
       <button class="enter-btn hidden" id="logout-btn" data-i18n="leave">LEAVE</button>
