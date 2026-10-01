@@ -263,7 +263,7 @@ body{background:var(--bg);color:var(--text)}
   background-position-x:0%;
 }
 .symbol-compass{background-position-x:0%}
-.symbol-artifact{background-position-x:25%}
+.symbol-artifact{background-position-x:26.5%}
 .symbol-collectible{background-position-x:50%}
 .symbol-oddity{background-position-x:75%}
 .symbol-mystery{background-position-x:100%}
