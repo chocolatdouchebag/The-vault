@@ -179,11 +179,26 @@ app.post("/api/cart", requireLogin, async (req, res) => {
   if (!Number.isInteger(productId) || productId <= 0) return res.status(400).json({ error: "Invalid product" });
   const userId = req.session.userId;
   try {
-    const existing = await pool.query("SELECT id FROM cart WHERE user_id = $1 AND product_id = $2", [userId, productId]);
-    if (existing.rows.length) {
-      await pool.query("UPDATE cart SET quantity = quantity + 1 WHERE id = $1", [existing.rows[0].id]);
-    } else {
+    const existing = await pool.query(
+      `SELECT c.id, c.quantity, p.stock
+       FROM cart c
+       JOIN products p ON c.product_id = p.id
+       WHERE c.user_id = $1 AND c.product_id = $2
+         AND p.is_active = TRUE AND p.status = 'active'`,
+      [userId, productId]
+    );
+    if (!existing.rows.length) {
+      const product = await pool.query(
+        "SELECT stock FROM products WHERE id = $1 AND is_active = TRUE AND status = 'active'",
+        [productId]
+      );
+      if (!product.rows.length) return res.status(404).json({ error: "Treasure not found" });
+      if (Number(product.rows[0].stock) < 1) return res.status(409).json({ error: "This treasure is currently out of stock" });
       await pool.query("INSERT INTO cart (user_id, product_id, quantity) VALUES ($1, $2, 1)", [userId, productId]);
+    } else {
+      const item = existing.rows[0];
+      if (Number(item.quantity) >= Number(item.stock)) return res.status(409).json({ error: "You cannot add more than the available stock" });
+      await pool.query("UPDATE cart SET quantity = quantity + 1 WHERE id = $1 AND user_id = $2", [item.id, userId]);
     }
     res.sendStatus(200);
   } catch (err) {
@@ -229,13 +244,42 @@ app.post("/api/cart/empty", requireLogin, async (req, res) => {
 
 app.post("/api/checkout", requireLogin, async (req, res) => {
   if (isProduction && process.env.PAYMENTS_ENABLED !== "true") return res.status(503).json({ error: "Online checkout is not configured yet." });
+
+  const {
+    customer_name,
+    customer_email,
+    shipping_address_line1,
+    shipping_postcode,
+    shipping_city,
+    shipping_country
+  } = req.body || {};
+
+  const email = String(customer_email || "").trim().toLowerCase();
+  const name = String(customer_name || "").trim();
+  const address = String(shipping_address_line1 || "").trim();
+  const postcode = String(shipping_postcode || "").trim();
+  const city = String(shipping_city || "").trim();
+  const country = String(shipping_country || "NL").trim().toUpperCase();
+
+  if (!name || name.length > 120) return res.status(400).json({ error: "Enter your full name" });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) return res.status(400).json({ error: "Enter a valid email address" });
+  if (!address || address.length > 200) return res.status(400).json({ error: "Enter your delivery address" });
+  if (!postcode || postcode.length > 30) return res.status(400).json({ error: "Enter your postcode" });
+  if (!city || city.length > 100) return res.status(400).json({ error: "Enter your city" });
+  if (!/^[A-Z]{2}$/.test(country)) return res.status(400).json({ error: "Enter a valid two-letter country code" });
+  if (req.body?.accept_terms !== true) return res.status(400).json({ error: "Please confirm the terms and withdrawal information" });
+
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
     const cart = await client.query(`
       SELECT c.product_id, c.quantity, p.price, p.stock, p.name
-      FROM cart c JOIN products p ON c.product_id = p.id
-      WHERE c.user_id = $1 FOR UPDATE
+      FROM cart c
+      JOIN products p ON c.product_id = p.id
+      WHERE c.user_id = $1
+        AND p.is_active = TRUE
+        AND p.status = 'active'
+      FOR UPDATE
     `, [req.session.userId]);
     if (!cart.rows.length) {
       await client.query("ROLLBACK");
@@ -246,7 +290,14 @@ app.post("/api/checkout", requireLogin, async (req, res) => {
       return res.status(400).json({ error: `Not enough stock for ${item.name}` });
     }
     const total = cart.rows.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
-    const order = await client.query("INSERT INTO orders (user_id, total) VALUES ($1, $2) RETURNING id", [req.session.userId, total]);
+    const order = await client.query(
+      `INSERT INTO orders (
+        user_id, total, customer_name, customer_email,
+        shipping_address_line1, shipping_postcode, shipping_city, shipping_country
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id`,
+      [req.session.userId, total, name, email, address, postcode, city, country]
+    );
     const orderId = order.rows[0].id;
     for (const item of cart.rows) {
       await client.query("INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)", [orderId, item.product_id, item.quantity, item.price]);
@@ -264,8 +315,19 @@ app.post("/api/checkout", requireLogin, async (req, res) => {
 
 app.get("/api/admin/orders", requireAdmin, async (req, res) => {
   try {
-    const orders = await pool.query(`SELECT o.id, o.user_id, o.total, o.status, o.created_at, u.username FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.id DESC`);
-    const items = await pool.query(`SELECT oi.order_id, p.name, oi.quantity, oi.price FROM order_items oi JOIN products p ON oi.product_id = p.id`);
+    const orders = await pool.query(`
+      SELECT o.id, o.user_id, o.total, o.status, o.created_at, o.customer_name,
+             o.customer_email, o.shipping_address_line1, o.shipping_postcode,
+             o.shipping_city, o.shipping_country, u.username
+      FROM orders o
+      JOIN users u ON o.user_id = u.id
+      ORDER BY o.id DESC
+    `);
+    const items = await pool.query(`
+      SELECT oi.order_id, p.name, oi.quantity, oi.price
+      FROM order_items oi
+      JOIN products p ON oi.product_id = p.id
+    `);
     res.json(orders.rows.map(o => ({ ...o, items: items.rows.filter(i => i.order_id === o.id) })));
   } catch (err) {
     console.error(err);
@@ -273,9 +335,43 @@ app.get("/api/admin/orders", requireAdmin, async (req, res) => {
   }
 });
 
+app.post("/api/withdrawal", async (req, res) => {
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  const reason = String(req.body?.reason || "").trim();
+  const orderId = req.body?.order_id ? Number(req.body.order_id) : null;
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254)
+    return res.status(400).json({ error: "Enter a valid email address" });
+  if (reason.length > 2000)
+    return res.status(400).json({ error: "Reason is too long" });
+  if (orderId !== null && (!Number.isInteger(orderId) || orderId <= 0))
+    return res.status(400).json({ error: "Invalid order number" });
+
+  try {
+    if (orderId !== null) {
+      const order = await pool.query(
+        "SELECT id FROM orders WHERE id = $1 AND lower(customer_email) = $2",
+        [orderId, email]
+      );
+      if (!order.rows.length) return res.status(404).json({ error: "Order not found for that email address" });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO withdrawal_requests (order_id, email, reason)
+       VALUES ($1, $2, $3)
+       RETURNING id, submitted_at`,
+      [orderId, email, reason || null]
+    );
+    res.status(201).json({ success: true, requestId: result.rows[0].id, submittedAt: result.rows[0].submitted_at });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Could not submit withdrawal request" });
+  }
+});
+
 // SPA routes: product URLs are real, shareable URLs, while the client loads the product data.
 app.use(express.static(publicDir));
 app.get("/product/:idOrSlug", (req, res) => res.sendFile(path.join(publicDir, "index.html")));
-app.get(["/", "/treasures", "/new-arrivals", "/ledger", "/merchant", "/faq", "/contact", "/shipping", "/returns", "/privacy"], (req, res) => res.sendFile(path.join(publicDir, "index.html")));
+app.get(["/", "/treasures", "/new-arrivals", "/ledger", "/merchant", "/faq", "/contact", "/shipping", "/returns", "/privacy", "/terms", "/withdrawal", "/accessibility"], (req, res) => res.sendFile(path.join(publicDir, "index.html")));
 
 app.listen(PORT, () => console.log(`🧭 FLIGALIGA Vault running at http://localhost:${PORT}`));
