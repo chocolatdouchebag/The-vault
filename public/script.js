@@ -1,6 +1,11 @@
 const state={products:[],user:null,isAdmin:false,category:'all',search:'',newOnly:false};
 const $=id=>document.getElementById(id);
-const money=v=>new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR'}).format(Number(v||0));
+
+// Store pricing is kept in one base currency. Customer-facing formatting can be
+// expanded later without changing product prices in the database.
+const STORE_CURRENCY='EUR';
+const STORE_LOCALE='nl-NL';
+const money=v=>new Intl.NumberFormat(STORE_LOCALE,{style:'currency',currency:STORE_CURRENCY}).format(Number(v||0));
 const slug=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
 const pagePaths=new Set(['/','/treasures','/new-arrivals','/ledger','/merchant','/faq','/contact','/shipping','/returns','/privacy','/terms','/withdrawal','/accessibility']);
 
