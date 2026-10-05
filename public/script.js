@@ -127,6 +127,7 @@ function applyLanguage(){
     const key = el.dataset.i18nPlaceholder;
     if (translations[lang]?.[key] !== undefined) el.placeholder = translations[lang][key];
   });
+  applyStaticTranslations();
   const toggle = $('language-toggle');
   if (toggle) {
     toggle.textContent = lang === 'en' ? 'NL' : 'EN';
@@ -134,7 +135,19 @@ function applyLanguage(){
     toggle.setAttribute('aria-label', toggle.title);
   }
 }
-
+function setText(selector,key){const el=document.querySelector(selector);if(el)el.textContent=t(key,el.textContent);}
+function setPlaceholder(selector,key){const el=document.querySelector(selector);if(el)el.placeholder=t(key,el.placeholder);}
+function setLabelText(selector,key){const el=document.querySelector(selector);if(el&&el.firstChild&&el.firstChild.nodeType===3)el.firstChild.nodeValue=t(key,el.firstChild.nodeValue.trim())+' ';}
+function setCheckText(inputSelector,key){const label=document.querySelector(inputSelector)?.closest('label');if(label&&label.lastChild&&label.lastChild.nodeType===3)label.lastChild.nodeValue=' '+t(key,label.lastChild.nodeValue.trim());}
+function applyStaticTranslations(){
+  setText('.brand-copy small','brandTagline');setText('.footer-brand small','brandTagline');setText('.service-strip a:nth-child(4) p','exploreDiscoveries');
+  setText('#auth-view .panel-inner>.eyebrow','merchantOffice');setText('#auth-view .panel-inner>h2','enterTheVault');setText('#login-form h3','returningTraveler');setText('#register-form h3','newArrival');
+  setPlaceholder('#login-user','username');setPlaceholder('#login-pass','password');setPlaceholder('#reg-user','chooseUsername');setPlaceholder('#reg-pass','choosePassword');setText('#login-form button','enter');setText('#register-form button','createAccount');
+  setText('#cart-view .panel-inner>.eyebrow','yourLedger');setText('#checkout-panel .section-heading p','deliveryDetails');setText('#checkout-panel .section-heading h2','completeOrder');setText('#checkout-panel>.muted-note','detailsRequired');
+  setPlaceholder('#checkout-name','fullName');setPlaceholder('#checkout-email','emailAddress');setPlaceholder('#checkout-address','streetAddress');setPlaceholder('#checkout-postcode','postcode');setPlaceholder('#checkout-city','city');setPlaceholder('#checkout-country','countryCode');setText('#checkout-form button[type="submit"]','placeOrder');setText('#cancel-checkout','cancel');
+  setText('#order-view .eyebrow','ledgerUpdated');setText('#order-view h2','orderPlaced');setText('#order-view a','returnVault');setText('footer p','footerTagline');
+  const fm={'.footer-links a[href="/"]':'navVault','.footer-links a[href="/new-arrivals"]':'navNew','.footer-links a[href="/ledger"]':'navLedger','.footer-links a[href="/merchant"]':'navMerchant'};Object.entries(fm).forEach(([s,k])=>setText(s,k));
+}
 function applyTheme(){
   const theme = localStorage.getItem('fligaliga-theme') || 'dark';
   document.documentElement.dataset.theme = theme;
