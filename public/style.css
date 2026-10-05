@@ -325,157 +325,55 @@ body{background:var(--bg);color:var(--text)}
 }
 
 /* Vault entry transition */
-.vault-transition{position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:0;visibility:hidden;overflow:hidden;
-  background:
-    radial-gradient(circle at 50% 50%,rgba(199,155,87,.055),transparent 20%),
-    radial-gradient(circle at 50% 55%,#16140f 0,#090a09 48%,#040505 100%);
-  perspective:1500px}
+.vault-transition{position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:0;visibility:hidden;overflow:hidden;background:radial-gradient(circle at 50% 50%,rgba(220,173,93,.08),transparent 17%),radial-gradient(circle at 50% 54%,#17140e 0,#090a09 48%,#040505 100%);perspective:1700px}
 .vault-transition.is-active{opacity:1;visibility:visible;pointer-events:auto}
 .vault-opening{overflow:hidden}
-
-/* Light leaking from the chamber behind the door */
-.vault-light{position:absolute;left:50%;top:50%;width:min(69vmin,790px);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
-  background:radial-gradient(circle,rgba(244,205,125,.96) 0,rgba(207,150,65,.58) 8%,rgba(128,82,28,.24) 25%,rgba(42,26,11,.18) 47%,transparent 68%);
-  opacity:.1;filter:blur(3px);z-index:0}
-.vault-transition.is-opening .vault-light{animation:vaultLight 2.5s ease-out .45s forwards}
-
-/* Deep circular recess behind the door */
-.vault-aperture{position:absolute;left:50%;top:50%;width:min(79vmin,900px);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
-  border:18px solid #11110e;
-  background:
-    radial-gradient(circle at 50% 50%,rgba(214,158,70,.22),transparent 18%),
-    radial-gradient(circle at 50% 50%,#241b10 0,#0a0907 58%,#050505 100%);
-  box-shadow:
-    0 0 0 2px rgba(199,155,87,.24),
-    0 0 0 9px rgba(199,155,87,.07),
-    0 0 0 26px rgba(0,0,0,.72),
-    inset 0 0 80px #000,
-    0 0 100px rgba(0,0,0,.9);
-  z-index:1}
-.vault-aperture:before{content:"";position:absolute;inset:5%;border-radius:50%;border:1px solid rgba(199,155,87,.3);
-  box-shadow:inset 0 0 35px rgba(199,155,87,.06)}
-.vault-aperture:after{content:"";position:absolute;inset:10%;border-radius:50%;border:1px dashed rgba(199,155,87,.13)}
-
-/* Heavy steel vault door */
-.vault-door{position:absolute;left:50%;top:50%;width:min(73vmin,835px);aspect-ratio:1;transform:translate(-50%,-50%) rotateY(0deg);
-  transform-origin:10% 50%;transform-style:preserve-3d;border-radius:50%;z-index:3;
-  border:15px solid #6e5838;
-  background:
-    radial-gradient(circle at 50% 50%,transparent 0 8%,rgba(0,0,0,.14) 8.3% 11%,transparent 11.3%),
-    repeating-conic-gradient(from 0deg,rgba(255,255,255,.028) 0 2deg,transparent 2deg 16deg),
-    radial-gradient(circle at 36% 28%,rgba(255,255,255,.07),transparent 22%),
-    linear-gradient(145deg,#292722 0,#151512 45%,#26241f 100%);
-  box-shadow:
-    0 0 0 3px rgba(199,155,87,.52),
-    0 0 0 11px rgba(13,12,10,.96),
-    0 0 0 13px rgba(199,155,87,.17),
-    inset 0 0 0 5px rgba(0,0,0,.55),
-    inset 0 0 85px rgba(0,0,0,.85),
-    20px 28px 65px rgba(0,0,0,.75);
-  backface-visibility:hidden}
-.vault-door:before{content:"";position:absolute;inset:8%;border-radius:50%;border:3px solid rgba(199,155,87,.48);
-  box-shadow:
-    inset 0 0 0 13px rgba(9,9,8,.52),
-    inset 0 0 0 16px rgba(199,155,87,.13),
-    0 0 0 1px rgba(0,0,0,.7)}
-.vault-door:after{content:"";position:absolute;inset:18%;border-radius:50%;
-  border:1px solid rgba(199,155,87,.3);
-  background:repeating-conic-gradient(from 0deg,rgba(199,155,87,.06) 0 1deg,transparent 1deg 45deg);
-  box-shadow:inset 0 0 30px rgba(0,0,0,.65)}
-
-/* A darker back plate gives the door thickness when it swings */
-.vault-door-back{position:absolute;inset:0;border-radius:50%;background:linear-gradient(145deg,#25231d,#100f0d);
-  border:15px solid #4f402a;transform:rotateY(180deg);backface-visibility:hidden;z-index:-1;
-  box-shadow:inset 0 0 60px rgba(0,0,0,.85)}
-
-/* Radial locking bars */
-.vault-spoke{position:absolute;left:50%;top:50%;width:45%;height:11px;margin:-5.5px 0 0 -22.5%;border-radius:999px;
-  background:linear-gradient(90deg,#4f402a,#bd9150 48%,#4f402a);
-  box-shadow:0 0 0 2px rgba(0,0,0,.72),0 0 10px rgba(199,155,87,.1);z-index:1}
-.vault-spoke-a{transform:rotate(0deg)}.vault-spoke-b{transform:rotate(45deg)}
-.vault-spoke-c{transform:rotate(90deg)}.vault-spoke-d{transform:rotate(135deg)}
-
-/* Familiar Fligaliga symbols, treated as faint metal engravings */
-.vault-symbols{position:absolute;inset:10%;z-index:2;pointer-events:none}
-.vault-symbol{position:absolute;width:7.5%;aspect-ratio:1;display:grid;place-items:center;opacity:.24;
-  filter:grayscale(1) sepia(1) saturate(.7) brightness(.72) contrast(1.1) drop-shadow(0 1px 1px #000)}
+.vault-light{position:absolute;left:50%;top:50%;width:min(68vmin,790px);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,221,148,.96) 0,rgba(216,159,72,.62) 7%,rgba(139,87,28,.25) 23%,rgba(57,34,11,.1) 52%,transparent 70%);opacity:.08;filter:blur(3px);z-index:0}
+.vault-transition.is-opening .vault-light{animation:vaultLight 2.65s ease-out .38s forwards}
+.vault-aperture{position:absolute;left:50%;top:50%;width:min(82vmin,930px);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;z-index:1;border:15px solid #0e0e0c;background:repeating-conic-gradient(from 0deg,rgba(199,155,87,.055) 0 1deg,transparent 1deg 12deg),radial-gradient(circle,#34230f 0 8%,#0c0b08 25%,#070706 70%,#020303 100%);box-shadow:0 0 0 2px rgba(199,155,87,.4),0 0 0 9px rgba(199,155,87,.08),0 0 0 28px rgba(0,0,0,.82),inset 0 0 100px #000,0 0 110px rgba(0,0,0,.95)}
+.vault-aperture:before{content:"";position:absolute;inset:3%;border-radius:50%;border:1px solid rgba(199,155,87,.28);box-shadow:inset 0 0 35px rgba(199,155,87,.08)}
+.vault-aperture:after{content:"";position:absolute;inset:9%;border-radius:50%;border:1px dashed rgba(199,155,87,.16)}
+.vault-door{position:absolute;left:50%;top:50%;width:min(77vmin,875px);aspect-ratio:1;transform:translate(-50%,-50%) rotateY(0deg);transform-origin:8% 50%;transform-style:preserve-3d;border-radius:50%;z-index:3;border:13px solid #77603d;background:repeating-conic-gradient(from 1deg,rgba(230,196,127,.04) 0 2deg,transparent 2deg 11.25deg),radial-gradient(circle at 34% 25%,rgba(255,255,255,.075),transparent 21%),radial-gradient(circle at 50% 50%,#292721 0,#171714 48%,#24221d 74%,#12110f 100%);box-shadow:0 0 0 2px rgba(220,173,93,.66),0 0 0 7px rgba(11,10,8,.98),0 0 0 10px rgba(199,155,87,.18),inset 0 0 0 5px rgba(0,0,0,.52),inset 0 0 90px rgba(0,0,0,.88),18px 30px 70px rgba(0,0,0,.8);backface-visibility:hidden}
+.vault-door:before{content:"";position:absolute;inset:5%;border-radius:50%;border:2px solid rgba(199,155,87,.5);box-shadow:inset 0 0 0 11px rgba(7,7,6,.6),inset 0 0 0 14px rgba(199,155,87,.12),0 0 0 1px rgba(0,0,0,.8)}
+.vault-door:after{content:"";position:absolute;inset:12%;border-radius:50%;border:1px solid rgba(230,196,127,.28);background:repeating-conic-gradient(from 0deg,rgba(230,196,127,.05) 0 1deg,transparent 1deg 15deg);box-shadow:inset 0 0 45px rgba(0,0,0,.62)}
+.vault-door-back{position:absolute;inset:0;border-radius:50%;background:linear-gradient(145deg,#27241e,#0d0c0a);border:16px solid #4d3d28;transform:rotateY(180deg);backface-visibility:hidden;z-index:-1;box-shadow:inset 0 0 70px rgba(0,0,0,.9)}
+.vault-ring{position:absolute;left:50%;top:50%;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
+.vault-ring-outer{width:95%;height:95%;border:1px solid rgba(199,155,87,.35);box-shadow:inset 0 0 0 8px rgba(0,0,0,.28),inset 0 0 0 10px rgba(199,155,87,.08)}
+.vault-ring-mid{width:82%;height:82%;border:2px solid rgba(151,113,59,.58);box-shadow:inset 0 0 0 5px rgba(0,0,0,.42),0 0 0 1px rgba(0,0,0,.65)}
+.vault-ring-inner{width:67%;height:67%;border:1px solid rgba(230,196,127,.4);border-style:dashed}
+.vault-ring-engrave{width:56%;height:56%;border:2px double rgba(199,155,87,.26);box-shadow:inset 0 0 25px rgba(199,155,87,.04)}
+.vault-spoke{position:absolute;left:50%;top:50%;width:43%;height:9px;margin:-4.5px 0 0 -21.5%;border-radius:999px;background:linear-gradient(90deg,transparent 0,#5e4a2d 8%,#c69b5c 48%,#5e4a2d 92%,transparent 100%);box-shadow:0 0 0 2px rgba(0,0,0,.7),0 0 9px rgba(199,155,87,.14);z-index:2;transform:translate(-50%,-50%) rotate(var(--angle))}
+.vault-spoke:after{content:"";position:absolute;left:0;top:50%;width:11px;height:11px;border:1px solid #c79b57;background:#171410;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 2px #0c0c0a}
+.vault-bolt{position:absolute;left:50%;top:50%;width:14px;height:14px;border-radius:50%;transform:translate(-50%,-50%) rotate(var(--angle)) translateY(-40%);transform-origin:0 40%;background:radial-gradient(circle at 35% 30%,#e0bb77 0 15%,#86683c 28%,#282017 65%,#0d0c09 70%);border:1px solid #a07a46;box-shadow:0 0 0 2px rgba(0,0,0,.62),0 1px 2px #000;z-index:4}
+.vault-bolt i{display:block;width:4px;height:1px;background:#d5ae6e;position:absolute;left:4px;top:5px;transform:rotate(27deg)}
+.vault-symbols{position:absolute;inset:11%;z-index:3;pointer-events:none}
+.vault-symbol{position:absolute;width:6.5%;aspect-ratio:1;display:grid;place-items:center;opacity:.23;filter:grayscale(1) sepia(1) saturate(.7) brightness(.7) contrast(1.25) drop-shadow(0 1px 2px #000)}
 .vault-symbol img{width:100%;height:100%;object-fit:contain}
-.vault-symbol-1{left:46%;top:2%}.vault-symbol-2{right:3%;top:43%}
-.vault-symbol-3{right:17%;bottom:8%}.vault-symbol-4{left:17%;bottom:8%}.vault-symbol-5{left:3%;top:43%}
-
-/* Central locking wheel */
-.vault-lock{position:absolute;left:50%;top:50%;width:19%;aspect-ratio:1;transform:translate(-50%,-50%);
-  border-radius:50%;z-index:5;
-  background:
-    radial-gradient(circle,#1d180f 0 29%,#c09658 30% 34%,#141310 35% 56%,#917043 57% 61%,#161511 62% 100%);
-  border:2px solid #b28a4f;
-  box-shadow:0 0 0 5px rgba(0,0,0,.62),0 0 24px rgba(199,155,87,.18)}
-.vault-lock:before{content:"";position:absolute;inset:17%;border:1px solid rgba(230,196,127,.55);border-radius:50%;transform:rotate(22deg)}
-.vault-lock:after{content:"";position:absolute;left:50%;top:17%;width:5px;height:66%;border-radius:5px;
-  background:#d0a561;transform:translateX(-50%);box-shadow:0 0 6px rgba(230,196,127,.24)}
-
-/* Small mechanical bolts */
-.vault-bolts{position:absolute;inset:0;border-radius:50%;z-index:4}
-.vault-bolts:before{content:"";position:absolute;inset:4%;border-radius:50%;
-  background:
-    radial-gradient(circle at 50% 2%,#b28a4f 0 5px,#16130f 6px,transparent 8px),
-    radial-gradient(circle at 98% 50%,#b28a4f 0 5px,#16130f 6px,transparent 8px),
-    radial-gradient(circle at 50% 98%,#b28a4f 0 5px,#16130f 6px,transparent 8px),
-    radial-gradient(circle at 2% 50%,#b28a4f 0 5px,#16130f 6px,transparent 8px),
-    radial-gradient(circle at 85% 15%,#8d6b3f 0 3px,transparent 5px),
-    radial-gradient(circle at 85% 85%,#8d6b3f 0 3px,transparent 5px),
-    radial-gradient(circle at 15% 85%,#8d6b3f 0 3px,transparent 5px),
-    radial-gradient(circle at 15% 15%,#8d6b3f 0 3px,transparent 5px)}
-
-/* Subtle engraved wording */
-.vault-inscription{position:absolute;left:50%;top:15%;transform:translateX(-50%);
-  font:8px "Cinzel",serif;letter-spacing:3px;color:rgba(230,196,127,.46);white-space:nowrap;z-index:6}
-.vault-transition-label{position:absolute;left:50%;top:calc(50% + min(41vmin,450px));transform:translateX(-50%);
-  font:10px "Cinzel",serif;letter-spacing:4px;color:#b9aa91;white-space:nowrap;text-shadow:0 2px 12px #000;opacity:0;z-index:8}
-
-.vault-transition.is-opening .vault-lock{animation:vaultLockTurn .92s cubic-bezier(.65,.02,.35,.98) forwards}
-.vault-transition.is-opening .vault-bolts{animation:vaultBolts .72s ease-out .8s forwards}
-.vault-transition.is-opening .vault-door{animation:vaultDoorSwing 1.55s cubic-bezier(.77,0,.16,1) .83s forwards}
-.vault-transition.is-opening .vault-transition-label{animation:vaultLabel 1.25s ease-out .18s forwards}
-
-@keyframes vaultLockTurn{
-  0%{transform:translate(-50%,-50%) rotate(0deg)}
-  30%{transform:translate(-50%,-50%) rotate(130deg)}
-  55%{transform:translate(-50%,-50%) rotate(92deg)}
-  78%{transform:translate(-50%,-50%) rotate(190deg)}
-  100%{transform:translate(-50%,-50%) rotate(180deg)}
-}
-@keyframes vaultBolts{
-  0%{transform:scale(1);opacity:1}
-  45%{transform:scale(1.018);opacity:.74}
-  100%{transform:scale(1);opacity:1}
-}
-@keyframes vaultDoorSwing{
-  0%{transform:translate(-50%,-50%) rotateY(0deg) rotateZ(0deg);filter:brightness(1)}
-  12%{transform:translate(-50%,-50%) rotateY(-4deg) rotateZ(-.5deg);filter:brightness(1.05)}
-  100%{transform:translate(-50%,-50%) rotateY(-108deg) rotateZ(-2deg);filter:brightness(.72)}
-}
-@keyframes vaultLight{
-  0%{opacity:.06;transform:translate(-50%,-50%) scale(.84)}
-  48%{opacity:.72;transform:translate(-50%,-50%) scale(1.02)}
-  100%{opacity:.4;transform:translate(-50%,-50%) scale(1.08)}
-}
-@keyframes vaultLabel{
-  0%{opacity:0;letter-spacing:6px}
-  28%{opacity:.86}
-  75%{opacity:.66}
-  100%{opacity:0;letter-spacing:4px}
-}
-
-@media(max-width:700px){
-  .vault-door{border-width:10px}
-  .vault-aperture{border-width:11px}
-  .vault-spoke{height:8px;margin-top:-4px}
-  .vault-lock:after{width:4px}
-  .vault-symbol{width:10%}
-  .vault-inscription{font-size:6px;letter-spacing:2px}
-  .vault-transition-label{top:calc(50% + 39vmin);font-size:8px}
-}
+.vault-symbol.top{left:46.75%;top:-2%}.vault-symbol.upper-right{right:9%;top:7%}.vault-symbol.right{right:-2%;top:46.75%}.vault-symbol.lower-right{right:9%;bottom:7%}.vault-symbol.bottom{left:46.75%;bottom:-2%}.vault-symbol.lower-left{left:9%;bottom:7%}.vault-symbol.left{left:-2%;top:46.75%}.vault-symbol.upper-left{left:9%;top:7%}
+.vault-ornament{position:absolute;left:50%;top:50%;width:58%;height:58%;transform:translate(-50%,-50%);border:1px solid rgba(199,155,87,.16);border-radius:50%;z-index:2}
+.vault-ornament:before,.vault-ornament:after{content:"";position:absolute;inset:9%;border-radius:50%;border:1px solid rgba(199,155,87,.1);clip-path:polygon(50% 0,58% 42%,100% 50%,58% 58%,50% 100%,42% 58%,0 50%,42% 42%)}
+.vault-ornament:after{inset:17%;transform:rotate(22.5deg);opacity:.8}
+.vault-lock{position:absolute;left:50%;top:50%;width:21%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;z-index:7;background:radial-gradient(circle,#2c2010 0 19%,#d4aa68 20% 23%,#15130f 24% 44%,#9b7744 45% 50%,#211b12 51% 68%,#b68b4e 69% 72%,#11100e 73% 100%);border:2px solid #d1a664;box-shadow:0 0 0 6px rgba(0,0,0,.72),0 0 0 8px rgba(199,155,87,.18),0 0 32px rgba(199,155,87,.19)}
+.vault-lock:before{content:"";position:absolute;inset:18%;border-radius:50%;border:1px solid rgba(239,211,151,.72);box-shadow:inset 0 0 12px rgba(199,155,87,.08)}
+.vault-lock:after{content:"";position:absolute;left:50%;top:14%;width:6px;height:72%;border-radius:4px;background:linear-gradient(#e3bd79,#8b683b);transform:translateX(-50%);box-shadow:0 0 8px rgba(230,196,127,.3)}
+.vault-lock-mark{position:absolute;left:50%;top:50%;width:36%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;border:1px solid rgba(230,196,127,.7);z-index:8}
+.vault-lock-mark:before,.vault-lock-mark:after{content:"";position:absolute;left:50%;top:50%;width:58%;height:1px;background:#d4aa68;transform-origin:center;transform:translate(-50%,-50%) rotate(45deg)}
+.vault-lock-mark:after{transform:translate(-50%,-50%) rotate(-45deg)}
+.vault-inscription{position:absolute;left:50%;top:10.5%;transform:translateX(-50%);font:7px "Cinzel",serif;letter-spacing:3px;color:rgba(230,196,127,.48);white-space:nowrap;z-index:8}
+.vault-inscription-bottom{top:auto;bottom:10.5%;transform:translateX(-50%) rotate(180deg)}
+.vault-transition-label{position:absolute;left:50%;top:calc(50% + min(43vmin,460px));transform:translateX(-50%);font:10px "Cinzel",serif;letter-spacing:4px;color:#b9aa91;white-space:nowrap;text-shadow:0 2px 12px #000;opacity:0;z-index:9}
+.vault-transition.is-opening .vault-lock{animation:vaultLockTurn 1.05s cubic-bezier(.65,.02,.35,.98) forwards}
+.vault-transition.is-opening .vault-spoke{animation:vaultSpokes .75s ease-out .78s forwards}
+.vault-transition.is-opening .vault-bolt{animation:vaultBoltRelease .55s ease-out .82s forwards}
+.vault-transition.is-opening .vault-door{animation:vaultDoorSwing 1.7s cubic-bezier(.77,0,.16,1) .88s forwards}
+.vault-transition.is-opening .vault-transition-label{animation:vaultLabel 1.45s ease-out .12s forwards}
+@keyframes vaultLockTurn{0%{transform:translate(-50%,-50%) rotate(0deg)}26%{transform:translate(-50%,-50%) rotate(92deg)}43%{transform:translate(-50%,-50%) rotate(72deg)}68%{transform:translate(-50%,-50%) rotate(210deg)}100%{transform:translate(-50%,-50%) rotate(180deg)}}
+@keyframes vaultSpokes{0%{filter:brightness(1)}55%{filter:brightness(1.5)}100%{filter:brightness(1)}}
+@keyframes vaultBoltRelease{0%{transform:translate(-50%,-50%) rotate(var(--angle)) translateY(-40%) scale(1);opacity:1}45%{transform:translate(-50%,-50%) rotate(var(--angle)) translateY(-40%) scale(1.3);opacity:.7}100%{transform:translate(-50%,-50%) rotate(var(--angle)) translateY(-40%) scale(1);opacity:1}}
+@keyframes vaultDoorSwing{0%{transform:translate(-50%,-50%) rotateY(0deg) rotateZ(0deg);filter:brightness(1)}10%{transform:translate(-50%,-50%) rotateY(-2deg) rotateZ(-.2deg);filter:brightness(1.06)}100%{transform:translate(-50%,-50%) rotateY(-112deg) rotateZ(-2deg);filter:brightness(.68)}}
+@keyframes vaultLight{0%{opacity:.04;transform:translate(-50%,-50%) scale(.8)}48%{opacity:.85;transform:translate(-50%,-50%) scale(1.04)}100%{opacity:.44;transform:translate(-50%,-50%) scale(1.1)}}
+@keyframes vaultLabel{0%{opacity:0;letter-spacing:7px}25%{opacity:.9}72%{opacity:.62}100%{opacity:0;letter-spacing:4px}}
+@media(max-width:700px){.vault-door{border-width:10px}.vault-aperture{border-width:10px}.vault-spoke{height:7px;margin-top:-3.5px}.vault-bolt{width:10px;height:10px}.vault-symbol{width:8.5%}.vault-inscription{font-size:5px;letter-spacing:2px}.vault-transition-label{top:calc(50% + 39vmin);font-size:8px}}
 @media(prefers-reduced-motion:reduce){
   .vault-transition.is-opening .vault-lock,.vault-transition.is-opening .vault-bolts,.vault-transition.is-opening .vault-door,.vault-transition.is-opening .vault-transition-label,.vault-transition.is-opening .vault-light{animation:none}
   .vault-transition.is-opening .vault-lock{transform:translate(-50%,-50%) rotate(180deg)}
