@@ -172,9 +172,16 @@ await me();await loadProducts();await loadCart();if(state.isAdmin)await loadOrde
   document.querySelectorAll('[data-category]').forEach(b=>b.addEventListener('click',()=>{state.category=b.dataset.category;state.newOnly=false;renderProducts();document.getElementById('treasures').scrollIntoView({behavior:'smooth'});}));
   $('clear-filter').addEventListener('click',()=>{state.category='all';state.search='';state.newOnly=false;$('search-input').value='';history.replaceState({},'', '/');renderProducts(true);});
   $('enter-vault-btn')?.addEventListener('click',()=>{
-    if(document.querySelector('.vault-transition.is-active'))return;
-    state.category='all';state.search='';state.newOnly=false;$('search-input').value='';
-    const overlay=document.createElement('div');overlay.className='vault-transition';
+    const existing=document.querySelector('.vault-transition');
+    if(existing)return;
+
+    state.category='all';
+    state.search='';
+    state.newOnly=false;
+    if($('search-input'))$('search-input').value='';
+
+    const overlay=document.createElement('div');
+    overlay.className='vault-transition';
     const spokes=Array.from({length:12},(_,i)=>'<span class="vault-spoke" style="--angle:'+(i*30)+'deg"></span>').join('');
     const bolts=Array.from({length:12},(_,i)=>'<span class="vault-bolt" style="--angle:'+(i*30)+'deg"><i></i></span>').join('');
     const symbols=[
@@ -182,12 +189,29 @@ await me();await loadProducts();await loadCart();if(state.isAdmin)await loadOrde
       ['/assets/skull%20.png','lower-right'],['/assets/box%20.png','bottom'],['/assets/boat.png','lower-left'],
       ['/assets/shield.png','left'],['/assets/star.png','upper-left']
     ].map(([src,pos])=>'<span class="vault-symbol '+pos+'"><img src="'+src+'" alt=""></span>').join('');
+
     overlay.innerHTML='<div class="vault-light" aria-hidden="true"></div><div class="vault-aperture" aria-hidden="true"></div><div class="vault-door" aria-hidden="true"><span class="vault-door-back"></span><span class="vault-ring vault-ring-outer"></span><span class="vault-ring vault-ring-mid"></span><span class="vault-ring vault-ring-inner"></span><span class="vault-ring vault-ring-engrave"></span><div class="vault-ornament"></div>'+spokes+'<div class="vault-symbols">'+symbols+'</div><div class="vault-bolts">'+bolts+'</div><span class="vault-inscription">FLIGALIGA · TREASURES · CURIOSITIES · ODDITIES</span><span class="vault-inscription vault-inscription-bottom">THE MERCHANT'S SEAL · EST. UNKNOWN</span><span class="vault-lock"><span class="vault-lock-mark"></span></span></div><div class="vault-transition-label">UNLOCKING THE VAULT</div>';
-    document.body.appendChild(overlay);document.body.classList.add('vault-opening');
-    requestAnimationFrame(()=>{overlay.classList.add('is-active');requestAnimationFrame(()=>overlay.classList.add('is-opening'));});
-    history.replaceState({},'', '/#treasures');renderProducts();
-    setTimeout(()=>document.getElementById('treasures')?.scrollIntoView({behavior:'smooth'}),1250);
-    setTimeout(()=>{overlay.classList.remove('is-active');overlay.remove();document.body.classList.remove('vault-opening');},2900);
+
+    document.body.appendChild(overlay);
+    document.body.classList.add('vault-opening');
+
+    const cleanup=()=>{
+      overlay.remove();
+      document.body.classList.remove('vault-opening');
+    };
+
+    // Always schedule cleanup before doing anything else so a rendering error
+    // can never leave the transition permanently covering the shop.
+    const timer=window.setTimeout(cleanup,2900);
+
+    history.replaceState({},'', '/#treasures');
+    try{renderProducts();}catch(err){console.error('Vault catalogue render failed:',err);cleanup();window.clearTimeout(timer);return;}
+
+    document.getElementById('treasures')?.scrollIntoView({behavior:'smooth'});
+    requestAnimationFrame(()=>{
+      overlay.classList.add('is-active');
+      requestAnimationFrame(()=>overlay.classList.add('is-opening'));
+    });
   });
   $('login-link').addEventListener('click',()=>show('auth-view'));$('logout-btn').addEventListener('click',logout);$('admin-link').addEventListener('click',async()=>{show('admin-view');await loadOrders();});$('cart-btn').addEventListener('click',()=>state.user?show('cart-view'):show('auth-view'));
   $('login-form').addEventListener('submit',login);$('register-form').addEventListener('submit',register);$('empty-cart').addEventListener('click',emptyCart);$('checkout-btn').addEventListener('click',openCheckout);$('checkout-form').addEventListener('submit',checkout);$('cancel-checkout').addEventListener('click',()=>{$('checkout-panel').classList.add('hidden');$('checkout-message').textContent='';});$('admin-product-form').addEventListener('submit',adminAdd);
