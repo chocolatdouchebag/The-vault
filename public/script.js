@@ -82,7 +82,7 @@ function renderPage(path){
   const d=pageData[path];if(!d)return renderHome();
   setActiveNav(path);show('content-view');
   const copy=pageCopy[path];
-  const kicker=copy?t(copy.k,d.kicker),title=copy?t(copy.t,d.title),intro=copy?t(copy.i,d.intro);
+  const kicker=copy?t(copy.k,d.kicker):t(d.kicker,d.kicker),title=copy?t(copy.t,d.title):t(d.title,d.title),intro=copy?t(copy.i,d.intro):t(d.intro,d.intro);
   let html=`<div class="page-hero"><p class="eyebrow">${escapeHtml(kicker)}</p><h1>${escapeHtml(title)}</h1><p>${escapeHtml(intro)}</p></div>`;
   if(path==='/faq')html+=faqHtml();
   else if(path==='/contact')html+=contactHtml();
