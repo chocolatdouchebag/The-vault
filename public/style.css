@@ -302,3 +302,17 @@ body{background:var(--bg);color:var(--text)}
   .service-strip a:last-child{grid-column:1/-1;border-top:1px solid var(--line-soft)}
 }
 :root[data-theme="light"] .service-icon{color:#76542b}
+
+/* Fine-tune individual service artwork */
+.service-strip a:nth-child(1) .service-icon img{max-width:62px;max-height:58px}
+.service-strip a:nth-child(2) .service-icon img{max-width:58px;max-height:58px}
+.service-strip a:nth-child(3) .service-icon img{max-width:62px;max-height:58px}
+.service-strip a:nth-child(4) .service-icon img{max-width:58px;max-height:58px}
+.service-strip a:nth-child(5) .service-icon img{max-width:58px;max-height:58px;transform:translateY(4px)}
+@media(max-width:780px){
+  .service-strip a:nth-child(1) .service-icon img{max-width:48px;max-height:46px}
+  .service-strip a:nth-child(2) .service-icon img{max-width:48px;max-height:48px}
+  .service-strip a:nth-child(3) .service-icon img{max-width:48px;max-height:46px}
+  .service-strip a:nth-child(4) .service-icon img{max-width:48px;max-height:48px}
+  .service-strip a:nth-child(5) .service-icon img{max-width:48px;max-height:48px;transform:translateY(3px)}
+}
