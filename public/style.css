@@ -248,62 +248,38 @@ body{background:var(--bg);color:var(--text)}
 :root[data-theme="light"] .category-bar button:hover{background:#d5c7b2}
 :root[data-theme="light"] .category-icon{color:#725029}
 
-/* User-selected antique symbol artwork — individually bounded */
-.symbol-sprite{
+/* Individual antique symbol artwork */
+.brand-mark .brand-art{
+  width:58px;
+  height:58px;
+  object-fit:contain;
   display:block;
-  background-image:url("/assets/ChatGPT%20Image%20Oct%201,%202026,%2003_32_42%20PM.png");
-  background-repeat:no-repeat;
-  background-size:265.2px 100px;
-  flex:0 0 auto;
-  transform:none;
 }
-.brand-mark .symbol-sprite{
-  width:62px;
-  height:68px;
-  background-position:0.2px -17px;
-}
-.symbol-compass{
-  width:46px;
-  height:68px;
-  background-position:0.2px -17px;
-}
-.symbol-artifact{
-  width:40px;
-  height:65px;
-  background-position:-58.5px -16.1px;
-}
-.symbol-collectible{
-  width:46px;
-  height:46px;
-  background-position:-102.5px -26.5px;
-}
-.symbol-oddity{
-  width:50px;
-  height:68px;
-  background-position:-149px -16.8px;
-}
-.symbol-mystery{
-  width:46px;
-  height:57px;
-  background-position:-199px -24.7px;
-}
-
 .category-icon{
-  margin:0;
+  width:76px;
+  height:76px;
   display:flex;
   align-items:center;
   justify-content:center;
+  margin:0;
   filter:drop-shadow(0 0 8px rgba(199,155,87,.18));
 }
-.category-icon.symbol-sprite{display:block}
-@media(max-width:700px){
-  .brand-mark .symbol-sprite{width:50px;height:58px;background-size:229.4px 86.5px;background-position:0.2px -14.7px}
-  .symbol-compass{width:40px;height:58px;background-position:0.2px -14.7px}
-  .symbol-artifact{width:35px;height:56px;background-position:-50.6px -13.9px}
-  .symbol-collectible{width:40px;height:40px;background-position:-88.7px -22.9px}
-  .symbol-oddity{width:43px;height:58px;background-position:-128.8px -14.5px}
-  .symbol-mystery{width:40px;height:49px;background-position:-172.3px -21.4px}
+.category-art{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center;
+  display:block;
 }
+@media(max-width:700px){
+  .brand-mark .brand-art{width:46px;height:46px}
+  .category-icon{width:60px;height:60px}
+}
+:root[data-theme="light"] .category-art,
+:root[data-theme="light"] .brand-art{
+  filter:drop-shadow(0 1px 2px rgba(65,46,25,.15));
+}
+
 :root[data-theme="light"] .cart-btn b{
   background:#684b27;
   color:#fff8eb;
