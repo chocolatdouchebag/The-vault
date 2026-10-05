@@ -23,7 +23,6 @@
     </a>
     <nav class="main-nav" aria-label="Primary navigation">
       <a href="/" data-page="vault" data-i18n="navVault">THE VAULT</a>
-      <a href="/treasures" data-page="treasures" data-i18n="navTreasures">TREASURES</a>
       <a href="/new-arrivals" data-page="new-arrivals" data-i18n="navNew">NEW ARRIVALS</a>
       <a href="/ledger" data-page="ledger" data-i18n="navLedger">THE LEDGER</a>
       <a href="/merchant" data-page="merchant" data-i18n="navMerchant">ABOUT THE MERCHANT</a>
@@ -51,7 +50,7 @@
           <p class="eyebrow" data-i18n="welcomeTo">WELCOME TO</p>
           <h1 data-i18n="vault">THE VAULT</h1>
           <p class="hero-sub"><span data-i18n="heroSub">Treasures collected from places<br>better left forgotten.</span></p>
-          <a href="/treasures" class="ornate-btn">✧ &nbsp; <span data-i18n="enterVault">ENTER THE VAULT</span></a>
+          <button type="button" class="ornate-btn" id="enter-vault-btn">✧ &nbsp; <span data-i18n="enterVault">ENTER THE VAULT</span></button>
         </div>
       </section>
 
@@ -80,7 +79,7 @@
           <span class="service-icon" aria-hidden="true"><img src="/assets/shield.png" alt=""></span>
           <h3 data-i18n="secureReturns">SECURE RETURNS</h3><p data-i18n="returnsSub">A clear path when plans change.</p>
         </a>
-        <a href="/treasures">
+        <a href="#treasures" data-home-scroll="treasures">
           <span class="service-icon" aria-hidden="true"><img src="/assets/star.png" alt=""></span>
           <h3 data-i18n="uniqueAuthentic">UNIQUE &amp; AUTHENTIC</h3><p data-i18n="uniqueSub">Each item has a story.</p>
         </a>
@@ -118,7 +117,7 @@
       <a href="/" class="footer-brand-link"><span class="brand-mark" aria-hidden="true"><img class="brand-art" src="/assets/compass.png" alt=""></span><span><strong>FLIGALIGA</strong><small>TREASURES · CURIOSITIES · ODDITIES</small></span></a>
     </div>
     <div class="footer-links">
-      <a href="/">THE VAULT</a><a href="/treasures">TREASURES</a><a href="/new-arrivals">NEW ARRIVALS</a><a href="/ledger">THE LEDGER</a><a href="/merchant">ABOUT THE MERCHANT</a>
+      <a href="/">THE VAULT</a><a href="/new-arrivals">NEW ARRIVALS</a><a href="/ledger">THE LEDGER</a><a href="/merchant">ABOUT THE MERCHANT</a>
       <a href="/faq">FAQ</a><a href="/contact">CONTACT</a><a href="/shipping">SHIPPING</a><a href="/returns">RETURNS</a><a href="/privacy">PRIVACY</a><a href="/terms">TERMS</a><a href="/withdrawal">WITHDRAWAL</a><a href="/accessibility">ACCESSIBILITY</a>
     </div>
     <p data-i18n="footerTagline">Some treasures are not meant to be found...</p>
