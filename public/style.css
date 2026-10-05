@@ -250,8 +250,8 @@ body{background:var(--bg);color:var(--text)}
 
 /* Individual antique symbol artwork */
 .brand-mark .brand-art{
-  width:58px;
-  height:58px;
+  width:72px;
+  height:72px;
   object-fit:contain;
   display:block;
 }
@@ -272,7 +272,7 @@ body{background:var(--bg);color:var(--text)}
   display:block;
 }
 @media(max-width:700px){
-  .brand-mark .brand-art{width:46px;height:46px}
+  .brand-mark .brand-art{width:56px;height:56px}
   .category-icon{width:60px;height:60px}
 }
 :root[data-theme="light"] .category-art,
