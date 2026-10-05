@@ -176,13 +176,14 @@ await me();await loadProducts();await loadCart();if(state.isAdmin)await loadOrde
     state.category='all';state.search='';state.newOnly=false;$('search-input').value='';
     const overlay=document.createElement('div');
     overlay.className='vault-transition';
-    overlay.innerHTML='<div class="vault-door vault-door-left"></div><div class="vault-door vault-door-right"></div><div class="vault-seal" aria-hidden="true"><span class="vault-seal-glyph">✧</span></div><div class="vault-transition-label">OPENING THE VAULT</div>';
+    overlay.innerHTML='<div class="vault-aperture" aria-hidden="true"></div><div class="vault-door" aria-hidden="true"><span class="vault-spoke vault-spoke-a"></span><span class="vault-spoke vault-spoke-b"></span><span class="vault-spoke vault-spoke-c"></span><span class="vault-spoke vault-spoke-d"></span><span class="vault-bolts"></span><span class="vault-lock"></span></div><div class="vault-transition-label">OPENING THE VAULT</div>';
     document.body.appendChild(overlay);
+    document.body.classList.add('vault-opening');
     requestAnimationFrame(()=>{overlay.classList.add('is-active');requestAnimationFrame(()=>overlay.classList.add('is-opening'));});
     history.replaceState({},'', '/#treasures');
     renderProducts();
-    setTimeout(()=>document.getElementById('treasures')?.scrollIntoView({behavior:'smooth'}),650);
-    setTimeout(()=>{overlay.classList.remove('is-active');overlay.remove();},1250);
+    setTimeout(()=>document.getElementById('treasures')?.scrollIntoView({behavior:'smooth'}),1450);
+    setTimeout(()=>{overlay.classList.remove('is-active');overlay.remove();document.body.classList.remove('vault-opening');},3050);
   });
   $('login-link').addEventListener('click',()=>show('auth-view'));$('logout-btn').addEventListener('click',logout);$('admin-link').addEventListener('click',async()=>{show('admin-view');await loadOrders();});$('cart-btn').addEventListener('click',()=>state.user?show('cart-view'):show('auth-view'));
   $('login-form').addEventListener('submit',login);$('register-form').addEventListener('submit',register);$('empty-cart').addEventListener('click',emptyCart);$('checkout-btn').addEventListener('click',openCheckout);$('checkout-form').addEventListener('submit',checkout);$('cancel-checkout').addEventListener('click',()=>{$('checkout-panel').classList.add('hidden');$('checkout-message').textContent='';});$('admin-product-form').addEventListener('submit',adminAdd);
