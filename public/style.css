@@ -7,7 +7,8 @@
   --surface:#0b0d0b;--surface-2:#14140f;--image-bg:#171410;--footer-bg:#080908;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%;width:100%;max-width:100%;overflow-x:clip}
+body{width:100%;max-width:100%;margin:0;overflow-x:clip}
 body{margin:0;background:var(--bg);color:var(--text);font-family:"Cormorant Garamond",serif;font-size:18px;line-height:1.35}
 button,a,input,textarea{font:inherit}button,a{color:inherit}.hidden{display:none!important}
 .grain{position:fixed;inset:0;pointer-events:none;opacity:.055;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.28'/%3E%3C/svg%3E");z-index:50}
