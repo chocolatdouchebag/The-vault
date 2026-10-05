@@ -150,15 +150,51 @@ app.get("/api/products/:idOrSlug", async (req, res) => {
 });
 
 app.post("/api/admin/product", requireAdmin, async (req, res) => {
-  const { name, description, price, stock, image_url, category, rarity, origin, condition, provenance, is_featured, is_new_arrival } = req.body || {};
-  if (!name || price === undefined) return res.status(400).json({ error: "Name and price required" });
+  const {
+    name, description, price, stock, image_url, category, rarity,
+    origin, condition, provenance, is_featured, is_new_arrival
+  } = req.body || {};
+
+  const allowedCategories = new Set(["Artifacts", "Collectibles", "Oddities", "Mystery Boxes"]);
+  const allowedRarities = new Set(["Common", "Uncommon", "Rare", "Very Rare", "Unique"]);
+
+  const cleanName = String(name || "").trim();
+  const cleanDescription = String(description || "").trim();
+  const cleanImage = String(image_url || "").trim();
+  const cleanCategory = String(category || "").trim();
+  const cleanRarity = String(rarity || "").trim();
+  const cleanOrigin = String(origin || "").trim();
+  const cleanCondition = String(condition || "").trim();
+  const cleanProvenance = String(provenance || "").trim();
+
+  const numericPrice = Number(price);
+  const numericStock = Number(stock);
+
+  if (!cleanName || cleanName.length > 160) return res.status(400).json({ error: "Enter a valid treasure name" });
+  if (cleanDescription.length > 5000) return res.status(400).json({ error: "Description is too long" });
+  if (!Number.isFinite(numericPrice) || numericPrice <= 0 || numericPrice > 99999999.99)
+    return res.status(400).json({ error: "Enter a valid price" });
+  if (!Number.isInteger(numericStock) || numericStock < 0 || numericStock > 2147483647)
+    return res.status(400).json({ error: "Enter a valid stock quantity" });
+  if (!allowedCategories.has(cleanCategory)) return res.status(400).json({ error: "Select a valid category" });
+  if (cleanRarity && !allowedRarities.has(cleanRarity)) return res.status(400).json({ error: "Select a valid rarity" });
+  if (cleanImage.length > 1000) return res.status(400).json({ error: "Image URL is too long" });
+  if (cleanOrigin.length > 200) return res.status(400).json({ error: "Origin is too long" });
+  if (cleanCondition.length > 120) return res.status(400).json({ error: "Condition is too long" });
+  if (cleanProvenance.length > 2000) return res.status(400).json({ error: "Provenance is too long" });
+
   try {
-    await pool.query(
+    const result = await pool.query(
       `INSERT INTO products (name, description, price, stock, image_url, category, rarity, origin, condition, provenance, is_featured, is_new_arrival)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-      [name, description || "", price, stock ?? 0, image_url || null, category || "Artifacts", rarity || null, origin || null, condition || null, provenance || null, is_featured === true, is_new_arrival === true]
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+       RETURNING id`,
+      [
+        cleanName, cleanDescription, numericPrice, numericStock, cleanImage || null,
+        cleanCategory, cleanRarity || null, cleanOrigin || null, cleanCondition || null,
+        cleanProvenance || null, is_featured === true, is_new_arrival === true
+      ]
     );
-    res.sendStatus(200);
+    res.status(201).json({ success: true, id: result.rows[0].id });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to add product" });
