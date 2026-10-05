@@ -37,7 +37,18 @@ function badgeFor(p,i){const n=String(p.name||'').toLowerCase();if(n.includes('w
 function card(p,i){const [badge,klass]=badgeFor(p,i);return `<article class="product-card" data-product-url="${productUrl(p)}" tabindex="0"><div class="product-image">${imageMarkup(p)}<span class="badge ${klass}">${badge}</span></div><div class="product-info"><h3>${escapeHtml(p.name)}</h3><p>${t("classification","Classification")}: ${escapeHtml(p.category||'Unknown Artifact')}</p><p>${t("origin","Origin")}: ${escapeHtml(p.origin||'Unknown')}</p><div class="product-meta"><span class="price">${money(p.price)}</span><span class="card-link">${t("viewArtifact","VIEW ARTIFACT")} →</span></div></div></article>`;}
 function filteredProducts(){return state.products.filter(p=>{const cat=(p.category||'').toLowerCase();const catOK=state.category==='all'||cat.includes(state.category)||(state.category==='mystery'&&((p.name||'').toLowerCase().includes('box')));const q=state.search.trim().toLowerCase();const searchOK=!q||`${p.name} ${p.description} ${p.category} ${p.origin||''} ${p.rarity||''}`.toLowerCase().includes(q);return catOK&&searchOK;});}
 function renderProducts(limitHome=false){let list=filteredProducts();if(limitHome&&!state.search&&!state.newOnly&&state.category==='all'){list=[...list].sort((a,b)=>Number(b.is_featured)-Number(a.is_featured)||Number(b.is_new_arrival)-Number(a.is_new_arrival)||Number(b.id)-Number(a.id));list=list.slice(0,4);}$('products-list').innerHTML=list.length?list.map(card).join(''):`<div class="empty-state">No treasures were found in the current catalogue.</div>`;$('result-count').textContent=`${list.length} treasure${list.length===1?'':'s'} discovered`;$('clear-filter').classList.toggle('hidden',!(state.category!=='all'||state.search||state.newOnly));}
-async function loadProducts(){const r=await fetch('/api/products');state.products=r.ok?await r.json():[];renderProducts();}
+async function loadProducts(){
+  try{
+    const r=await fetch('/api/products',{cache:'no-store'});
+    if(!r.ok)throw new Error('Products request failed: '+r.status);
+    const products=await r.json();
+    state.products=Array.isArray(products)?products:[];
+    renderProducts();
+  }catch(err){
+    console.error('Failed to load products:',err);
+    renderProducts();
+  }
+}
 async function renderProductFromPath(){const path=location.pathname;if(!path.startsWith('/product/'))return;const key=decodeURIComponent(path.split('/product/')[1]);show('product-view');$('product-view').innerHTML='<div class="panel-inner"><p class="eyebrow">THE ARCHIVES</p><h2>Retrieving treasure...</h2></div>';try{const r=await fetch('/api/products/'+encodeURIComponent(key));if(!r.ok)throw new Error('not found');const p=await r.json();$('product-view').innerHTML=`<div class="product-detail"><div class="detail-image">${imageMarkup(p,true)}</div><div class="detail-copy"><span class="badge">${escapeHtml(p.category||'ARTIFACT')}</span><h1>${escapeHtml(p.name)}</h1><p class="eyebrow">CATALOGUE NO. ${p.id}</p><div class="detail-price">${money(p.price)}</div><p class="detail-description">${escapeHtml(p.description||'A treasure whose history has yet to be fully uncovered.')}</p><div class="spec-list"><div><strong>CLASSIFICATION</strong><span>${escapeHtml(p.category||'Unknown Artifact')}</span></div><div><strong>ORIGIN</strong><span>${escapeHtml(p.origin||'Unknown')}</span></div><div><strong>RARITY</strong><span>${escapeHtml(p.rarity||'Unclassified')}</span></div><div><strong>CONDITION</strong><span>${escapeHtml(p.condition||'Not recorded')}</span></div><div><strong>PROVENANCE</strong><span>${escapeHtml(p.provenance||'Unknown')}</span></div><div><strong>AVAILABILITY</strong><span>${Number(p.stock)>0?`${p.stock} in the vault`:'Currently unavailable'}</span></div></div><button class="ornate-btn" data-add-to-cart="${p.id}" ${Number(p.stock)<=0?'disabled':''}>✧ &nbsp; ADD TO CART</button><div class="share-row"><button class="copy-link" data-copy-link>COPY DIRECT TREASURE LINK</button></div></div></div><div class="related"><div class="section-heading"><div class="line"></div><div><p>OTHER DISCOVERIES</p><h2>YOU MAY ALSO FIND</h2></div><div class="line"></div></div><div class="product-grid">${state.products.filter(x=>x.id!==p.id).slice(0,4).map(card).join('')}</div></div>`;document.title=`${p.name} — FLIGALIGA`;window.scrollTo(0,0);}catch(e){$('product-view').innerHTML='<div class="panel-inner"><p class="eyebrow">THE ARCHIVES</p><h2>Treasure not found</h2><a class="ornate-btn" href="/">RETURN TO THE VAULT</a></div>';}}
 function copyProductLink(){navigator.clipboard?.writeText(location.href);alert('Direct treasure link copied.');}
 function setActiveNav(path){document.querySelectorAll('.main-nav a[data-page]').forEach(a=>a.classList.toggle('active',a.getAttribute('href')===path));}
@@ -150,7 +161,7 @@ const translations = {
 
 function t(key,fallback=''){const lang=localStorage.getItem('fligaliga-language')||'en';return translations[lang]?.[key]??translations.en?.[key]??fallback;}
 
-document.addEventListener('DOMContentLoaded', async()=>{
+document.addEventListener('DOMContentLoaded',()=>{
   applyTheme();
   applyLanguage();
 
@@ -166,18 +177,32 @@ document.addEventListener('DOMContentLoaded', async()=>{
     localStorage.setItem('fligaliga-theme',current==='dark'?'light':'dark');
     applyTheme();
   });
-await me();await loadProducts();await loadCart();if(state.isAdmin)await loadOrders();applySearchFromUrl();
-  $('search-form').addEventListener('submit',e=>{e.preventDefault();const q=$('search-input').value.trim();navigate(q?`/?q=${encodeURIComponent(q)}#treasures`:'/');if(q)document.getElementById('treasures')?.scrollIntoView({behavior:'smooth'});});
-  $('search-input').addEventListener('input',e=>{state.search=e.target.value;});
-  document.querySelectorAll('[data-category]').forEach(b=>b.addEventListener('click',()=>{state.category=b.dataset.category;state.newOnly=false;renderProducts();document.getElementById('treasures').scrollIntoView({behavior:'smooth'});}));
-  $('clear-filter').addEventListener('click',()=>{state.category='all';state.search='';state.newOnly=false;$('search-input').value='';history.replaceState({},'', '/');renderProducts(true);});
-  $('enter-vault-btn')?.addEventListener('click',()=>{
-    const existing=document.querySelector('.vault-transition');
-    if(existing)return;
 
-    state.category='all';
-    state.search='';
+  $('search-form')?.addEventListener('submit',e=>{
+    e.preventDefault();
+    const q=$('search-input').value.trim();
+    navigate(q?'/?q='+encodeURIComponent(q)+'#treasures':'/');
+    if(q)document.getElementById('treasures')?.scrollIntoView({behavior:'smooth'});
+  });
+  $('search-input')?.addEventListener('input',e=>{state.search=e.target.value;});
+
+  document.querySelectorAll('[data-category]').forEach(b=>b.addEventListener('click',()=>{
+    state.category=b.dataset.category;
     state.newOnly=false;
+    renderProducts();
+    document.getElementById('treasures')?.scrollIntoView({behavior:'smooth'});
+  }));
+
+  $('clear-filter')?.addEventListener('click',()=>{
+    state.category='all';state.search='';state.newOnly=false;
+    if($('search-input'))$('search-input').value='';
+    history.replaceState({},'', '/');
+    renderProducts();
+  });
+
+  $('enter-vault-btn')?.addEventListener('click',()=>{
+    if(document.querySelector('.vault-transition.is-active'))return;
+    state.category='all';state.search='';state.newOnly=false;
     if($('search-input'))$('search-input').value='';
 
     const overlay=document.createElement('div');
@@ -200,12 +225,15 @@ await me();await loadProducts();await loadCart();if(state.isAdmin)await loadOrde
       document.body.classList.remove('vault-opening');
     };
 
-    // Always schedule cleanup before doing anything else so a rendering error
-    // can never leave the transition permanently covering the shop.
     const timer=window.setTimeout(cleanup,2900);
-
     history.replaceState({},'', '/#treasures');
-    try{renderProducts();}catch(err){console.error('Vault catalogue render failed:',err);cleanup();window.clearTimeout(timer);return;}
+
+    try{renderProducts();}catch(err){
+      console.error('Vault catalogue render failed:',err);
+      cleanup();
+      window.clearTimeout(timer);
+      return;
+    }
 
     document.getElementById('treasures')?.scrollIntoView({behavior:'smooth'});
     requestAnimationFrame(()=>{
@@ -213,8 +241,35 @@ await me();await loadProducts();await loadCart();if(state.isAdmin)await loadOrde
       requestAnimationFrame(()=>overlay.classList.add('is-opening'));
     });
   });
-  $('login-link').addEventListener('click',()=>show('auth-view'));$('logout-btn').addEventListener('click',logout);$('admin-link').addEventListener('click',async()=>{show('admin-view');await loadOrders();});$('cart-btn').addEventListener('click',()=>state.user?show('cart-view'):show('auth-view'));
-  $('login-form').addEventListener('submit',login);$('register-form').addEventListener('submit',register);$('empty-cart').addEventListener('click',emptyCart);$('checkout-btn').addEventListener('click',openCheckout);$('checkout-form').addEventListener('submit',checkout);$('cancel-checkout').addEventListener('click',()=>{$('checkout-panel').classList.add('hidden');$('checkout-message').textContent='';});$('admin-product-form').addEventListener('submit',adminAdd);
-  if(location.pathname.startsWith('/product/'))await renderProductFromPath();else route();
-  applyLanguage();
+
+  $('login-link')?.addEventListener('click',()=>show('auth-view'));
+  $('logout-btn')?.addEventListener('click',logout);
+  $('admin-link')?.addEventListener('click',async()=>{show('admin-view');await loadOrders();});
+  $('cart-btn')?.addEventListener('click',()=>state.user?show('cart-view'):show('auth-view'));
+  $('login-form')?.addEventListener('submit',login);
+  $('register-form')?.addEventListener('submit',register);
+  $('empty-cart')?.addEventListener('click',emptyCart);
+  $('checkout-btn')?.addEventListener('click',openCheckout);
+  $('checkout-form')?.addEventListener('submit',checkout);
+  $('cancel-checkout')?.addEventListener('click',()=>{
+    $('checkout-panel')?.classList.add('hidden');
+    if($('checkout-message'))$('checkout-message').textContent='';
+  });
+  $('admin-product-form')?.addEventListener('submit',adminAdd);
+
+  (async()=>{
+    try{await me();}catch(err){console.error('Session check failed:',err);}
+    try{await loadProducts();}catch(err){console.error('Product loading failed:',err);}
+    try{await loadCart();}catch(err){console.error('Cart loading failed:',err);}
+    try{
+      if(state.isAdmin)await loadOrders();
+      applySearchFromUrl();
+      if(location.pathname.startsWith('/product/'))await renderProductFromPath();
+      else route();
+      applyLanguage();
+    }catch(err){
+      console.error('Page initialization failed:',err);
+      try{route();}catch(routeErr){console.error('Route failed:',routeErr);}
+    }
+  })();
 });
