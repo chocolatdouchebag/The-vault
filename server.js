@@ -585,9 +585,16 @@ app.post("/api/withdrawal", async (req, res) => {
   }
 });
 
+app.post("/api/challenge/complete", (req, res) => {
+  if (!req.session.rubiksCode) {
+    req.session.rubiksCode = "FLIGA-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+  }
+  res.json({ code: req.session.rubiksCode });
+});
+
 // SPA routes: product URLs are real, shareable URLs, while the client loads the product data.
 app.use(express.static(publicDir));
 app.get("/product/:idOrSlug", (req, res) => res.sendFile(path.join(publicDir, "index.html")));
-app.get(["/", "/treasures", "/new-arrivals", "/ledger", "/merchant", "/faq", "/contact", "/shipping", "/returns", "/privacy", "/terms", "/withdrawal", "/accessibility", "/payment-result"], (req, res) => res.sendFile(path.join(publicDir, "index.html")));
+app.get(["/", "/treasures", "/new-arrivals", "/ledger", "/merchant", "/faq", "/contact", "/shipping", "/returns", "/privacy", "/terms", "/withdrawal", "/accessibility", "/payment-result", "/challenge"], (req, res) => res.sendFile(path.join(publicDir, "index.html")));
 
 app.listen(PORT, () => console.log(`🧭 FLIGALIGA Vault running at http://localhost:${PORT}`));
