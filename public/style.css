@@ -47,6 +47,7 @@ footer{min-height:205px;border-top:1px solid var(--line);padding:32px 5%;display
   min-width:40px;height:38px;padding:0 9px;border:1px solid var(--line);
   background:transparent;color:var(--gold2);font:10px "Cinzel",serif;letter-spacing:1px;cursor:pointer;
 }
+.theme-btn{font-size:20px;line-height:1;}
 .theme-btn:hover,.language-btn:hover{background:var(--panel2);color:var(--gold3)}
 .theme-btn:focus-visible,.language-btn:focus-visible{outline:2px solid var(--gold3);outline-offset:3px}
 
