@@ -423,3 +423,6 @@ body{background:var(--bg);color:var(--text)}
 :root[data-theme="light"] .admin-product-row strong{color:#3a2c20}
 :root[data-theme="light"] .admin-product-row span{color:#684b27}
 :root[data-theme="light"] .admin-product-row small{color:#665e53}
+
+/* Prevent a visible dark/English flash while saved preferences are restored. */
+html:not(.fligaliga-ready) body{visibility:hidden}
