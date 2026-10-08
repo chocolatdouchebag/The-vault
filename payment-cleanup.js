@@ -87,7 +87,8 @@ async function cleanupExpiredPaymentReservations({
   pool,
   apiKey,
   fetchImpl = globalThis.fetch,
-  limit = 25
+  limit = 25,
+  onPaid = null
 }) {
   if (!apiKey) return { scanned: 0, released: 0, paid: 0 };
 
@@ -133,7 +134,16 @@ async function cleanupExpiredPaymentReservations({
           "WHERE id = $1 AND status = 'payment_pending' AND stock_released_at IS NULL",
           [order.id]
         );
-        if (result.rowCount === 1) paid++;
+        if (result.rowCount === 1) {
+          paid++;
+          if (typeof onPaid === "function") {
+            try {
+              await onPaid(order.id);
+            } catch (emailErr) {
+              console.error("Payment confirmation email failed for order", order.id, emailErr);
+            }
+          }
+        }
         continue;
       }
 

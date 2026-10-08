@@ -22,3 +22,5 @@ jobs:
         run: node --check public/theme-init.js
       - name: Validate package.json
         run: node -e "JSON.parse(require('fs').readFileSync('package.json', 'utf8')); console.log('package.json OK')"
+      - name: Test transactional email integration
+        run: node .github/email-regression-test.js
