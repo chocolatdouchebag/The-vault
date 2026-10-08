@@ -30,9 +30,15 @@ for(const key of required){
   assert.match(nl,new RegExp(key+":'"));
 }
 
+
+function valueFor(block,key){
+  const match=block.match(new RegExp(key+":'((?:\\\\'|[^'])*)'"));
+  assert.ok(match,key+" missing");
+  return match[1];
+}
 for(const block of [en,nl]){
-  assert.doesNotMatch(block,/\[PLACEHOLDER[^\]]*\]/);
-  assert.match(block,/withdrawalForm|withdrawal-form\.html/);
+  for(const key of required) assert.doesNotMatch(valueFor(block,key),/PLACEHOLDER/i);
+  assert.match(valueFor(block,"modelFormText"),/withdrawal-form\.html/);
 }
 
 assert.match(script, /'\/privacy':\{[^\n]*dataSharingTitle/);
