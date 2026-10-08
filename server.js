@@ -5,6 +5,10 @@ const bcrypt = require("bcrypt");
 const bodyParser = require("body-parser");
 const path = require("path");
 const pool = require("./db");
+const {
+  releaseReservedStock,
+  cleanupExpiredPaymentReservations
+} = require("./payment-cleanup");
 require("dotenv").config();
 
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync("fligaliga-invalid-password", 10);
@@ -62,6 +66,11 @@ function createRateLimiter({ windowMs, maxRequests, key = req => req.ip || "unkn
 }
 
 const apiRateLimiter = createRateLimiter({ windowMs: 60 * 1000, maxRequests: 240 });
+const PAYMENT_RESERVATION_MINUTES = Math.max(
+  10,
+  Math.min(120, Number(process.env.PAYMENT_RESERVATION_MINUTES) || 30)
+);
+const PAYMENT_CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
 const loginRateLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, maxRequests: 12 });
 const registerRateLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, maxRequests: 8 });
 const withdrawalRateLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, maxRequests: 10 });
@@ -554,10 +563,12 @@ app.post("/api/checkout", requireSameOrigin, requireLogin, async (req, res) => {
     const order = await client.query(
       `INSERT INTO orders (
         user_id, total, status, customer_name, customer_email,
-        shipping_address_line1, shipping_postcode, shipping_city, shipping_country
-      ) VALUES ($1, $2, 'payment_pending', $3, $4, $5, $6, $7, $8)
+        shipping_address_line1, shipping_postcode, shipping_city, shipping_country,
+        payment_expires_at
+      ) VALUES ($1, $2, 'payment_pending', $3, $4, $5, $6, $7, $8,
+                CURRENT_TIMESTAMP + make_interval(mins => $9::integer))
        RETURNING id`,
-      [req.session.userId, total, name, email, address, postcode, city, country]
+      [req.session.userId, total, name, email, address, postcode, city, country, PAYMENT_RESERVATION_MINUTES]
     );
     orderId = order.rows[0].id;
 
@@ -615,45 +626,32 @@ app.post("/api/checkout", requireSameOrigin, requireLogin, async (req, res) => {
   }
 });
 
-async function releaseReservedStock(orderId, status = "payment_failed") {
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    const order = await client.query(
-      "SELECT status, stock_released_at FROM orders WHERE id = $1 FOR UPDATE",
-      [orderId]
-    );
-    if (!order.rows.length) {
-      await client.query("ROLLBACK");
-      return;
-    }
-    if (order.rows[0].stock_released_at || order.rows[0].status === "paid") {
-      await client.query("COMMIT");
-      return;
-    }
+async function runPaymentReservationCleanup() {
+  if (process.env.PAYMENTS_ENABLED !== "true" || !process.env.MOLLIE_API_KEY) return;
 
-    const items = await client.query(
-      "SELECT product_id, quantity FROM order_items WHERE order_id = $1",
-      [orderId]
-    );
-    for (const item of items.rows) {
-      await client.query(
-        "UPDATE products SET stock = stock + $1 WHERE id = $2",
-        [item.quantity, item.product_id]
-      );
-    }
-    await client.query(
-      "UPDATE orders SET status = $1, stock_released_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
-      [status, orderId]
-    );
-    await client.query("COMMIT");
+  try {
+    await cleanupExpiredPaymentReservations({
+      pool,
+      apiKey: process.env.MOLLIE_API_KEY
+    });
   } catch (err) {
-    await client.query("ROLLBACK").catch(() => {});
-    throw err;
-  } finally {
-    client.release();
+    if (err?.code === "42703") {
+      console.error(
+        "Payment reservation cleanup skipped: run migration 007_payment_reservation_expiry.sql first."
+      );
+    } else {
+      console.error("Payment reservation cleanup failed:", err);
+    }
   }
 }
+
+const paymentCleanup = setInterval(
+  runPaymentReservationCleanup,
+  PAYMENT_CLEANUP_INTERVAL_MS
+);
+paymentCleanup.unref?.();
+runPaymentReservationCleanup();
+
 
 app.post("/api/payments/mollie-webhook", async (req, res) => {
   const apiKey = process.env.MOLLIE_API_KEY;
@@ -817,6 +815,7 @@ server.keepAliveTimeout = 5000;
 async function shutdown(signal) {
   console.log(signal + " received. Shutting down...");
   clearInterval(sessionCleanup);
+  clearInterval(paymentCleanup);
   await new Promise(resolve => server.close(resolve));
   await pool.end();
   process.exit(0);
