@@ -143,7 +143,7 @@ async function run() {
     results.push("PASS 500-request API flood survived (" + okCount + " served, " + limitedCount + " throttled, " + floodMs + "ms)");
 
     const loginAdmin = await getCookie("/api/login", { username: "test-admin", password: "AdminPassword123!" });
-    assert(loginAdmin.res.status === 204 && loginAdmin.cookie, "admin login failed in harness");
+    assert(loginAdmin.res.status === 204 && loginAdmin.cookie, "admin login failed in harness: HTTP " + loginAdmin.res.status + " " + (await loginAdmin.res.text()));
 
     r = await req("/api/admin/products", { headers: { Cookie: loginAdmin.cookie } });
     assert(r.status === 200, "admin product list unavailable");
