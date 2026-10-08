@@ -8,7 +8,7 @@
  * - Requires FLIGALIGA_DB_CHECKOUT_TEST=1.
  * - Refuses NODE_ENV=production.
  * - NEVER commits application-data changes.
- * - Uses TEMP cart tables so the real cart table is untouched.
+ * - Uses an explicitly named TEMP cart table so the real cart table is untouched.
  * - Uses product row locks inside transactions, then ROLLBACKs.
  *
  * Run from repository root:
@@ -57,7 +57,7 @@ async function oneCheckoutLockScenario(productIds) {
     // TEMP table shadows the real cart table for this PostgreSQL session.
     // No application cart rows are created.
     await client.query(
-      "CREATE TEMP TABLE cart (user_id integer NOT NULL, product_id integer NOT NULL, quantity integer NOT NULL) ON COMMIT DROP"
+      "CREATE TEMP TABLE checkout_test_cart (user_id integer NOT NULL, product_id integer NOT NULL, quantity integer NOT NULL) ON COMMIT DROP"
     );
 
     const pidResult = await client.query(
@@ -67,7 +67,7 @@ async function oneCheckoutLockScenario(productIds) {
 
     for (const productId of productIds) {
       await client.query(
-        "INSERT INTO cart (user_id, product_id, quantity) VALUES ($1, $2, 1)",
+        "INSERT INTO checkout_test_cart (user_id, product_id, quantity) VALUES ($1, $2, 1)",
         [tempUserId, productId]
       );
     }
@@ -77,7 +77,7 @@ async function oneCheckoutLockScenario(productIds) {
     // This is the same row-locking SELECT used by production checkout.
     const result = await client.query(
       `SELECT c.product_id, c.quantity, p.price, p.stock, p.name
-       FROM cart c
+       FROM checkout_test_cart c
        JOIN products p ON c.product_id = p.id
        WHERE c.user_id = $1
          AND p.is_active = TRUE
