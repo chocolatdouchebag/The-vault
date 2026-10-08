@@ -15,8 +15,45 @@ if (isProduction && !process.env.SESSION_SECRET) throw new Error("SESSION_SECRET
 app.disable("x-powered-by");
 if (isProduction) app.set("trust proxy", 1);
 
-app.use(bodyParser.json());
-app.use(express.urlencoded({ extended: false }));
+function createRateLimiter({ windowMs, maxRequests, key = req => req.ip || "unknown" }) {
+  const buckets = new Map();
+  const cleanup = setInterval(() => {
+    const now = Date.now();
+    for (const [id, bucket] of buckets) {
+      if (bucket.resetAt <= now) buckets.delete(id);
+    }
+  }, Math.min(windowMs, 60000));
+  cleanup.unref?.();
+
+  return (req, res, next) => {
+    const now = Date.now();
+    const id = String(key(req) || "unknown");
+    let bucket = buckets.get(id);
+
+    if (!bucket || bucket.resetAt <= now) {
+      bucket = { count: 0, resetAt: now + windowMs };
+      buckets.set(id, bucket);
+    }
+
+    bucket.count += 1;
+    if (bucket.count > maxRequests) {
+      const retryAfter = Math.max(1, Math.ceil((bucket.resetAt - now) / 1000));
+      res.setHeader("Retry-After", String(retryAfter));
+      return res.status(429).json({ error: "Too many requests. Please try again later." });
+    }
+
+    next();
+  };
+}
+
+const apiRateLimiter = createRateLimiter({ windowMs: 60 * 1000, maxRequests: 240 });
+const loginRateLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, maxRequests: 12 });
+const registerRateLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, maxRequests: 8 });
+const withdrawalRateLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, maxRequests: 10 });
+
+app.use("/api", apiRateLimiter);
+app.use(bodyParser.json({ limit: "64kb" }));
+app.use(express.urlencoded({ extended: false, limit: "32kb" }));
 app.use(session({
   store: new PgSessionStore(pool),
   name: isProduction ? "__Host-fligaliga" : "fligaliga.sid",
