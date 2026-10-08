@@ -153,8 +153,9 @@ async function sendContactMessageEmail(message, fetchImpl = globalThis.fetch) {
       "<p><strong>Email:</strong> " + escapeHtml(email) + "</p>" +
       "<hr>" +
       "<p>" + text + "</p>" +
-      "</body></html>"
-  }, fetchImpl);
+      "</body></html>",
+    fetchImpl
+  });
 }
 
 module.exports = {
