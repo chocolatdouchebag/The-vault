@@ -135,7 +135,7 @@ async function main() {
              (gs % 7 = 0),
              TRUE,
              'active'
-           FROM generate_series($1, $2) AS gs`,
+           FROM generate_series($1::integer, $2::integer) AS gs`,
           [previousSize + 1, size]
         );
 
