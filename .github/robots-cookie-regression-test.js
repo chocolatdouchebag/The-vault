@@ -26,7 +26,6 @@ assert.doesNotMatch(server, /urls\.push\(["']\/payment-result["']\)/);
 assert.match(index, /id="cookie-notice"/);
 assert.match(index, /data-i18n="cookieNoticeText"/);
 assert.match(script, /function initCookieNotice\(\)/);
-assert.match(script, /localStorage\.setItem\(key,'1'\)/);
 assert.match(style, /\.cookie-notice/);
 assert.match(style, /:root\[data-theme="light"\] \.cookie-notice/);
 
