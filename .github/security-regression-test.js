@@ -6,7 +6,7 @@ const { spawn } = require("child_process");
 
 const repo = process.cwd();
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "fligaliga-security-"));
-for (const file of ["server.js", "session-store.js"]) fs.copyFileSync(path.join(repo, file), path.join(tmp, file));
+for (const file of ["server.js", "session-store.js", "payment-cleanup.js"]) fs.copyFileSync(path.join(repo, file), path.join(tmp, file));
 fs.cpSync(path.join(repo, "public"), path.join(tmp, "public"), { recursive: true });
 fs.writeFileSync(path.join(tmp, "db.js"), "module.exports = require('./test-db');\n");
 fs.copyFileSync(path.join(__dirname, "test-db.js"), path.join(tmp, "test-db.js"));
