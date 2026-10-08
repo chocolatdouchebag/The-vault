@@ -338,6 +338,33 @@ async function main() {
     console.log("PASS: payment-failure/cancel/expiry release behavior is idempotent.");
     if (!hasScheduledExpiry) {
       console.log("FINDING: abandoned payment_pending reservations have no automatic expiry.");
+
+      console.log("");
+      console.log("6) Abandoned payment_pending reservation remains held without an expiry job");
+      const pendingOrderId = await createReservedOrder(fixtures.userId, fixtures.productId, 1, "payment_pending");
+      orderIds.push(pendingOrderId);
+
+      const pendingReservedStock = await getProductStock(fixtures.productId);
+      await new Promise(resolve => setTimeout(resolve, 1100));
+      const pendingAfterDelay = await getProductStock(fixtures.productId);
+      const pendingState = await getOrder(pendingOrderId);
+
+      console.log("  Stock immediately after reservation:", pendingReservedStock);
+      console.log("  Stock after 1.1s without webhook:", pendingAfterDelay);
+      console.log("  Order status after 1.1s:", pendingState.status);
+
+      if (pendingAfterDelay !== pendingReservedStock || pendingState.status !== "payment_pending") {
+        throw new Error("Unexpected automatic change to abandoned payment_pending order.");
+      }
+
+      await releaseReservedStockForTest(pendingOrderId, "expired");
+      const pendingReleasedStock = await getProductStock(fixtures.productId);
+
+      console.log("  Stock after explicit expiry cleanup:", pendingReleasedStock);
+
+      if (pendingReleasedStock !== pendingReservedStock + 1) {
+        throw new Error("Explicit cleanup failed to restore abandoned reservation.");
+      }
     }
   } finally {
     await cleanupFixtures(fixtures.userId, fixtures.productId, orderIds);
