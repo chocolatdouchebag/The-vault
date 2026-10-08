@@ -54,8 +54,11 @@ async function oneCheckoutLockScenario(productIds) {
   const start = process.hrtime.bigint();
 
   try {
-    // TEMP table shadows the real cart table for this PostgreSQL session.
+    // Keep the temporary cart inside the transaction. Because the table uses
+    // ON COMMIT DROP, creating it before BEGIN would immediately drop it.
     // No application cart rows are created.
+    await client.query("BEGIN");
+
     await client.query(
       "CREATE TEMP TABLE checkout_test_cart (user_id integer NOT NULL, product_id integer NOT NULL, quantity integer NOT NULL) ON COMMIT DROP"
     );
@@ -71,8 +74,6 @@ async function oneCheckoutLockScenario(productIds) {
         [tempUserId, productId]
       );
     }
-
-    await client.query("BEGIN");
 
     // This is the same row-locking SELECT used by production checkout.
     const result = await client.query(
