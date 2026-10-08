@@ -9,6 +9,7 @@ const repo = process.cwd();
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "fligaliga-stress-"));
 fs.copyFileSync(path.join(repo, "server.js"), path.join(tmp, "server.js"));
 fs.copyFileSync(path.join(repo, "session-store.js"), path.join(tmp, "session-store.js"));
+fs.copyFileSync(path.join(repo, "payment-cleanup.js"), path.join(tmp, "payment-cleanup.js"));
 fs.copyFileSync(path.join(repo, "db.js"), path.join(tmp, "real-db.js"));
 fs.cpSync(path.join(repo, "public"), path.join(tmp, "public"), { recursive: true });
 fs.writeFileSync(path.join(tmp, "db.js"), "module.exports = require('./test-db');\n");
