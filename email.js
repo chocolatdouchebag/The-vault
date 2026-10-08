@@ -78,7 +78,7 @@ async function sendOrderReceivedEmail(order, fetchImpl = globalThis.fetch) {
       "<p>Your order <strong>#" + orderId + "</strong> has been received.</p>" +
       "<p>Total: <strong>€" + escapeHtml(total) + "</strong></p>" +
       "<p>Your payment is being handled securely. You can check the latest status here:</p>" +
-      "<p><a href="" + escapeHtml(statusUrl) + "">View order status</a></p>" +
+      "<p><a href=\"" + escapeHtml(statusUrl) + "\">View order status</a></p>" +
       "<p>Thank you for travelling with FLIGALIGA.</p>" +
       "</body></html>"
   }, fetchImpl);
@@ -103,7 +103,7 @@ async function sendPaymentConfirmationEmail(order, fetchImpl = globalThis.fetch)
       "<p>Dear " + customerName + ",</p>" +
       "<p>Payment for order <strong>#" + orderId + "</strong> has been received.</p>" +
       "<p>Total paid: <strong>€" + escapeHtml(total) + "</strong></p>" +
-      "<p><a href="" + escapeHtml(statusUrl) + "">View your order</a></p>" +
+      "<p><a href=\"" + escapeHtml(statusUrl) + "\">View your order</a></p>" +
       "<p>Your treasure is now confirmed for processing.</p>" +
       "</body></html>"
   }, fetchImpl);
@@ -125,7 +125,7 @@ async function sendWithdrawalConfirmationEmail(request, fetchImpl = globalThis.f
       "<p>We have received your withdrawal request" + orderText + ".</p>" +
       "<p>Request number: <strong>#" + requestId + "</strong></p>" +
       "<p>We will review the request and contact you about the next steps.</p>" +
-      "<p>You can revisit the withdrawal information here: <a href="" + escapeHtml(withdrawalUrl) + "">Withdrawal information</a></p>" +
+      "<p>You can revisit the withdrawal information here: <a href=\"" + escapeHtml(withdrawalUrl) + "\">Withdrawal information</a></p>" +
       "</body></html>"
   }, fetchImpl);
 }
