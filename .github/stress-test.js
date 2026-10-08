@@ -103,7 +103,7 @@ function assert(condition, message) {
 }
 
 async function run() {
-  const server = await startServer();
+  let server = await startServer();
   const results = [];
   try {
     let r = await req("/api/health");
@@ -206,6 +206,16 @@ async function run() {
     const distributedOk = distributed.filter(x => x.status === 200).length;
     results.push("INFO distributed-IP simulation: " + distributedOk + "/1000 served in " + distributedMs + "ms");
     assert(distributedOk > 0, "distributed traffic was completely unavailable");
+
+    // The distributed phase intentionally consumes the app's in-memory API
+    // limiter bucket. Restart the isolated test server before measuring the
+    // separate 500-request flood so the two scenarios do not contaminate each other.
+    server.child.kill("SIGTERM");
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("server did not restart cleanly")), 5000);
+      server.child.on("exit", () => { clearTimeout(timer); resolve(); });
+    });
+    server = await startServer();
 
     const floodStartTime = Date.now();
     const productFlood = await Promise.all(Array.from({ length: 500 }, () => req("/api/products")));
