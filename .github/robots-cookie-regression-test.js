@@ -51,4 +51,14 @@ assert.match(server, /GA_MEASUREMENT_ID/);
 assert.match(server, /analyticsMeasurementId/);
 assert.match(server, /www\.google-analytics\.com/);
 
+const themeInit = fs.readFileSync(path.join(root, "public", "theme-init.js"), "utf8");
+assert.match(themeInit, /localStorage\.getItem\("fligaliga-language"\)/);
+assert.match(themeInit, /navigator\.languages/);
+assert.match(themeInit, /browserLanguage\.indexOf\("nl"\) === 0/);
+assert.match(themeInit, /localStorage\.getItem\("fligaliga-theme"\) \|\| "light"/);
+assert.match(script, /function detectedBrowserLanguage\(\)/);
+assert.match(script, /function currentLanguage\(\)/);
+assert.match(script, /return browserLanguage\.startsWith\('nl'\) \? 'nl' : 'en'/);
+assert.match(script, /localStorage\.getItem\('fligaliga-theme'\) \|\| 'light'/);
+
 console.log("Robots, sitemap and cookie-notice regression tests passed.");
