@@ -7,6 +7,8 @@ const path = require("path");
 const pool = require("./db");
 require("dotenv").config();
 
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync("fligaliga-invalid-password", 10);
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const publicDir = path.join(__dirname, "public");
@@ -81,6 +83,30 @@ app.use((req, res, next) => {
   next();
 });
 
+function requireSameOrigin(req, res, next) {
+  const origin = req.get("Origin");
+  const configuredBaseUrl = String(process.env.PUBLIC_BASE_URL || "").replace(/\/$/, "");
+  let expectedOrigin;
+  try {
+    expectedOrigin = configuredBaseUrl ? new URL(configuredBaseUrl).origin : `${req.protocol}://${req.get("host")}`;
+  } catch {
+    expectedOrigin = `${req.protocol}://${req.get("host")}`;
+  }
+
+  if (origin && origin !== expectedOrigin) return res.status(403).json({ error: "Cross-site request blocked" });
+
+  const referer = req.get("Referer");
+  if (!origin && referer) {
+    try {
+      if (new URL(referer).origin !== expectedOrigin) return res.status(403).json({ error: "Cross-site request blocked" });
+    } catch {
+      return res.status(403).json({ error: "Invalid request origin" });
+    }
+  }
+
+  next();
+}
+
 function requireLogin(req, res, next) {
   if (!req.session.userId) return res.status(401).json({ error: "Login required" });
   next();
@@ -106,31 +132,36 @@ function productSlug(name) {
     .replace(/^-+|-+$/g, "");
 }
 
-app.post("/api/register", async (req, res) => {
-  const { username, password } = req.body || {};
-  if (!username || !password) return res.status(400).send("Username and password required");
+app.post("/api/register", registerRateLimiter, async (req, res) => {
+  const username = String(req.body?.username || "").trim();
+  const password = String(req.body?.password || "");
+  if (username.length < 3 || username.length > 64) return res.status(400).json({ error: "Username must be 3 to 64 characters" });
+  if (password.length < 12 || password.length > 128) return res.status(400).json({ error: "Password must be 12 to 128 characters" });
   try {
     const hash = await bcrypt.hash(password, 10);
     await pool.query("INSERT INTO users (username, password) VALUES ($1, $2)", [username, hash]);
     res.sendStatus(200);
   } catch (err) {
+    if (err?.code === "23505") return res.status(409).json({ error: "User already exists" });
     console.error(err);
-    res.status(400).send("User already exists");
+    res.status(500).json({ error: "Registration failed" });
   }
 });
 
-app.post("/api/login", async (req, res) => {
-  const { username, password } = req.body || {};
+app.post("/api/login", loginRateLimiter, async (req, res) => {
+  const username = String(req.body?.username || "").trim();
+  const password = String(req.body?.password || "");
   try {
     const result = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
-    if (!result.rows.length) return res.status(401).send("Invalid login");
-    const user = result.rows[0];
-    if (!(await bcrypt.compare(password || "", user.password))) return res.status(401).send("Invalid login");
+    const user = result.rows[0] || null;
+    const valid = await bcrypt.compare(password, user?.password || DUMMY_PASSWORD_HASH);
+    if (!user || !valid) return res.status(401).json({ error: "Invalid login" });
     req.session.regenerate(err => {
       if (err) return res.status(500).json({ error: "Login failed" });
       req.session.userId = user.id;
       req.session.isAdmin = !!user.is_admin;
       req.session.user = { id: user.id, username: user.username, isAdmin: !!user.is_admin };
+      req.session.cookie.maxAge = user.is_admin ? 1000 * 60 * 60 * 2 : 1000 * 60 * 60 * 24 * 7;
       res.sendStatus(204);
     });
   } catch (err) {
