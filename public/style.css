@@ -388,3 +388,31 @@ body{background:var(--bg);color:var(--text)}
   .main-nav a{font-size:11px}
   .brand-copy small{font-size:8px}
 }
+
+/* Readability pass: product cards and admin controls */
+.product-info h3{font-size:17px}
+.product-info p{font-size:15px;line-height:1.4}
+.card-link{font-size:12px}
+.badge{font-size:12px}
+
+.admin-management h3{font-size:15px;letter-spacing:1.4px}
+.admin-product-row strong{font-size:15px;letter-spacing:.7px}
+.admin-product-row span{font-size:15px}
+.admin-product-row small{font-size:14px;line-height:1.4}
+.admin-edit{font-size:13px;padding:10px 14px}
+.admin-grid label.admin-field{font-size:15px}
+.admin-field-note{font-size:13px}
+.admin-grid label.admin-check{font-size:15px}
+.admin-form-actions .ornate-btn,.admin-form-actions .ghost-btn{font-size:13px}
+
+@media(max-width:700px){
+  .product-info h3{font-size:18px}
+  .product-info p{font-size:15px}
+  .admin-management h3{font-size:15px}
+  .admin-product-row strong{font-size:15px}
+  .admin-product-row span{font-size:15px}
+  .admin-product-row small{font-size:14px}
+  .admin-edit{font-size:13px}
+  .admin-grid label.admin-field,.admin-grid label.admin-check{font-size:15px}
+  .admin-field-note{font-size:12px}
+}
