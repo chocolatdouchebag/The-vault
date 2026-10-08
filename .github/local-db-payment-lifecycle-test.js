@@ -277,23 +277,29 @@ async function main() {
     }
 
     console.log("");
-    console.log("4) Canceled and expired statuses both restore stock");
+    console.log("4) Canceled and expired statuses both restore their own reservation");
     const canceledOrderId = await createReservedOrder(fixtures.userId, fixtures.productId, 1);
     orderIds.push(canceledOrderId);
+    const beforeCanceledRelease = await getProductStock(fixtures.productId);
     await releaseReservedStockForTest(canceledOrderId, "canceled");
 
     const afterCanceled = await getProductStock(fixtures.productId);
-    if (afterCanceled !== fixtures.startingStock) {
-      throw new Error("Canceled payment did not restore stock.");
+    console.log("  Stock before canceled release:", beforeCanceledRelease);
+    console.log("  Stock after canceled release:", afterCanceled);
+    if (afterCanceled !== beforeCanceledRelease + 1) {
+      throw new Error("Canceled payment did not restore its reserved stock.");
     }
 
     const expiredOrderId = await createReservedOrder(fixtures.userId, fixtures.productId, 1);
     orderIds.push(expiredOrderId);
+    const beforeExpiredRelease = await getProductStock(fixtures.productId);
     await releaseReservedStockForTest(expiredOrderId, "expired");
 
     const afterExpired = await getProductStock(fixtures.productId);
-    if (afterExpired !== fixtures.startingStock) {
-      throw new Error("Expired payment did not restore stock.");
+    console.log("  Stock before expired release:", beforeExpiredRelease);
+    console.log("  Stock after expired release:", afterExpired);
+    if (afterExpired !== beforeExpiredRelease + 1) {
+      throw new Error("Expired payment did not restore its reserved stock.");
     }
 
     console.log("  Canceled release: PASS");
