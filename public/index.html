@@ -14,14 +14,46 @@
 </head>
 <body>
   <div class="grain"></div>
-  <section id="cookie-notice" class="cookie-notice hidden" role="region" aria-label="Cookie notice" aria-live="polite">
+  <section id="cookie-notice" class="cookie-notice hidden" role="dialog" aria-modal="false" aria-labelledby="cookie-notice-title">
     <div class="cookie-notice-copy">
-      <strong data-i18n="cookieNoticeTitle">COOKIE NOTICE</strong>
-      <p data-i18n="cookieNoticeText">FLIGALIGA uses necessary session cookies for features such as login and checkout. The site also stores your language and theme preference locally. We currently do not use advertising or analytics cookies.</p>
+      <strong id="cookie-notice-title" data-i18n="cookieNoticeTitle">COOKIE & PRIVACY SETTINGS</strong>
+      <p data-i18n="cookieNoticeText">FLIGALIGA uses necessary session cookies for features such as login and checkout. Optional analytics helps us understand how the shop is used, but it is only activated when you choose to allow it.</p>
       <a href="/privacy" data-i18n="cookieNoticePrivacy">Read the privacy notice</a>
     </div>
-    <button id="cookie-notice-dismiss" class="ghost-btn" type="button" data-i18n="cookieNoticeOk">OK, GOT IT</button>
+    <div class="cookie-notice-actions">
+      <button id="cookie-notice-reject" class="ghost-btn" type="button" data-i18n="cookieNoticeReject">REJECT ANALYTICS</button>
+      <button id="cookie-notice-accept" class="ornate-btn" type="button" data-i18n="cookieNoticeAccept">ALLOW ANALYTICS</button>
+      <button id="cookie-notice-settings" class="text-link" type="button" data-i18n="cookieNoticeSettings">SETTINGS</button>
+    </div>
   </section>
+  <button id="cookie-settings-fab" class="cookie-settings-fab hidden" type="button" aria-label="Cookie settings" data-i18n="cookieSettingsFab">COOKIE SETTINGS</button>
+
+  <div id="cookie-settings-panel" class="cookie-settings-panel hidden" role="dialog" aria-modal="true" aria-labelledby="cookie-settings-title">
+    <div class="cookie-settings-card">
+      <button id="cookie-settings-close" class="cookie-settings-close" type="button" aria-label="Close">×</button>
+      <p class="eyebrow" data-i18n="cookieSettingsKicker">PRIVACY SETTINGS</p>
+      <h2 id="cookie-settings-title" data-i18n="cookieSettingsTitle">COOKIE SETTINGS</h2>
+      <p data-i18n="cookieSettingsIntro">Necessary storage is always enabled because it supports core functions such as login, checkout and your language/theme preference. Optional analytics is off unless you allow it.</p>
+      <div class="cookie-settings-row">
+        <div>
+          <strong data-i18n="cookieNecessaryTitle">NECESSARY</strong>
+          <p data-i18n="cookieNecessaryText">Session and preference storage required for the webshop to work.</p>
+        </div>
+        <span data-i18n="cookieAlwaysOn">ALWAYS ON</span>
+      </div>
+      <label class="cookie-settings-row cookie-settings-toggle">
+        <div>
+          <strong data-i18n="cookieAnalyticsTitle">ANALYTICS</strong>
+          <p data-i18n="cookieAnalyticsText">Optional Google Analytics measurement to understand visits and improve the shop.</p>
+        </div>
+        <input id="cookie-analytics-toggle" type="checkbox">
+      </label>
+      <div class="cookie-settings-actions">
+        <button id="cookie-settings-save" class="ornate-btn" type="button" data-i18n="cookieSave">SAVE PREFERENCES</button>
+        <a href="/privacy" class="ghost-btn" data-i18n="cookieSettingsPrivacy">PRIVACY NOTICE</a>
+      </div>
+    </div>
+  </div>
   <header class="site-header">
     <a class="brand" href="/" aria-label="FLIGALIGA home">
       <span class="brand-mark" aria-hidden="true">
