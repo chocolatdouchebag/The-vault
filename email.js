@@ -24,6 +24,7 @@ async function sendEmail({
   subject,
   html,
   idempotencyKey,
+  replyTo,
   fetchImpl = globalThis.fetch
 }) {
   if (!isEmailConfigured()) {
@@ -43,7 +44,8 @@ async function sendEmail({
       from: process.env.RESEND_FROM,
       to: [to],
       subject,
-      html
+      html,
+      ...(replyTo ? { reply_to: [replyTo] } : {})
     })
   });
 
@@ -133,10 +135,33 @@ async function sendWithdrawalConfirmationEmail(request, fetchImpl = globalThis.f
   });
 }
 
+async function sendContactMessageEmail(message, fetchImpl = globalThis.fetch) {
+  const name = escapeHtml(message.name || "Visitor");
+  const email = String(message.email || "").trim().toLowerCase();
+  const text = escapeHtml(message.message || "").replace(/\n/g, "<br>");
+  const recipient = String(process.env.CONTACT_RECIPIENT || "fligaliga@hotmail.com").trim();
+
+  return sendEmail({
+    to: recipient,
+    subject: "FLIGALIGA — Contact message from " + name,
+    replyTo: email,
+    idempotencyKey: "contact-message/" + String(message.idempotencyKey),
+    html:
+      "<!doctype html><html><body>" +
+      "<h1>FLIGALIGA — Contact message</h1>" +
+      "<p><strong>From:</strong> " + name + "</p>" +
+      "<p><strong>Email:</strong> " + escapeHtml(email) + "</p>" +
+      "<hr>" +
+      "<p>" + text + "</p>" +
+      "</body></html>"
+  }, fetchImpl);
+}
+
 module.exports = {
   isEmailConfigured,
   sendEmail,
   sendOrderReceivedEmail,
   sendPaymentConfirmationEmail,
-  sendWithdrawalConfirmationEmail
+  sendWithdrawalConfirmationEmail,
+  sendContactMessageEmail
 };
