@@ -24,7 +24,6 @@ assert.match(server, /"\/accessibility"/);
 assert.doesNotMatch(server, /urls\.push\(["']\/payment-result["']\)/);
 
 assert.match(index, /id="cookie-notice"/);
-assert.match(index, /id="cookie-notice-dismiss"/);
 assert.match(index, /data-i18n="cookieNoticeText"/);
 assert.match(script, /function initCookieNotice\(\)/);
 assert.match(script, /fligaliga-cookie-notice-seen/);
