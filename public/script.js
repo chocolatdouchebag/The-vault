@@ -461,7 +461,7 @@ function refreshCookieUi(){
   const fab=$('cookie-settings-fab');
   const consent=readConsent();
   if(notice)notice.classList.toggle('hidden',!!consent);
-  if(fab)fab.classList.toggle('hidden',!consent);
+  if(fab)fab.classList.add('hidden');
 }
 async function initCookieNotice(){
   if(!$('cookie-notice'))return;
