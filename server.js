@@ -984,6 +984,13 @@ app.get("/sitemap.xml", async (req, res) => {
   }
 });
 
+app.get("/api/public-config", (req, res) => {
+  res.setHeader("Cache-Control", "public, max-age=300");
+  res.json({
+    analyticsMeasurementId: String(process.env.GA_MEASUREMENT_ID || "").trim() || null
+  });
+});
+
 // SPA routes: product URLs are real, shareable URLs, while the client loads the product data.
 app.use(express.static(publicDir));
 app.get("/product/:idOrSlug", (req, res) => res.sendFile(path.join(publicDir, "index.html")));
