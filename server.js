@@ -132,6 +132,26 @@ function productSlug(name) {
     .replace(/^-+|-+$/g, "");
 }
 
+let publicProductCache = { expiresAt: 0, data: null };
+const PRODUCT_CACHE_TTL = 10000;
+
+function invalidateProductCache() {
+  publicProductCache.expiresAt = 0;
+  publicProductCache.data = null;
+}
+
+async function getPublicProducts() {
+  const now = Date.now();
+  if (publicProductCache.data && publicProductCache.expiresAt > now) return publicProductCache.data;
+  const result = await pool.query(
+    "SELECT * FROM products WHERE is_active = TRUE AND status = 'active' ORDER BY is_featured DESC, is_new_arrival DESC, id DESC"
+  );
+  const data = result.rows.map(p => ({ ...p, slug: productSlug(p.name) }));
+  publicProductCache = { expiresAt: now + PRODUCT_CACHE_TTL, data };
+  return data;
+}
+
+
 app.post("/api/register", registerRateLimiter, async (req, res) => {
   const username = String(req.body?.username || "").trim();
   const password = String(req.body?.password || "");
@@ -170,7 +190,7 @@ app.post("/api/login", loginRateLimiter, async (req, res) => {
   }
 });
 
-app.post("/api/logout", (req, res) => req.session.destroy(() => res.sendStatus(200)));
+app.post("/api/logout", requireSameOrigin, (req, res) => req.session.destroy(() => res.sendStatus(200)));
 app.get("/api/me", async (req, res) => {
   if (!req.session.userId) return res.json(null);
   try {
@@ -189,35 +209,38 @@ app.get("/api/health", async (req, res) => { try { await pool.query("SELECT 1");
 
 app.get("/api/products", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM products WHERE is_active = TRUE AND status = 'active' ORDER BY is_featured DESC, is_new_arrival DESC, id DESC");
-    res.json(result.rows.map(p => ({ ...p, slug: productSlug(p.name) })));
+    const data = await getPublicProducts();
+    res.setHeader("Cache-Control", "public, max-age=10, stale-while-revalidate=30");
+    res.json(data);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to load products" });
+    res.status(503).json({ error: "Catalogue temporarily unavailable" });
   }
 });
 
 app.get("/api/products/:idOrSlug", async (req, res) => {
-  const key = req.params.idOrSlug;
+  const key = String(req.params.idOrSlug || "").toLowerCase();
   try {
-    const idMatch = key.match(/(?:^|-)(\d+)$/);
-    let product;
-    if (idMatch) {
-      const result = await pool.query("SELECT * FROM products WHERE id = $1 AND is_active = TRUE AND status = 'active'", [Number(idMatch[1])]);
-      product = result.rows[0];
-    } else {
-      const result = await pool.query("SELECT * FROM products WHERE is_active = TRUE AND status = 'active'");
-      product = result.rows.find(p => productSlug(p.name) === key.toLowerCase());
+    const products = await getPublicProducts();
+    const idMatch = key.match(/(?:^|-)({})$/);
+    const numericId = /^\d+$/.test(key) ? Number(key) : null;
+    let product = null;
+    if (numericId) product = products.find(p => Number(p.id) === numericId);
+    else {
+      const suffix = key.match(/(?:^|-)(\d+)$/);
+      if (suffix) product = products.find(p => Number(p.id) === Number(suffix[1]));
+      if (!product) product = products.find(p => String(p.slug).toLowerCase() === key);
     }
     if (!product) return res.status(404).json({ error: "Treasure not found" });
-    res.json({ ...product, slug: productSlug(product.name) });
+    res.setHeader("Cache-Control", "public, max-age=10, stale-while-revalidate=30");
+    res.json(product);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to load treasure" });
+    res.status(503).json({ error: "Treasure temporarily unavailable" });
   }
 });
 
-app.post("/api/admin/product", requireAdmin, async (req, res) => {
+app.post("/api/admin/product", requireSameOrigin, requireAdmin, async (req, res) => {
   const {
     name, description, price, stock, image_url, category, rarity,
     origin, condition, provenance, is_featured, is_new_arrival
@@ -262,6 +285,7 @@ app.post("/api/admin/product", requireAdmin, async (req, res) => {
         cleanProvenance || null, is_featured === true, is_new_arrival === true
       ]
     );
+    invalidateProductCache();
     res.status(201).json({ success: true, id: result.rows[0].id });
   } catch (err) {
     console.error(err);
@@ -269,13 +293,20 @@ app.post("/api/admin/product", requireAdmin, async (req, res) => {
   }
 });
 
-app.delete("/api/admin/product/:id", requireAdmin, async (req, res) => {
+app.delete("/api/admin/product/:id", requireSameOrigin, requireAdmin, async (req, res) => {
+  const productId = Number(req.params.id);
+  if (!Number.isInteger(productId) || productId <= 0) return res.status(400).json({ error: "Invalid product" });
   try {
-    await pool.query("DELETE FROM products WHERE id = $1", [req.params.id]);
+    const result = await pool.query(
+      "UPDATE products SET is_active = FALSE, status = 'archived', updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id",
+      [productId]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: "Treasure not found" });
+    invalidateProductCache();
     res.sendStatus(200);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to delete product" });
+    res.status(500).json({ error: "Failed to archive product" });
   }
 });
 
@@ -289,7 +320,7 @@ app.get("/api/admin/products", requireAdmin, async (req, res) => {
   }
 });
 
-app.patch("/api/admin/product/:id", requireAdmin, async (req, res) => {
+app.patch("/api/admin/product/:id", requireSameOrigin, requireAdmin, async (req, res) => {
   const productId = Number(req.params.id);
   if (!Number.isInteger(productId) || productId <= 0) return res.status(400).json({ error: "Invalid product" });
 
@@ -337,6 +368,7 @@ app.patch("/api/admin/product/:id", requireAdmin, async (req, res) => {
       ]
     );
     if (!result.rows.length) return res.status(404).json({ error: "Treasure not found" });
+    invalidateProductCache();
     res.json({ success: true, product: result.rows[0] });
   } catch (err) {
     console.error(err);
@@ -344,7 +376,7 @@ app.patch("/api/admin/product/:id", requireAdmin, async (req, res) => {
   }
 });
 
-app.post("/api/cart", requireLogin, async (req, res) => {
+app.post("/api/cart", requireSameOrigin, requireLogin, async (req, res) => {
   const productId = Number(req.body?.product_id);
   if (!Number.isInteger(productId) || productId <= 0) return res.status(400).json({ error: "Invalid product" });
   const userId = req.session.userId;
@@ -391,7 +423,7 @@ app.get("/api/cart", requireLogin, async (req, res) => {
   }
 });
 
-app.post("/api/cart/update", requireLogin, async (req, res) => {
+app.post("/api/cart/update", requireSameOrigin, requireLogin, async (req, res) => {
   const id = Number(req.body?.id), quantity = Number(req.body?.quantity);
   if (!Number.isInteger(id) || id <= 0 || !Number.isInteger(quantity)) return res.status(400).json({ error: "Invalid cart update" });
   try {
@@ -407,12 +439,12 @@ app.post("/api/cart/update", requireLogin, async (req, res) => {
   }
 });
 
-app.post("/api/cart/empty", requireLogin, async (req, res) => {
+app.post("/api/cart/empty", requireSameOrigin, requireLogin, async (req, res) => {
   await pool.query("DELETE FROM cart WHERE user_id = $1", [req.session.userId]);
   res.sendStatus(200);
 });
 
-app.post("/api/checkout", requireLogin, async (req, res) => {
+app.post("/api/checkout", requireSameOrigin, requireLogin, async (req, res) => {
   const paymentsEnabled = process.env.PAYMENTS_ENABLED === "true";
   const apiKey = process.env.MOLLIE_API_KEY;
   const baseUrl = String(process.env.PUBLIC_BASE_URL || "").replace(/\/$/, "");
@@ -684,7 +716,7 @@ app.get("/api/admin/orders", requireAdmin, async (req, res) => {
   }
 });
 
-app.post("/api/withdrawal", async (req, res) => {
+app.post("/api/withdrawal", withdrawalRateLimiter, requireSameOrigin, async (req, res) => {
   const email = String(req.body?.email || "").trim().toLowerCase();
   const reason = String(req.body?.reason || "").trim();
   const orderId = req.body?.order_id ? Number(req.body.order_id) : null;
