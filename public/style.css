@@ -355,3 +355,36 @@ body{background:var(--bg);color:var(--text)}
 @supports not (overflow:clip){
   html,body{overflow-x:hidden}
 }
+
+/* Accessibility: comfortable minimum text sizes for customer-facing UI */
+.main-nav a{font-size:12px}
+.eyebrow{font-size:12px}
+.ornate-btn,.ghost-btn{font-size:12px}
+.category-bar button{font-size:13px;letter-spacing:1.4px}
+.section-heading p{font-size:12px}
+.text-link{font-size:12px}
+.placeholder div{font-size:13px}
+.placeholder small{font-size:10px}
+.badge{font-size:11px}
+.card-link{font-size:11px}
+.spec-list strong{font-size:12px}
+.contact-card li strong{font-size:11px}
+.footer-links a{font-size:11px}
+.admin-field-note{font-size:11px}
+.admin-edit{font-size:11px}
+.admin-product-row small{font-size:13px}
+.theme-btn,.language-btn{font-size:12px}
+.cart-btn b{font-size:10px}
+.brand-copy small,.footer-brand small{font-size:11px}
+.service-strip h3{font-size:clamp(11px,.82vw,13px)}
+.service-strip p{font-size:clamp(13px,1vw,15px)}
+@media(max-width:700px){
+  .main-nav a{font-size:11px}
+  .brand-copy small{font-size:9px}
+  .service-strip h3{font-size:11px;letter-spacing:.55px}
+  .service-strip p{font-size:13px}
+}
+@media(max-width:360px){
+  .main-nav a{font-size:11px}
+  .brand-copy small{font-size:8px}
+}
