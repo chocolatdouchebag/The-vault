@@ -211,6 +211,16 @@ app.delete("/api/admin/product/:id", requireAdmin, async (req, res) => {
   }
 });
 
+app.get("/api/admin/products", requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM products ORDER BY id DESC");
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load products" });
+  }
+});
+
 app.post("/api/cart", requireLogin, async (req, res) => {
   const productId = Number(req.body?.product_id);
   if (!Number.isInteger(productId) || productId <= 0) return res.status(400).json({ error: "Invalid product" });
