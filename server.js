@@ -108,21 +108,21 @@ app.use((req, res, next) => {
 });
 
 function requireSameOrigin(req, res, next) {
-  const origin = req.get("Origin");
+  const requestOrigin = `${req.protocol}://${req.get("host")}`;
   const configuredBaseUrl = String(process.env.PUBLIC_BASE_URL || "").replace(/\/$/, "");
-  let expectedOrigin;
-  try {
-    expectedOrigin = configuredBaseUrl ? new URL(configuredBaseUrl).origin : `${req.protocol}://${req.get("host")}`;
-  } catch {
-    expectedOrigin = `${req.protocol}://${req.get("host")}`;
-  }
+  let configuredOrigin = null;
+  try { configuredOrigin = configuredBaseUrl ? new URL(configuredBaseUrl).origin : null; } catch {}
 
-  if (origin && origin !== expectedOrigin) return res.status(403).json({ error: "Cross-site request blocked" });
+  const allowedOrigins = new Set([requestOrigin]);
+  if (configuredOrigin) allowedOrigins.add(configuredOrigin);
+
+  const origin = req.get("Origin");
+  if (origin && !allowedOrigins.has(origin)) return res.status(403).json({ error: "Cross-site request blocked" });
 
   const referer = req.get("Referer");
   if (!origin && referer) {
     try {
-      if (new URL(referer).origin !== expectedOrigin) return res.status(403).json({ error: "Cross-site request blocked" });
+      if (!allowedOrigins.has(new URL(referer).origin)) return res.status(403).json({ error: "Cross-site request blocked" });
     } catch {
       return res.status(403).json({ error: "Invalid request origin" });
     }
