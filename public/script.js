@@ -187,12 +187,12 @@ function updateHeaderVisibility(){
     if(direction>0){
       clearTimeout(headerShowTimer);
       headerShowTimer=null;
-      if(directionDistance>=24) header.classList.add('header-hidden');
-    }else if(direction<0 && !headerShowTimer && directionDistance>=24){
+      if(directionDistance>=40) header.classList.add('header-hidden');
+    }else if(direction<0 && !headerShowTimer && directionDistance>=40){
       headerShowTimer=setTimeout(()=>{
         header.classList.remove('header-hidden');
         headerShowTimer=null;
-      },180);
+      },220);
     }
   }
 
