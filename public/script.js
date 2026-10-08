@@ -441,6 +441,9 @@ async function initCookieNotice(){
     closeCookieSettings();
     refreshCookieUi();
   });
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&!$('cookie-settings-panel')?.classList.contains('hidden'))closeCookieSettings();
+  });
   refreshCookieUi();
   if(readConsent()?.analytics==='granted')await loadGoogleAnalytics();
 }
