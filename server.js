@@ -221,6 +221,61 @@ app.get("/api/admin/products", requireAdmin, async (req, res) => {
   }
 });
 
+app.patch("/api/admin/product/:id", requireAdmin, async (req, res) => {
+  const productId = Number(req.params.id);
+  if (!Number.isInteger(productId) || productId <= 0) return res.status(400).json({ error: "Invalid product" });
+
+  const {
+    name, description, price, stock, image_url, category, rarity,
+    origin, condition, provenance, is_featured, is_new_arrival
+  } = req.body || {};
+
+  const allowedCategories = new Set(["Artifacts", "Collectibles", "Oddities", "Mystery Boxes"]);
+  const allowedRarities = new Set(["Common", "Uncommon", "Rare", "Very Rare", "Unique"]);
+  const cleanName = String(name || "").trim();
+  const cleanDescription = String(description || "").trim();
+  const cleanImage = String(image_url || "").trim();
+  const cleanCategory = String(category || "").trim();
+  const cleanRarity = String(rarity || "").trim();
+  const cleanOrigin = String(origin || "").trim();
+  const cleanCondition = String(condition || "").trim();
+  const cleanProvenance = String(provenance || "").trim();
+  const numericPrice = Number(price);
+  const numericStock = Number(stock);
+
+  if (!cleanName || cleanName.length > 160) return res.status(400).json({ error: "Enter a valid treasure name" });
+  if (cleanDescription.length > 5000) return res.status(400).json({ error: "Description is too long" });
+  if (!Number.isFinite(numericPrice) || numericPrice <= 0 || numericPrice > 99999999.99) return res.status(400).json({ error: "Enter a valid price" });
+  if (!Number.isInteger(numericStock) || numericStock < 0 || numericStock > 2147483647) return res.status(400).json({ error: "Enter a valid stock quantity" });
+  if (!allowedCategories.has(cleanCategory)) return res.status(400).json({ error: "Select a valid category" });
+  if (cleanRarity && !allowedRarities.has(cleanRarity)) return res.status(400).json({ error: "Select a valid rarity" });
+  if (cleanImage.length > 1000) return res.status(400).json({ error: "Image URL is too long" });
+  if (cleanOrigin.length > 200) return res.status(400).json({ error: "Origin is too long" });
+  if (cleanCondition.length > 120) return res.status(400).json({ error: "Condition is too long" });
+  if (cleanProvenance.length > 2000) return res.status(400).json({ error: "Provenance is too long" });
+
+  try {
+    const result = await pool.query(
+      `UPDATE products
+       SET name = $1, description = $2, price = $3, stock = $4, image_url = $5,
+           category = $6, rarity = $7, origin = $8, condition = $9, provenance = $10,
+           is_featured = $11, is_new_arrival = $12, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $13
+       RETURNING *`,
+      [
+        cleanName, cleanDescription, numericPrice, numericStock, cleanImage || null,
+        cleanCategory, cleanRarity || null, cleanOrigin || null, cleanCondition || null,
+        cleanProvenance || null, is_featured === true, is_new_arrival === true, productId
+      ]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: "Treasure not found" });
+    res.json({ success: true, product: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update product" });
+  }
+});
+
 app.post("/api/cart", requireLogin, async (req, res) => {
   const productId = Number(req.body?.product_id);
   if (!Number.isInteger(productId) || productId <= 0) return res.status(400).json({ error: "Invalid product" });
