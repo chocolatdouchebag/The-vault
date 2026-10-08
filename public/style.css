@@ -524,3 +524,159 @@ html:not(.fligaliga-ready) body{visibility:hidden}
   }
   .cookie-notice .ghost-btn{width:100%}
 }
+
+
+/* Analytics consent manager */
+.cookie-notice-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:9px;
+  flex:0 0 auto;
+}
+.cookie-notice-actions .text-link{
+  min-height:40px;
+  padding:0 10px;
+  color:var(--gold2);
+}
+.cookie-settings-fab{
+  position:fixed;
+  left:14px;
+  bottom:14px;
+  z-index:99;
+  min-height:38px;
+  padding:0 12px;
+  border:1px solid var(--line);
+  background:var(--panel);
+  color:var(--gold2);
+  font:11px "Cinzel",serif;
+  letter-spacing:1px;
+  cursor:pointer;
+  box-shadow:0 6px 20px rgba(0,0,0,.20);
+}
+.cookie-settings-fab:hover{background:var(--panel2);color:var(--gold3)}
+.cookie-settings-panel{
+  position:fixed;
+  inset:0;
+  z-index:101;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  background:rgba(0,0,0,.55);
+}
+.cookie-settings-card{
+  position:relative;
+  width:min(640px,100%);
+  max-height:min(88vh,760px);
+  overflow:auto;
+  padding:30px;
+  background:var(--panel);
+  color:var(--text);
+  border:1px solid var(--line);
+  box-shadow:0 18px 55px rgba(0,0,0,.35);
+}
+.cookie-settings-card h2{
+  margin:0 0 12px;
+  color:var(--gold3);
+  font:500 30px "Cinzel",serif;
+}
+.cookie-settings-card>p:not(.eyebrow){
+  color:var(--muted);
+  font-size:17px;
+  line-height:1.5;
+}
+.cookie-settings-close{
+  position:absolute;
+  top:10px;
+  right:12px;
+  width:36px;
+  height:36px;
+  border:0;
+  background:transparent;
+  color:var(--gold2);
+  font-size:28px;
+  cursor:pointer;
+}
+.cookie-settings-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  padding:17px 0;
+  border-top:1px solid var(--line-soft);
+}
+.cookie-settings-row strong{
+  display:block;
+  color:var(--gold2);
+  font:600 12px "Cinzel",serif;
+  letter-spacing:1.3px;
+}
+.cookie-settings-row p{
+  margin:5px 0 0;
+  color:var(--muted);
+  font-size:15px;
+  line-height:1.4;
+}
+.cookie-settings-row>span{
+  flex:0 0 auto;
+  color:var(--muted2);
+  font:11px "Cinzel",serif;
+  letter-spacing:1px;
+}
+.cookie-settings-toggle{cursor:pointer}
+.cookie-settings-toggle input{
+  width:22px;
+  height:22px;
+  margin:0;
+  accent-color:var(--gold2);
+  flex:0 0 auto;
+}
+.cookie-settings-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:20px;
+}
+.cookie-settings-actions .ghost-btn{color:var(--gold2)}
+:root[data-theme="light"] .cookie-settings-fab{
+  background:#f8f3e9;
+  color:#684b27;
+  border-color:rgba(111,77,35,.38);
+  box-shadow:0 6px 20px rgba(63,48,30,.14);
+}
+:root[data-theme="light"] .cookie-settings-fab:hover{
+  background:#e6ddce;
+  color:#4d351c;
+}
+:root[data-theme="light"] .cookie-settings-panel{
+  background:rgba(48,37,25,.34);
+}
+:root[data-theme="light"] .cookie-settings-card{
+  background:#f8f3e9;
+  color:#2b261f;
+  border-color:rgba(111,77,35,.30);
+}
+:root[data-theme="light"] .cookie-settings-card h2{color:#3a2c20}
+:root[data-theme="light"] .cookie-settings-card>p:not(.eyebrow){color:#584e42}
+:root[data-theme="light"] .cookie-settings-close{color:#684b27}
+:root[data-theme="light"] .cookie-settings-row strong{color:#684b27}
+:root[data-theme="light"] .cookie-settings-row p{color:#584e42}
+:root[data-theme="light"] .cookie-settings-row>span{color:#6d604f}
+@media(max-width:700px){
+  .cookie-notice-actions{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .cookie-notice-actions .ornate-btn,
+  .cookie-notice-actions .ghost-btn{width:100%;min-width:0}
+  .cookie-notice-actions .text-link{grid-column:1/-1}
+  .cookie-settings-fab{
+    left:10px;
+    bottom:10px;
+  }
+  .cookie-settings-card{padding:24px 18px}
+  .cookie-settings-actions .ornate-btn,
+  .cookie-settings-actions .ghost-btn{width:100%}
+}

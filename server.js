@@ -115,7 +115,8 @@ app.use((req, res, next) => {
     "script-src 'self'; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com; " +
-    "connect-src 'self'; " +
+    "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com; " +
+    "script-src 'self' https://www.googletagmanager.com; " +
     "base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
   );
   res.setHeader("X-Content-Type-Options", "nosniff");
@@ -982,6 +983,13 @@ app.get("/sitemap.xml", async (req, res) => {
     console.error("Sitemap generation failed:", err);
     res.status(500).type("text/plain").send("Sitemap unavailable");
   }
+});
+
+app.get("/api/public-config", (req, res) => {
+  res.setHeader("Cache-Control", "public, max-age=300");
+  res.json({
+    analyticsMeasurementId: String(process.env.GA_MEASUREMENT_ID || "").trim() || null
+  });
 });
 
 // SPA routes: product URLs are real, shareable URLs, while the client loads the product data.
