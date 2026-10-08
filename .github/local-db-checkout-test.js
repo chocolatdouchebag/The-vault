@@ -61,7 +61,7 @@ async function oneCheckoutLockScenario(productIds) {
     );
 
     const pidResult = await client.query(
-      "SELECT current_backend_pid()::integer AS pid"
+      "SELECT pg_backend_pid()::integer AS pid"
     );
     const tempUserId = pidResult.rows[0].pid;
 
