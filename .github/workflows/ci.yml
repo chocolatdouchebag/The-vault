@@ -28,3 +28,5 @@ jobs:
         run: node .github/robots-cookie-regression-test.js
       - name: Test GA4 ecommerce events
         run: node .github/analytics-ecommerce-regression-test.js
+      - name: Test bilingual legal content
+        run: node .github/legal-content-regression-test.js
