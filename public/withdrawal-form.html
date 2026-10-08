@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model Withdrawal Form — FLIGALIGA</title>
+<style>
+  :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#171717;background:#f4f1e8;line-height:1.6}
+  body{margin:0;padding:32px 18px}
+  main{max-width:780px;margin:auto;background:#fffdf8;border:1px solid #c9bd9d;padding:34px;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+  h1,h2{font-family:Georgia,serif;line-height:1.15}
+  h1{margin-top:0;font-size:2.2rem}
+  h2{margin-top:2rem}
+  .notice{padding:14px 16px;border:1px solid #c9bd9d;background:#f7f2e5}
+  .field{margin:18px 0}
+  label{display:block;font-weight:700;margin-bottom:6px}
+  input,textarea{box-sizing:border-box;width:100%;font:inherit;border:1px solid #999;padding:10px;background:white}
+  textarea{min-height:90px;resize:vertical}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .print{display:inline-block;margin-top:18px;padding:10px 16px;border:1px solid #222;background:#222;color:#fff;text-decoration:none;cursor:pointer}
+  .muted{color:#555;font-size:.95rem}
+  .lang{margin-top:3rem;padding-top:2rem;border-top:1px solid #ccc}
+  @media(max-width:620px){main{padding:22px}.grid{grid-template-columns:1fr}}
+  @media print{body{padding:0;background:white}main{border:0;box-shadow:none;max-width:none}.print{display:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>FLIGALIGA — Model Withdrawal Form</h1>
+  <p class="notice">Use this form only when you want to withdraw from an eligible consumer purchase. Completing this model is optional: you may also use FLIGALIGA's online cancellation function or send another clear withdrawal statement.</p>
+
+  <h2>Trader</h2>
+  <p><strong>FLIGALIGA</strong><br>
+  Registered business name: <strong>[COMPLETE BEFORE LAUNCH]</strong><br>
+  Business address: <strong>[COMPLETE BEFORE LAUNCH]</strong><br>
+  Email: <strong>fligaliga@hotmail.com</strong></p>
+
+  <h2>Withdrawal notice</h2>
+  <p>I/we hereby notify FLIGALIGA that I/we wish to withdraw from the contract of sale for the following goods.</p>
+
+  <div class="field">
+    <label for="goods-en">Goods / product details</label>
+    <textarea id="goods-en" name="goods-en"></textarea>
+  </div>
+
+  <div class="grid">
+    <div class="field">
+      <label for="order-en">Order number</label>
+      <input id="order-en" name="order-en" type="text">
+    </div>
+    <div class="field">
+      <label for="ordered-en">Ordered on / received on</label>
+      <input id="ordered-en" name="ordered-en" type="text">
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="name-en">Consumer name(s)</label>
+    <input id="name-en" name="name-en" type="text">
+  </div>
+
+  <div class="field">
+    <label for="address-en">Consumer address</label>
+    <textarea id="address-en" name="address-en"></textarea>
+  </div>
+
+  <div class="grid">
+    <div class="field">
+      <label for="date-en">Date</label>
+      <input id="date-en" name="date-en" type="date">
+    </div>
+    <div class="field">
+      <label for="signature-en">Signature (paper submissions only)</label>
+      <input id="signature-en" name="signature-en" type="text">
+    </div>
+  </div>
+
+  <p class="muted">Send the completed form to <strong>fligaliga@hotmail.com</strong>. Keep a copy of your withdrawal notice and proof of sending.</p>
+
+  <button class="print" type="button" onclick="window.print()">Print / save as PDF</button>
+
+  <section class="lang">
+    <h1>FLIGALIGA — Modelformulier voor herroeping</h1>
+    <p class="notice">Gebruik dit formulier wanneer je een in aanmerking komende consumentenaankoop wilt herroepen. Invullen is niet verplicht: je kunt ook de online annuleringsfunctie gebruiken of op een andere duidelijke manier laten weten dat je wilt herroepen.</p>
+
+    <h2>Handelaar</h2>
+    <p><strong>FLIGALIGA</strong><br>
+    Ingeschreven bedrijfsnaam: <strong>[VOOR DE LANCERING INVULLEN]</strong><br>
+    Bedrijfsadres: <strong>[VOOR DE LANCERING INVULLEN]</strong><br>
+    E-mail: <strong>fligaliga@hotmail.com</strong></p>
+
+    <h2>Herroepingsmelding</h2>
+    <p>Hierbij laat ik/wij FLIGALIGA weten dat ik/wij de overeenkomst voor de verkoop van de volgende goederen wil/willen herroepen.</p>
+
+    <div class="field"><label for="goods-nl">Goederen / productgegevens</label><textarea id="goods-nl" name="goods-nl"></textarea></div>
+    <div class="grid">
+      <div class="field"><label for="order-nl">Ordernummer</label><input id="order-nl" name="order-nl" type="text"></div>
+      <div class="field"><label for="ordered-nl">Besteld op / ontvangen op</label><input id="ordered-nl" name="ordered-nl" type="text"></div>
+    </div>
+    <div class="field"><label for="name-nl">Naam van consument(en)</label><input id="name-nl" name="name-nl" type="text"></div>
+    <div class="field"><label for="address-nl">Adres van consument(en)</label><textarea id="address-nl" name="address-nl"></textarea></div>
+    <div class="grid">
+      <div class="field"><label for="date-nl">Datum</label><input id="date-nl" name="date-nl" type="date"></div>
+      <div class="field"><label for="signature-nl">Handtekening (alleen bij papier)</label><input id="signature-nl" name="signature-nl" type="text"></div>
+    </div>
+
+    <p class="muted">Stuur het ingevulde formulier naar <strong>fligaliga@hotmail.com</strong>. Bewaar een kopie van je herroepingsmelding en een bewijs van verzending.</p>
+  </section>
+</main>
+</body>
+</html>
