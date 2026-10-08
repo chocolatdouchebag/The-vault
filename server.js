@@ -45,6 +45,12 @@ function createRateLimiter({ windowMs, maxRequests, key = req => req.ip || "unkn
     }
 
     bucket.count += 1;
+    if (buckets.size > 10000) {
+      for (const staleId of buckets.keys()) {
+        buckets.delete(staleId);
+        if (buckets.size <= 9000) break;
+      }
+    }
     if (bucket.count > maxRequests) {
       const retryAfter = Math.max(1, Math.ceil((bucket.resetAt - now) / 1000));
       res.setHeader("Retry-After", String(retryAfter));
@@ -210,6 +216,7 @@ app.post("/api/login", loginRateLimiter, async (req, res) => {
 
 app.post("/api/logout", requireSameOrigin, (req, res) => req.session.destroy(() => res.sendStatus(200)));
 app.get("/api/me", async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
   if (!req.session.userId) return res.json(null);
   try {
     const result = await pool.query("SELECT id, username, is_admin FROM users WHERE id = $1", [req.session.userId]);
@@ -329,6 +336,7 @@ app.delete("/api/admin/product/:id", requireSameOrigin, requireAdmin, async (req
 });
 
 app.get("/api/admin/products", requireAdmin, async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
   try {
     const result = await pool.query("SELECT * FROM products ORDER BY id DESC");
     res.json(result.rows);
@@ -428,6 +436,7 @@ app.post("/api/cart", requireSameOrigin, requireLogin, async (req, res) => {
 });
 
 app.get("/api/cart", requireLogin, async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
   try {
     const cart = await pool.query(`
       SELECT c.id, c.product_id, c.quantity, p.name, p.price, p.image_url
@@ -508,7 +517,7 @@ app.post("/api/checkout", requireSameOrigin, requireLogin, async (req, res) => {
       WHERE c.user_id = $1
         AND p.is_active = TRUE
         AND p.status = 'active'
-      FOR UPDATE OF p
+      FOR UPDATE OF c, p
     `, [req.session.userId]);
 
     if (!cart.rows.length) {
@@ -560,6 +569,7 @@ app.post("/api/checkout", requireSameOrigin, requireLogin, async (req, res) => {
         "Content-Type": "application/json",
         "Accept": "application/json"
       },
+      signal: AbortSignal.timeout(10000),
       body: JSON.stringify({
         amount: { currency: "EUR", value: total.toFixed(2) },
         description: `FLIGALIGA Order #${orderId}`,
@@ -642,7 +652,8 @@ app.post("/api/payments/mollie-webhook", async (req, res) => {
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "Accept": "application/json"
-      }
+      },
+      signal: AbortSignal.timeout(10000)
     });
     const payment = await response.json().catch(() => null);
     if (!response.ok || !payment?.id) return res.sendStatus(502);
@@ -695,6 +706,7 @@ app.post("/api/payments/mollie-webhook", async (req, res) => {
 });
 
 app.get("/api/orders/:id", requireLogin, async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
   const orderId = Number(req.params.id);
   if (!Number.isInteger(orderId) || orderId <= 0) return res.status(400).json({ error: "Invalid order number" });
   try {
@@ -713,6 +725,7 @@ app.get("/api/orders/:id", requireLogin, async (req, res) => {
 });
 
 app.get("/api/admin/orders", requireAdmin, async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
   try {
     const orders = await pool.query(`
       SELECT o.id, o.user_id, o.total, o.status, o.created_at, o.customer_name,
@@ -768,9 +781,31 @@ app.post("/api/withdrawal", withdrawalRateLimiter, requireSameOrigin, async (req
   }
 });
 
+app.use((err, req, res, next) => {
+  if (err?.type === "entity.too.large") return res.status(413).json({ error: "Request is too large" });
+  if (err instanceof SyntaxError && "body" in err) return res.status(400).json({ error: "Invalid JSON" });
+  console.error(err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: "Internal server error" });
+});
+
 // SPA routes: product URLs are real, shareable URLs, while the client loads the product data.
 app.use(express.static(publicDir));
 app.get("/product/:idOrSlug", (req, res) => res.sendFile(path.join(publicDir, "index.html")));
 app.get(["/", "/treasures", "/new-arrivals", "/ledger", "/merchant", "/faq", "/contact", "/shipping", "/returns", "/privacy", "/terms", "/withdrawal", "/accessibility", "/payment-result"], (req, res) => res.sendFile(path.join(publicDir, "index.html")));
 
-app.listen(PORT, () => console.log(`🧭 FLIGALIGA Vault running at http://localhost:${PORT}`));
+const server = app.listen(PORT, () => console.log("🧭 FLIGALIGA Vault running at http://localhost:" + PORT));
+server.requestTimeout = 30000;
+server.headersTimeout = 15000;
+server.keepAliveTimeout = 5000;
+
+async function shutdown(signal) {
+  console.log(signal + " received. Shutting down...");
+  clearInterval(sessionCleanup);
+  await new Promise(resolve => server.close(resolve));
+  await pool.end();
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
