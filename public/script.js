@@ -158,8 +158,54 @@ function t(key,fallback=''){const lang=localStorage.getItem('fligaliga-language'
 
 let lastScrollY=window.scrollY;
 let scrollTicking=false;
-function updateHeaderVisibility(){const header=document.querySelector('.site-header');if(!header)return;const currentY=window.scrollY;const delta=currentY-lastScrollY;if(currentY<=12||delta<0){header.classList.remove('header-hidden');}else if(delta>4){header.classList.add('header-hidden');}lastScrollY=currentY;scrollTicking=false;}
-window.addEventListener('scroll',()=>{if(!scrollTicking){scrollTicking=true;requestAnimationFrame(updateHeaderVisibility);}}, {passive:true});
+let scrollDirection=0;
+let directionDistance=0;
+let headerShowTimer=null;
+
+function updateHeaderVisibility(){
+  const header=document.querySelector('.site-header');
+  if(!header)return;
+
+  const currentY=window.scrollY;
+  const delta=currentY-lastScrollY;
+  const direction=delta>0?1:delta<0?-1:0;
+
+  if(currentY<=12){
+    clearTimeout(headerShowTimer);
+    headerShowTimer=null;
+    header.classList.remove('header-hidden');
+    scrollDirection=0;
+    directionDistance=0;
+  }else if(direction!==0){
+    if(direction!==scrollDirection){
+      scrollDirection=direction;
+      directionDistance=0;
+    }
+
+    directionDistance+=Math.abs(delta);
+
+    if(direction>0){
+      clearTimeout(headerShowTimer);
+      headerShowTimer=null;
+      if(directionDistance>=24) header.classList.add('header-hidden');
+    }else if(direction<0 && !headerShowTimer && directionDistance>=24){
+      headerShowTimer=setTimeout(()=>{
+        header.classList.remove('header-hidden');
+        headerShowTimer=null;
+      },180);
+    }
+  }
+
+  lastScrollY=currentY;
+  scrollTicking=false;
+}
+
+window.addEventListener('scroll',()=>{
+  if(!scrollTicking){
+    scrollTicking=true;
+    requestAnimationFrame(updateHeaderVisibility);
+  }
+},{passive:true});
 
 document.addEventListener('DOMContentLoaded', async()=>{
   applyTheme();
