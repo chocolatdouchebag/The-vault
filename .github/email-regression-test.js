@@ -33,7 +33,14 @@ const fakeFetch = async (url, options) => {
     id: 123,
     total: 14.99,
     customer_name: "Test Customer <script>",
-    customer_email: "customer@example.com"
+    customer_email: "customer@example.com",
+    shipping_address_line1: "12 Treasure Lane",
+    shipping_postcode: "1234 AB",
+    shipping_city: "Haarlem",
+    shipping_country: "NL",
+    items: [
+      { product_id: 20, name: "Compass <script>", quantity: 2, price: 14.99 }
+    ]
   };
 
   const received = await sendOrderReceivedEmail(order, fakeFetch);
@@ -44,6 +51,12 @@ const fakeFetch = async (url, options) => {
   const receivedPayload = JSON.parse(calls[0].options.body);
   assert.equal(receivedPayload.to[0], "customer@example.com");
   assert.match(receivedPayload.html, /Test Customer &lt;script&gt;/);
+  assert.match(receivedPayload.html, /Compass &lt;script&gt;/);
+  assert.match(receivedPayload.html, /Order summary/);
+  assert.match(receivedPayload.html, /€29\.98/);
+  assert.match(receivedPayload.html, /Treasure Lane/);
+  assert.match(receivedPayload.html, /1234 AB/);
+  assert.match(receivedPayload.html, /Haarlem/);
 
   await sendPaymentConfirmationEmail(order, fakeFetch);
   assert.equal(calls[1].options.headers["Idempotency-Key"], "payment-confirmed/123");

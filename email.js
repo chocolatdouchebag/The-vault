@@ -64,6 +64,27 @@ async function sendOrderReceivedEmail(order, fetchImpl = globalThis.fetch) {
   const orderId = Number(order.id);
   const customerName = escapeHtml(order.customer_name || "traveller");
   const total = Number(order.total).toFixed(2);
+  const items = Array.isArray(order.items) ? order.items : [];
+  const itemRows = items.length
+    ? items.map(item => {
+        const name = escapeHtml(item.name || "Treasure");
+        const quantity = Number(item.quantity) || 0;
+        const price = Number(item.price || 0).toFixed(2);
+        const lineTotal = (quantity * Number(item.price || 0)).toFixed(2);
+        return "<tr>" +
+          "<td style=\"padding:8px 12px;border-bottom:1px solid #ddd\">" + name + "</td>" +
+          "<td style=\"padding:8px 12px;text-align:center;border-bottom:1px solid #ddd\">" + quantity + "</td>" +
+          "<td style=\"padding:8px 12px;text-align:right;border-bottom:1px solid #ddd\">€" + escapeHtml(price) + "</td>" +
+          "<td style=\"padding:8px 12px;text-align:right;border-bottom:1px solid #ddd\">€" + escapeHtml(lineTotal) + "</td>" +
+          "</tr>";
+      }).join("")
+    : "<tr><td colspan=\"4\" style=\"padding:10px 12px\">Your order details are available from your order-status page.</td></tr>";
+  const addressParts = [
+    order.shipping_address_line1,
+    [order.shipping_postcode, order.shipping_city].filter(Boolean).join(" "),
+    order.shipping_country
+  ].filter(Boolean).map(escapeHtml);
+  const addressHtml = addressParts.length ? addressParts.join("<br>") : "Delivery details are available from your order.";
   const baseUrl = String(process.env.PUBLIC_BASE_URL || "").replace(/\/$/, "");
   const statusUrl = baseUrl
     ? baseUrl + "/payment-result?order=" + encodeURIComponent(String(orderId))
@@ -74,12 +95,24 @@ async function sendOrderReceivedEmail(order, fetchImpl = globalThis.fetch) {
     subject: "FLIGALIGA — Order #" + orderId + " received",
     idempotencyKey: "order-received/" + orderId,
     html:
-      "<!doctype html><html><body>" +
+      "<!doctype html><html><body style=\"font-family:Arial,sans-serif;color:#2b261f;line-height:1.5\">" +
       "<h1>FLIGALIGA</h1>" +
       "<p>Dear " + customerName + ",</p>" +
       "<p>Your order <strong>#" + orderId + "</strong> has been received.</p>" +
-      "<p>Total: <strong>€" + escapeHtml(total) + "</strong></p>" +
-      "<p>Your payment is being handled securely. You can check the latest status here:</p>" +
+      "<h2>Order summary</h2>" +
+      "<table style=\"border-collapse:collapse;width:100%;max-width:700px\">" +
+      "<thead><tr>" +
+      "<th style=\"padding:8px 12px;text-align:left\">Item</th>" +
+      "<th style=\"padding:8px 12px;text-align:center\">Qty</th>" +
+      "<th style=\"padding:8px 12px;text-align:right\">Price</th>" +
+      "<th style=\"padding:8px 12px;text-align:right\">Total</th>" +
+      "</tr></thead><tbody>" +
+      itemRows +
+      "</tbody></table>" +
+      "<p><strong>Order total: €" + escapeHtml(total) + "</strong></p>" +
+      "<h2>Delivery address</h2>" +
+      "<p>" + addressHtml + "</p>" +
+      "<p>Your payment is being handled securely. You can check the latest order status here:</p>" +
       "<p><a href=\"" + escapeHtml(statusUrl) + "\">View order status</a></p>" +
       "<p>Thank you for travelling with FLIGALIGA.</p>" +
       "</body></html>",
