@@ -156,6 +156,11 @@ const translations = {
 
 function t(key,fallback=''){const lang=localStorage.getItem('fligaliga-language')||'en';return translations[lang]?.[key]??translations.en?.[key]??fallback;}
 
+let lastScrollY=window.scrollY;
+let scrollTicking=false;
+function updateHeaderVisibility(){const header=document.querySelector('.site-header');if(!header)return;const currentY=window.scrollY;const delta=currentY-lastScrollY;if(currentY<=12||delta<0){header.classList.remove('header-hidden');}else if(delta>4){header.classList.add('header-hidden');}lastScrollY=currentY;scrollTicking=false;}
+window.addEventListener('scroll',()=>{if(!scrollTicking){scrollTicking=true;requestAnimationFrame(updateHeaderVisibility);}}, {passive:true});
+
 document.addEventListener('DOMContentLoaded', async()=>{
   applyTheme();
   applyLanguage();
