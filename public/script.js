@@ -206,8 +206,15 @@ document.addEventListener('click',e=>{const adminEdit=e.target.closest('[data-ad
   const wrapper=img.parentElement;
   if(wrapper)wrapper.innerHTML=placeholder({name:img.alt||'UNCATALOGUED TREASURE'});
 },true);history.scrollRestoration='manual';window.addEventListener('popstate',e=>{route(e.state);window.setTimeout(trackAnalyticsPageView,0);});
+function detectedBrowserLanguage(){
+  const browserLanguage = String((navigator.languages && navigator.languages.length ? navigator.languages[0] : navigator.language) || 'en').toLowerCase();
+  return browserLanguage.startsWith('nl') ? 'nl' : 'en';
+}
+function currentLanguage(){
+  return localStorage.getItem('fligaliga-language') || detectedBrowserLanguage();
+}
 function applyLanguage(){
-  const lang = localStorage.getItem('fligaliga-language') || 'en';
+  const lang = currentLanguage();
   document.documentElement.lang = lang;
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.dataset.i18n;
@@ -226,7 +233,7 @@ function applyLanguage(){
 }
 
 function applyTheme(){
-  const theme = localStorage.getItem('fligaliga-theme') || 'dark';
+  const theme = localStorage.getItem('fligaliga-theme') || 'light';
   document.documentElement.dataset.theme = theme;
   const toggle = $('theme-toggle');
   if (toggle) {
@@ -269,7 +276,7 @@ const translations = {
   }
 };
 
-function t(key,fallback=''){const lang=localStorage.getItem('fligaliga-language')||'en';return translations[lang]?.[key]??translations.en?.[key]??fallback;}
+function t(key,fallback=''){const lang=currentLanguage();return translations[lang]?.[key]??translations.en?.[key]??fallback;}
 
 let lastScrollY=window.scrollY;
 let scrollTicking=false;
@@ -496,7 +503,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
   document.documentElement.classList.add('fligaliga-ready');
 
   $('language-toggle')?.addEventListener('click',async()=>{
-    const current=localStorage.getItem('fligaliga-language')||'en';
+    const current=currentLanguage();
     localStorage.setItem('fligaliga-language',current==='en'?'nl':'en');
     applyLanguage();
     if(!$('admin-view')?.classList.contains('hidden')){
@@ -508,7 +515,7 @@ document.addEventListener('DOMContentLoaded', async()=>{
   });
 
   $('theme-toggle')?.addEventListener('click',()=>{
-    const current=localStorage.getItem('fligaliga-theme')||'dark';
+    const current=localStorage.getItem('fligaliga-theme')||'light';
     localStorage.setItem('fligaliga-theme',current==='dark'?'light':'dark');
     applyTheme();
   });
