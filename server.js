@@ -950,6 +950,40 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
+function xmlEscape(value){
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"
+  }[char]));
+}
+
+app.get("/sitemap.xml", async (req, res) => {
+  try {
+    const configuredBaseUrl = String(process.env.PUBLIC_BASE_URL || "").replace(/\/$/, "");
+    const baseUrl = configuredBaseUrl || `${req.protocol}://${req.get("host")}`;
+    const urls = [
+      "/", "/treasures", "/new-arrivals", "/ledger", "/merchant",
+      "/faq", "/contact", "/shipping", "/returns", "/privacy",
+      "/terms", "/withdrawal", "/accessibility", "/withdrawal-form.html"
+    ];
+    const products = await getPublicProducts();
+    for (const product of products) {
+      if (product.slug) urls.push("/product/" + product.slug + "-" + product.id);
+    }
+
+    const body = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      ...urls.map(url => "<url><loc>" + xmlEscape(baseUrl + url) + "</loc></url>"),
+      "</urlset>"
+    ].join("");
+
+    res.type("application/xml").set("Cache-Control", "public, max-age=600").send(body);
+  } catch (err) {
+    console.error("Sitemap generation failed:", err);
+    res.status(500).type("text/plain").send("Sitemap unavailable");
+  }
+});
+
 // SPA routes: product URLs are real, shareable URLs, while the client loads the product data.
 app.use(express.static(publicDir));
 app.get("/product/:idOrSlug", (req, res) => res.sendFile(path.join(publicDir, "index.html")));
