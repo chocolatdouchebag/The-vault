@@ -213,6 +213,7 @@ window.addEventListener('scroll',()=>{
 document.addEventListener('DOMContentLoaded', async()=>{
   applyTheme();
   applyLanguage();
+  document.documentElement.classList.add('fligaliga-ready');
 
   $('language-toggle')?.addEventListener('click',async()=>{
     const current=localStorage.getItem('fligaliga-language')||'en';
