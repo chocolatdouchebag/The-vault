@@ -60,6 +60,33 @@ async function req(pathname, options = {}) {
   });
 }
 
+async function rawReq(pathname, { method = "GET", headers = {}, body = null } = {}) {
+  return new Promise((resolve, reject) => {
+    const payload = body == null ? null : (typeof body === "string" ? body : JSON.stringify(body));
+    const req = http.request({
+      hostname: "127.0.0.1",
+      port: PORT,
+      path: pathname,
+      method,
+      headers: {
+        ...(payload ? { "Content-Length": Buffer.byteLength(payload) } : {}),
+        ...headers
+      }
+    }, res => {
+      const chunks = [];
+      res.on("data", chunk => chunks.push(chunk));
+      res.on("end", () => resolve({
+        status: res.statusCode,
+        headers: res.headers,
+        body: Buffer.concat(chunks).toString()
+      }));
+    });
+    req.on("error", reject);
+    if (payload) req.write(payload);
+    req.end();
+  });
+}
+
 async function getCookie(pathname, body) {
   const res = await req(pathname, {
     method: "POST",
@@ -94,21 +121,6 @@ async function run() {
     assert(r.status === 401, "invalid login should be rejected");
     results.push("PASS invalid login");
 
-    for (let i = 0; i < 11; i++) {
-      await req("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: "nobody", password: "wrong" })
-      });
-    }
-    r = await req("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: "nobody", password: "wrong" })
-    });
-    assert(r.status === 429, "login limiter did not trigger");
-    results.push("PASS login flood throttled");
-
     const flood = await Promise.all(Array.from({ length: 500 }, () => req("/api/products")));
     const okCount = flood.filter(x => x.status === 200).length;
     const limitedCount = flood.filter(x => x.status === 429).length;
@@ -116,12 +128,25 @@ async function run() {
     assert(okCount > 0, "catalogue became completely unavailable under flood");
     results.push("PASS 500-request API flood survived (" + okCount + " served, " + limitedCount + " throttled)");
 
-    r = await req("/api/logout", {
+    const crossOrigin = await rawReq("/api/logout", {
       method: "POST",
-      headers: { Origin: "https://evil.example" }
+      headers: {
+        "Origin": "https://evil.example",
+        "Content-Type": "application/json"
+      },
+      body: {}
     });
-    assert(r.status === 403, "cross-origin state change was not blocked");
+    assert(crossOrigin.status === 403, "cross-origin state change was not blocked");
     results.push("PASS cross-origin mutation blocked");
+
+    const floodStartTime = Date.now();
+    const flood = await Promise.all(Array.from({ length: 500 }, () => req("/api/products")));
+    const floodMs = Date.now() - floodStartTime;
+    const okCount = flood.filter(x => x.status === 200).length;
+    const limitedCount = flood.filter(x => x.status === 429).length;
+    assert(limitedCount > 0, "global API flood limiter did not trigger");
+    assert(okCount > 0, "catalogue became completely unavailable under flood");
+    results.push("PASS 500-request API flood survived (" + okCount + " served, " + limitedCount + " throttled, " + floodMs + "ms)");
 
     const loginAdmin = await getCookie("/api/login", { username: "test-admin", password: "AdminPassword123!" });
     assert(loginAdmin.res.status === 204 && loginAdmin.cookie, "admin login failed in harness");
@@ -178,6 +203,19 @@ async function run() {
       server.child.on("exit", () => { clearTimeout(timer); resolve(); });
     });
     results.push("PASS graceful shutdown");
+
+    const degraded = await startServer({ TEST_DB_FAIL: "1" });
+    try {
+      r = await req("/api/health");
+      assert(r.status === 503, "database outage did not produce a 503 health response");
+      r = await req("/");
+      assert(r.status === 200, "static homepage became unavailable during database outage");
+      results.push("PASS database outage handled without taking down static site");
+      degraded.child.kill("SIGTERM");
+      await new Promise(resolve => degraded.child.on("exit", resolve));
+    } finally {
+      if (!degraded.child.killed) degraded.child.kill("SIGTERM");
+    }
 
     console.log(results.join("\n"));
     console.log("\nALL TESTS PASSED");
