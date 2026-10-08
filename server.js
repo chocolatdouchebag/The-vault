@@ -14,6 +14,13 @@ const PORT = process.env.PORT || 3000;
 const publicDir = path.join(__dirname, "public");
 const isProduction = process.env.NODE_ENV === "production";
 if (isProduction && !process.env.SESSION_SECRET) throw new Error("SESSION_SECRET must be set in production");
+if (isProduction && process.env.PAYMENTS_ENABLED === "true") {
+  if (!process.env.MOLLIE_API_KEY) throw new Error("MOLLIE_API_KEY must be set when payments are enabled");
+  const configuredBaseUrl = String(process.env.PUBLIC_BASE_URL || "");
+  let parsedBaseUrl;
+  try { parsedBaseUrl = new URL(configuredBaseUrl); } catch { parsedBaseUrl = null; }
+  if (!parsedBaseUrl || parsedBaseUrl.protocol !== "https:") throw new Error("PUBLIC_BASE_URL must be an HTTPS URL when payments are enabled in production");
+}
 app.disable("x-powered-by");
 if (isProduction) app.set("trust proxy", 1);
 
@@ -64,6 +71,17 @@ app.use(session({
   saveUninitialized: false,
   cookie: { httpOnly: true, sameSite: "lax", secure: isProduction, path: "/", maxAge: 1000 * 60 * 60 * 24 * 7 }
 }));
+
+async function pruneExpiredSessions() {
+  try {
+    await pool.query("DELETE FROM session WHERE expire <= CURRENT_TIMESTAMP");
+  } catch (err) {
+    console.error("Session cleanup failed:", err);
+  }
+}
+pruneExpiredSessions();
+const sessionCleanup = setInterval(pruneExpiredSessions, 60 * 60 * 1000);
+sessionCleanup.unref?.();
 
 app.use((req, res, next) => {
   res.setHeader(
@@ -199,6 +217,7 @@ app.get("/api/me", async (req, res) => {
     const user = result.rows[0];
     req.session.isAdmin = !!user.is_admin;
     req.session.user = { id: user.id, username: user.username, isAdmin: !!user.is_admin };
+    req.session.cookie.maxAge = user.is_admin ? 1000 * 60 * 60 * 2 : 1000 * 60 * 60 * 24 * 7;
     res.json(req.session.user);
   } catch (err) {
     console.error(err);
