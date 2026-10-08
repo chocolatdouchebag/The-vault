@@ -227,7 +227,7 @@ app.post("/api/login", loginRateLimiter, async (req, res) => {
   }
 });
 
-app.post("/api/logout", requireSameOrigin, (req, res) => req.session.destroy(() => res.sendStatus(200)));
+app.post("/api/logout", requireSameOrigin, (req, res) => req.session.destroy(err => err ? res.status(500).json({ error: "Logout failed" }) : res.sendStatus(200)));
 app.get("/api/me", async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   if (!req.session.userId) return res.json(null);
@@ -704,10 +704,12 @@ app.post("/api/payments/mollie-webhook", async (req, res) => {
         await releaseReservedStock(order.id, "expired");
         break;
       default:
-        await pool.query(
-          "UPDATE orders SET status = 'payment_pending', updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND status <> 'paid'",
-          [order.id]
-        );
+        if (!order.stock_released_at && order.status !== "paid") {
+          await pool.query(
+            "UPDATE orders SET status = 'payment_pending', updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND status <> 'paid'",
+            [order.id]
+          );
+        }
         break;
     }
 
@@ -796,7 +798,7 @@ app.post("/api/withdrawal", withdrawalRateLimiter, requireSameOrigin, async (req
 
 app.use((err, req, res, next) => {
   if (err?.type === "entity.too.large") return res.status(413).json({ error: "Request is too large" });
-  if (err instanceof SyntaxError && "body" in err) return res.status(400).json({ error: "Invalid JSON" });
+  if (err?.type === "entity.parse.failed") return res.status(400).json({ error: "Invalid JSON" });
   console.error(err);
   if (res.headersSent) return next(err);
   res.status(500).json({ error: "Internal server error" });
