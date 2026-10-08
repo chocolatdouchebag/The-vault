@@ -222,7 +222,6 @@ app.get("/api/products/:idOrSlug", async (req, res) => {
   const key = String(req.params.idOrSlug || "").toLowerCase();
   try {
     const products = await getPublicProducts();
-    const idMatch = key.match(/(?:^|-)({})$/);
     const numericId = /^\d+$/.test(key) ? Number(key) : null;
     let product = null;
     if (numericId) product = products.find(p => Number(p.id) === numericId);
@@ -298,7 +297,7 @@ app.delete("/api/admin/product/:id", requireSameOrigin, requireAdmin, async (req
   if (!Number.isInteger(productId) || productId <= 0) return res.status(400).json({ error: "Invalid product" });
   try {
     const result = await pool.query(
-      "UPDATE products SET is_active = FALSE, status = 'archived', updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id",
+      "UPDATE products SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id",
       [productId]
     );
     if (!result.rows.length) return res.status(404).json({ error: "Treasure not found" });
@@ -306,7 +305,7 @@ app.delete("/api/admin/product/:id", requireSameOrigin, requireAdmin, async (req
     res.sendStatus(200);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to archive product" });
+    res.status(500).json({ error: "Failed to remove product from the catalogue" });
   }
 });
 
