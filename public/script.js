@@ -224,7 +224,7 @@ function applyTheme(){
 const translations = {
   en: {
     navVault:'THE VAULT',navTreasures:'TREASURES',navNew:'NEW ARRIVALS',navLedger:'THE LEDGER',navMerchant:'ABOUT THE MERCHANT',
-    searchPlaceholder:'Search treasures...',admin:'ADMIN',enter:'ENTER',leave:'LEAVE',welcomeTo:'WELCOME TO',vault:'THE VAULT',
+    searchPlaceholder:'Search treasures...',cookieNoticeTitle:'COOKIE NOTICE',cookieNoticeText:'FLIGALIGA uses necessary session cookies for features such as login and checkout. The site also stores your language and theme preference locally. We currently do not use advertising or analytics cookies.',cookieNoticePrivacy:'Read the privacy notice',cookieNoticeOk:'OK, GOT IT',admin:'ADMIN',enter:'ENTER',leave:'LEAVE',welcomeTo:'WELCOME TO',vault:'THE VAULT',
     heroSub:'Treasures collected from places<br>better left forgotten.',enterVault:'ENTER THE VAULT',allTreasures:'ALL TREASURES',
     artifacts:'ARTIFACTS',collectibles:'COLLECTIBLES',oddities:'ODDITIES',mysteryBoxes:'MYSTERY BOXES',
     recentlyDiscovered:'RECENTLY DISCOVERED',featuredTreasures:'FEATURED TREASURES',clearFilter:'CLEAR FILTER ×',
@@ -239,7 +239,7 @@ const translations = {
   },
   nl: {
     navVault:'DE KLUIS',navTreasures:'SCHATTEN',navNew:'NIEUW BINNEN',navLedger:'HET GROOTBOEK',navMerchant:'OVER DE HANDELAAR',
-    searchPlaceholder:'Zoek schatten...',admin:'BEHEER',enter:'BINNENKOMEN',leave:'VERLATEN',welcomeTo:'WELKOM BIJ',vault:'DE KLUIS',
+    searchPlaceholder:'Zoek schatten...',cookieNoticeTitle:'COOKIEMELDING',cookieNoticeText:'FLIGALIGA gebruikt noodzakelijke sessiecookies voor functies zoals inloggen en afrekenen. Je taal- en themavoorkeur worden lokaal opgeslagen. We gebruiken momenteel geen advertentie- of analysecookies.',cookieNoticePrivacy:'Lees de privacyverklaring',cookieNoticeOk:'OK, BEGREPEN',admin:'BEHEER',enter:'BINNENKOMEN',leave:'VERLATEN',welcomeTo:'WELKOM BIJ',vault:'DE KLUIS',
     heroSub:'Schatten verzameld van plaatsen<br>die beter vergeten hadden kunnen blijven.',enterVault:'BETREED DE KLUIS',allTreasures:'ALLE SCHATTEN',
     artifacts:'ARTEFACTEN',collectibles:'VERZAMELOBJECTEN',oddities:'RARITEITEN',mysteryBoxes:'MYSTERYBOXEN',
     recentlyDiscovered:'RECENT ONTDEKT',featuredTreasures:'UITGELICHTE SCHATTEN',clearFilter:'FILTER WISSEN ×',
@@ -307,9 +307,24 @@ window.addEventListener('scroll',()=>{
   }
 },{passive:true});
 
+function initCookieNotice(){
+  const notice=$('cookie-notice');
+  const dismiss=$('cookie-notice-dismiss');
+  if(!notice||!dismiss)return;
+  const key='fligaliga-cookie-notice-seen';
+  let seen=false;
+  try{seen=localStorage.getItem(key)==='1';}catch{}
+  if(!seen)notice.classList.remove('hidden');
+  dismiss.addEventListener('click',()=>{
+    notice.classList.add('hidden');
+    try{localStorage.setItem(key,'1');}catch{}
+  });
+}
+
 document.addEventListener('DOMContentLoaded', async()=>{
   applyTheme();
   applyLanguage();
+  initCookieNotice();
   document.documentElement.classList.add('fligaliga-ready');
 
   $('language-toggle')?.addEventListener('click',async()=>{

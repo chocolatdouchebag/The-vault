@@ -465,3 +465,62 @@ html:not(.fligaliga-ready) body{visibility:hidden}
   color:#706557;
   opacity:1;
 }
+
+
+/* Cookie notice */
+.cookie-notice{
+  position:fixed;
+  left:20px;
+  right:20px;
+  bottom:20px;
+  z-index:100;
+  max-width:980px;
+  margin:0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+  padding:18px 20px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  box-shadow:0 12px 35px rgba(0,0,0,.30);
+}
+.cookie-notice-copy{min-width:0}
+.cookie-notice-copy strong{
+  display:block;
+  color:var(--gold2);
+  font:600 13px "Cinzel",serif;
+  letter-spacing:1.7px;
+  margin-bottom:5px;
+}
+.cookie-notice-copy p{
+  margin:0 0 5px;
+  color:var(--muted);
+  font-size:16px;
+  line-height:1.45;
+}
+.cookie-notice-copy a{
+  color:var(--gold2);
+  font-size:14px;
+}
+.cookie-notice .ghost-btn{flex:0 0 auto;white-space:nowrap}
+:root[data-theme="light"] .cookie-notice{
+  background:#f8f3e9;
+  border-color:rgba(111,77,35,.32);
+  box-shadow:0 12px 35px rgba(63,48,30,.16);
+}
+:root[data-theme="light"] .cookie-notice-copy strong{color:#5b3c1e}
+:root[data-theme="light"] .cookie-notice-copy p{color:#584e42}
+:root[data-theme="light"] .cookie-notice-copy a{color:#684b27}
+@media(max-width:700px){
+  .cookie-notice{
+    left:12px;
+    right:12px;
+    bottom:12px;
+    align-items:flex-start;
+    flex-direction:column;
+    gap:13px;
+    padding:16px;
+  }
+  .cookie-notice .ghost-btn{width:100%}
+}
