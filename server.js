@@ -794,6 +794,41 @@ app.post("/api/withdrawal", withdrawalRateLimiter, requireSameOrigin, async (req
   }
 });
 
+app.get("/api/admin/withdrawals", requireAdmin, async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  try {
+    const result = await pool.query(
+      `SELECT id, order_id, email, reason, status, submitted_at
+       FROM withdrawal_requests
+       ORDER BY submitted_at DESC, id DESC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load withdrawal requests" });
+  }
+});
+
+app.patch("/api/admin/withdrawals/:id", requireSameOrigin, requireAdmin, async (req, res) => {
+  const withdrawalId = Number(req.params.id);
+  const status = String(req.body?.status || "").trim();
+  const allowed = new Set(["received", "reviewing", "completed", "rejected"]);
+  if (!Number.isInteger(withdrawalId) || withdrawalId <= 0) return res.status(400).json({ error: "Invalid withdrawal request" });
+  if (!allowed.has(status)) return res.status(400).json({ error: "Invalid withdrawal status" });
+
+  try {
+    const result = await pool.query(
+      "UPDATE withdrawal_requests SET status = $1 WHERE id = $2 RETURNING id, order_id, email, reason, status, submitted_at",
+      [status, withdrawalId]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: "Withdrawal request not found" });
+    res.json({ success: true, withdrawal: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update withdrawal request" });
+  }
+});
+
 app.use((err, req, res, next) => {
   if (err?.type === "entity.too.large") return res.status(413).json({ error: "Request is too large" });
   if (err?.type === "entity.parse.failed") return res.status(400).json({ error: "Invalid JSON" });
