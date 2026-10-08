@@ -60,10 +60,15 @@ async function oneCheckoutLockScenario(productIds) {
       "CREATE TEMP TABLE cart (user_id integer NOT NULL, product_id integer NOT NULL, quantity integer NOT NULL) ON COMMIT DROP"
     );
 
+    const pidResult = await client.query(
+      "SELECT current_backend_pid()::integer AS pid"
+    );
+    const tempUserId = pidResult.rows[0].pid;
+
     for (const productId of productIds) {
       await client.query(
         "INSERT INTO cart (user_id, product_id, quantity) VALUES ($1, $2, 1)",
-        [Math.floor(Math.random() * 1000000000) + 1, productId]
+        [tempUserId, productId]
       );
     }
 
@@ -78,7 +83,7 @@ async function oneCheckoutLockScenario(productIds) {
          AND p.is_active = TRUE
          AND p.status = 'active'
        FOR UPDATE OF c, p`,
-      [await getTempUserId(client)]
+      [tempUserId]
     );
 
     // Hold the product row lock to make contention visible.
@@ -99,14 +104,6 @@ async function oneCheckoutLockScenario(productIds) {
   } finally {
     client.release();
   }
-}
-
-// Store/retrieve the TEMP cart's per-session user id without touching app data.
-async function getTempUserId(client) {
-  const result = await client.query(
-    "SELECT current_backend_pid()::integer AS pid"
-  );
-  return result.rows[0].pid;
 }
 
 async function concurrentScenario(productIds, count) {
