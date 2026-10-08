@@ -115,7 +115,8 @@ app.use((req, res, next) => {
     "script-src 'self'; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com; " +
-    "connect-src 'self'; " +
+    "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com; " +
+    "script-src 'self' https://www.googletagmanager.com; " +
     "base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
   );
   res.setHeader("X-Content-Type-Options", "nosniff");
