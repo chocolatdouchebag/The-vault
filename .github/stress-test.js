@@ -197,6 +197,15 @@ async function run() {
     assert(r.status === 429, "login limiter did not trigger");
     results.push("PASS login flood throttled");
 
+    const distributedStart = Date.now();
+    const distributed = await Promise.all(Array.from({ length: 1000 }, (_, i) => rawReq("/api/products", {
+      headers: { "X-Forwarded-For": "198.51.100." + ((i % 250) + 1) + ", 10.0.0." + ((i % 250) + 1) }
+    })));
+    const distributedMs = Date.now() - distributedStart;
+    const distributedOk = distributed.filter(x => x.status === 200).length;
+    results.push("INFO distributed-IP simulation: " + distributedOk + "/1000 served in " + distributedMs + "ms");
+    assert(distributedOk > 0, "distributed traffic was completely unavailable");
+
     const floodStartTime = Date.now();
     const productFlood = await Promise.all(Array.from({ length: 500 }, () => req("/api/products")));
     const floodMs = Date.now() - floodStartTime;
