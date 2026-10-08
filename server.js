@@ -157,9 +157,12 @@ function productSlug(name) {
 }
 
 let publicProductCache = { expiresAt: 0, data: null };
+let publicProductLoadPromise = null;
+let publicProductCacheGeneration = 0;
 const PRODUCT_CACHE_TTL = 10000;
 
 function invalidateProductCache() {
+  publicProductCacheGeneration += 1;
   publicProductCache.expiresAt = 0;
   publicProductCache.data = null;
 }
@@ -167,12 +170,22 @@ function invalidateProductCache() {
 async function getPublicProducts() {
   const now = Date.now();
   if (publicProductCache.data && publicProductCache.expiresAt > now) return publicProductCache.data;
-  const result = await pool.query(
+  if (publicProductLoadPromise) return publicProductLoadPromise;
+
+  const generation = publicProductCacheGeneration;
+  publicProductLoadPromise = pool.query(
     "SELECT * FROM products WHERE is_active = TRUE AND status = 'active' ORDER BY is_featured DESC, is_new_arrival DESC, id DESC"
-  );
-  const data = result.rows.map(p => ({ ...p, slug: productSlug(p.name) }));
-  publicProductCache = { expiresAt: now + PRODUCT_CACHE_TTL, data };
-  return data;
+  ).then(result => {
+    const data = result.rows.map(p => ({ ...p, slug: productSlug(p.name) }));
+    if (generation === publicProductCacheGeneration) {
+      publicProductCache = { expiresAt: Date.now() + PRODUCT_CACHE_TTL, data };
+    }
+    return data;
+  }).finally(() => {
+    publicProductLoadPromise = null;
+  });
+
+  return publicProductLoadPromise;
 }
 
 
@@ -236,7 +249,7 @@ app.get("/api/health", async (req, res) => { try { await pool.query("SELECT 1");
 app.get("/api/products", async (req, res) => {
   try {
     const data = await getPublicProducts();
-    res.setHeader("Cache-Control", "public, max-age=10, stale-while-revalidate=30");
+    res.setHeader("Cache-Control", "public, no-cache, stale-while-revalidate=30");
     res.json(data);
   } catch (err) {
     console.error(err);
