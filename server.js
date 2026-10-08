@@ -62,6 +62,11 @@ function createRateLimiter({ windowMs, maxRequests, key = req => req.ip || "unkn
 }
 
 const apiRateLimiter = createRateLimiter({ windowMs: 60 * 1000, maxRequests: 240 });
+const PAYMENT_RESERVATION_MINUTES = Math.max(
+  10,
+  Math.min(120, Number(process.env.PAYMENT_RESERVATION_MINUTES) || 30)
+);
+const PAYMENT_CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
 const loginRateLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, maxRequests: 12 });
 const registerRateLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, maxRequests: 8 });
 const withdrawalRateLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, maxRequests: 10 });
@@ -554,10 +559,12 @@ app.post("/api/checkout", requireSameOrigin, requireLogin, async (req, res) => {
     const order = await client.query(
       `INSERT INTO orders (
         user_id, total, status, customer_name, customer_email,
-        shipping_address_line1, shipping_postcode, shipping_city, shipping_country
-      ) VALUES ($1, $2, 'payment_pending', $3, $4, $5, $6, $7, $8)
+        shipping_address_line1, shipping_postcode, shipping_city, shipping_country,
+        payment_expires_at
+      ) VALUES ($1, $2, 'payment_pending', $3, $4, $5, $6, $7, $8,
+                CURRENT_TIMESTAMP + make_interval(mins => $9::integer))
        RETURNING id`,
-      [req.session.userId, total, name, email, address, postcode, city, country]
+      [req.session.userId, total, name, email, address, postcode, city, country, PAYMENT_RESERVATION_MINUTES]
     );
     orderId = order.rows[0].id;
 
@@ -654,6 +661,131 @@ async function releaseReservedStock(orderId, status = "payment_failed") {
     client.release();
   }
 }
+
+
+async function fetchMolliePayment(paymentId, apiKey) {
+  const response = await fetch(
+    "https://api.mollie.com/v2/payments/" + encodeURIComponent(paymentId),
+    {
+      headers: {
+        "Authorization": "Bearer " + apiKey,
+        "Accept": "application/json"
+      },
+      signal: AbortSignal.timeout(10000)
+    }
+  );
+  const payment = await response.json().catch(() => null);
+  if (!response.ok || !payment?.id) return null;
+  return payment;
+}
+
+async function cancelMolliePayment(paymentId, apiKey) {
+  const response = await fetch(
+    "https://api.mollie.com/v2/payments/" + encodeURIComponent(paymentId),
+    {
+      method: "DELETE",
+      headers: {
+        "Authorization": "Bearer " + apiKey,
+        "Accept": "application/json"
+      },
+      signal: AbortSignal.timeout(10000)
+    }
+  );
+  const payment = await response.json().catch(() => null);
+  if (!response.ok || !payment?.id) return null;
+  return payment;
+}
+
+let paymentCleanupRunning = false;
+
+async function cleanupExpiredPaymentReservations() {
+  if (paymentCleanupRunning) return;
+  if (process.env.PAYMENTS_ENABLED !== "true" || !process.env.MOLLIE_API_KEY) return;
+
+  paymentCleanupRunning = true;
+
+  try {
+    const expired = await pool.query(
+      "SELECT id, payment_id, total FROM orders " +
+      "WHERE status = 'payment_pending' " +
+      "AND stock_released_at IS NULL " +
+      "AND payment_expires_at <= CURRENT_TIMESTAMP " +
+      "ORDER BY id LIMIT 25"
+    );
+
+    for (const order of expired.rows) {
+      try {
+        if (!order.payment_id) {
+          await releaseReservedStock(order.id, "payment_expired");
+          continue;
+        }
+
+        const payment = await fetchMolliePayment(order.payment_id, process.env.MOLLIE_API_KEY);
+
+        if (!payment) {
+          console.error("Payment cleanup could not verify Mollie payment:", order.id);
+          continue;
+        }
+
+        const paymentAmount =
+          payment.amount?.currency === "EUR" ? Number(payment.amount.value) : NaN;
+
+        if (!Number.isFinite(paymentAmount) || Math.abs(paymentAmount - Number(order.total)) > 0.005) {
+          console.error("Payment cleanup amount mismatch; refusing stock release:", order.id);
+          continue;
+        }
+
+        if (payment.status === "paid") {
+          await pool.query(
+            "UPDATE orders SET status = 'paid', " +
+            "paid_at = COALESCE(paid_at, CURRENT_TIMESTAMP), " +
+            "updated_at = CURRENT_TIMESTAMP " +
+            "WHERE id = $1 AND status = 'payment_pending' AND stock_released_at IS NULL",
+            [order.id]
+          );
+          continue;
+        }
+
+        if (["failed", "canceled", "expired"].includes(payment.status)) {
+          await releaseReservedStock(order.id, "payment_" + payment.status);
+          continue;
+        }
+
+        if (payment.isCancelable === true) {
+          const canceledPayment = await cancelMolliePayment(
+            order.payment_id,
+            process.env.MOLLIE_API_KEY
+          );
+
+          if (canceledPayment?.status === "canceled") {
+            await releaseReservedStock(order.id, "payment_expired");
+          } else {
+            console.error("Payment cleanup could not cancel payment:", order.id);
+          }
+        }
+      } catch (err) {
+        console.error("Payment reservation cleanup failed for order", order.id, err);
+      }
+    }
+  } catch (err) {
+    if (err?.code === "42703") {
+      console.error(
+        "Payment reservation cleanup skipped: run migration 007_payment_reservation_expiry.sql first."
+      );
+    } else {
+      console.error("Payment reservation cleanup query failed:", err);
+    }
+  } finally {
+    paymentCleanupRunning = false;
+  }
+}
+
+const paymentCleanup = setInterval(
+  cleanupExpiredPaymentReservations,
+  PAYMENT_CLEANUP_INTERVAL_MS
+);
+paymentCleanup.unref?.();
+cleanupExpiredPaymentReservations();
 
 app.post("/api/payments/mollie-webhook", async (req, res) => {
   const apiKey = process.env.MOLLIE_API_KEY;
@@ -817,6 +949,7 @@ server.keepAliveTimeout = 5000;
 async function shutdown(signal) {
   console.log(signal + " received. Shutting down...");
   clearInterval(sessionCleanup);
+  clearInterval(paymentCleanup);
   await new Promise(resolve => server.close(resolve));
   await pool.end();
   process.exit(0);
