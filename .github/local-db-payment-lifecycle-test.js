@@ -309,11 +309,13 @@ async function main() {
     console.log("5) Check whether the application has an automatic pending-order expiry path");
 
     const serverSource = fs.readFileSync(path.join(process.cwd(), "server.js"), "utf8");
-    // Only count a timer as an expiry mechanism if that same timer callback
-    // actually targets payment_pending orders and calls the stock release path.
-    const hasScheduledExpiry =
-      /setInterval\\s*\\(\\s*(?:async\\s*)?(?:function\\s*)?\\([^)]*\\)\\s*=>?[\\s\\S]{0,3000}payment_pending[\\s\\S]{0,3000}releaseReservedStock/i.test(serverSource) ||
-      /setTimeout\\s*\\(\\s*(?:async\\s*)?(?:function\\s*)?\\([^)]*\\)\\s*=>?[\\s\\S]{0,3000}payment_pending[\\s\\S]{0,3000}releaseReservedStock/i.test(serverSource);
+    // Inspect each timer callback independently so the unrelated session
+    // cleanup timer cannot be mistaken for payment expiry logic.
+    const hasScheduledExpiry = [...serverSource.matchAll(/set(?:Interval|Timeout)\\s*\\(/g)]
+      .some(match => {
+        const callback = serverSource.slice(match.index, match.index + 5000);
+        return callback.includes("payment_pending") && callback.includes("releaseReservedStock");
+      });
 
     console.log("  Automatic pending-order expiry logic detected:", hasScheduledExpiry ? "YES" : "NO");
 
