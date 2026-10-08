@@ -426,3 +426,42 @@ body{background:var(--bg);color:var(--text)}
 
 /* Prevent a visible dark/English flash while saved preferences are restored. */
 html:not(.fligaliga-ready) body{visibility:hidden}
+
+
+/* Light-mode readability: override remaining dark-theme text rules */
+:root[data-theme="light"] .faq-list summary{
+  color:#3b2d20;
+}
+:root[data-theme="light"] .faq-list details p{
+  color:#584e42;
+}
+:root[data-theme="light"] .faq-list details{
+  border-color:rgba(111,77,35,.26);
+}
+:root[data-theme="light"] .contact-card li{
+  color:#584e42;
+}
+:root[data-theme="light"] .contact-form input::placeholder,
+:root[data-theme="light"] .contact-form textarea::placeholder{
+  color:#706557;
+  opacity:1;
+}
+:root[data-theme="light"] .qty button{
+  border-color:#92764e;
+  color:#684b27;
+}
+:root[data-theme="light"] .admin-order{
+  color:#584e42;
+}
+:root[data-theme="light"] .admin-field-note{
+  color:#6d604f;
+}
+:root[data-theme="light"] .admin-edit{
+  color:#684b27;
+}
+:root[data-theme="light"] .auth-grid input::placeholder,
+:root[data-theme="light"] .admin-grid input::placeholder,
+:root[data-theme="light"] .admin-grid textarea::placeholder{
+  color:#706557;
+  opacity:1;
+}
