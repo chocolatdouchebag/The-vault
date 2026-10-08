@@ -24,3 +24,5 @@ jobs:
         run: node -e "JSON.parse(require('fs').readFileSync('package.json', 'utf8')); console.log('package.json OK')"
       - name: Test transactional email integration
         run: node .github/email-regression-test.js
+      - name: Test robots, sitemap and cookie notice
+        run: node .github/robots-cookie-regression-test.js
