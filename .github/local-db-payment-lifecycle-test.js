@@ -309,13 +309,19 @@ async function main() {
     console.log("5) Check whether the application has an automatic pending-order expiry path");
 
     const serverSource = fs.readFileSync(path.join(process.cwd(), "server.js"), "utf8");
-    // Inspect each timer callback independently so the unrelated session
-    // cleanup timer cannot be mistaken for payment expiry logic.
-    const hasScheduledExpiry = [...serverSource.matchAll(/set(?:Interval|Timeout)\\s*\\(/g)]
-      .some(match => {
-        const callback = serverSource.slice(match.index, match.index + 5000);
-        return callback.includes("payment_pending") && callback.includes("releaseReservedStock");
-      });
+    // Inspect each timer call up to its closing ");". This avoids confusing
+    // the unrelated session cleanup timer with payment expiry logic.
+    const hasScheduledExpiry = ["setInterval", "setTimeout"].some(timerName => {
+      let offset = 0;
+      while (true) {
+        const start = serverSource.indexOf(timerName + "(", offset);
+        if (start === -1) return false;
+        const end = serverSource.indexOf(");", start);
+        const call = serverSource.slice(start, end === -1 ? serverSource.length : end);
+        if (call.includes("payment_pending") && call.includes("releaseReservedStock")) return true;
+        offset = start + timerName.length;
+      }
+    });
 
     console.log("  Automatic pending-order expiry logic detected:", hasScheduledExpiry ? "YES" : "NO");
 
