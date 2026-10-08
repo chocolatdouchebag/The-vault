@@ -133,15 +133,6 @@ async function run() {
     assert(crossOrigin.status === 403, "cross-origin state change was not blocked");
     results.push("PASS cross-origin mutation blocked");
 
-    const floodStartTime = Date.now();
-    const flood = await Promise.all(Array.from({ length: 500 }, () => req("/api/products")));
-    const floodMs = Date.now() - floodStartTime;
-    const okCount = flood.filter(x => x.status === 200).length;
-    const limitedCount = flood.filter(x => x.status === 429).length;
-    assert(limitedCount > 0, "global API flood limiter did not trigger");
-    assert(okCount > 0, "catalogue became completely unavailable under flood");
-    results.push("PASS 500-request API flood survived (" + okCount + " served, " + limitedCount + " throttled, " + floodMs + "ms)");
-
     const loginAdmin = await getCookie("/api/login", { username: "test-admin", password: "AdminPassword123!" });
     assert(loginAdmin.res.status === 204 && loginAdmin.cookie, "admin login failed in harness: HTTP " + loginAdmin.res.status + " " + (await loginAdmin.res.text()));
 
@@ -190,6 +181,31 @@ async function run() {
     });
     assert([400, 413, 429].includes(r.status), "oversized request was not safely rejected");
     results.push("PASS oversized request bounded");
+
+    for (let i = 0; i < 11; i++) {
+      await req("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "nobody", password: "wrong" })
+      });
+    }
+    r = await req("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "nobody", password: "wrong" })
+    });
+    assert(r.status === 429, "login limiter did not trigger");
+    results.push("PASS login flood throttled");
+
+    const floodStartTime = Date.now();
+    const productFlood = await Promise.all(Array.from({ length: 500 }, () => req("/api/products")));
+    const floodMs = Date.now() - floodStartTime;
+    const okCount = productFlood.filter(x => x.status === 200).length;
+    const limitedCount = productFlood.filter(x => x.status === 429).length;
+    assert(limitedCount > 0, "global API flood limiter did not trigger");
+    assert(okCount > 0, "catalogue became completely unavailable under flood");
+    results.push("PASS 500-request API flood survived (" + okCount + " served, " + limitedCount + " throttled, " + floodMs + "ms)");
+
 
     server.child.kill("SIGTERM");
     await new Promise((resolve, reject) => {
