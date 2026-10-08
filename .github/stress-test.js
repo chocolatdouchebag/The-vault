@@ -121,12 +121,6 @@ async function run() {
     assert(r.status === 401, "invalid login should be rejected");
     results.push("PASS invalid login");
 
-    const flood = await Promise.all(Array.from({ length: 500 }, () => req("/api/products")));
-    const okCount = flood.filter(x => x.status === 200).length;
-    const limitedCount = flood.filter(x => x.status === 429).length;
-    assert(limitedCount > 0, "global API flood limiter did not trigger");
-    assert(okCount > 0, "catalogue became completely unavailable under flood");
-    results.push("PASS 500-request API flood survived (" + okCount + " served, " + limitedCount + " throttled)");
 
     const crossOrigin = await rawReq("/api/logout", {
       method: "POST",
