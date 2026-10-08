@@ -214,11 +214,16 @@ document.addEventListener('DOMContentLoaded', async()=>{
   applyTheme();
   applyLanguage();
 
-  $('language-toggle')?.addEventListener('click',()=>{
+  $('language-toggle')?.addEventListener('click',async()=>{
     const current=localStorage.getItem('fligaliga-language')||'en';
     localStorage.setItem('fligaliga-language',current==='en'?'nl':'en');
     applyLanguage();
-    route();
+    if(!$('admin-view')?.classList.contains('hidden')){
+      await loadAdminProducts();
+      await loadOrders();
+    }else{
+      route();
+    }
   });
 
   $('theme-toggle')?.addEventListener('click',()=>{
