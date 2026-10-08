@@ -1,0 +1,16 @@
+name: FLIGALIGA distributed flood simulation
+
+on:
+  push:
+    branches: [stress-test-sandbox]
+
+jobs:
+  distributed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: node .github/distributed-flood-test.js
