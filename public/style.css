@@ -416,3 +416,6 @@ body{background:var(--bg);color:var(--text)}
   .admin-grid label.admin-field,.admin-grid label.admin-check{font-size:15px}
   .admin-field-note{font-size:12px}
 }
+.login-icon-btn{width:38px;height:38px;display:grid;place-items:center;padding:0;color:var(--gold2)}
+.login-icon-btn svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.login-icon-btn:hover{color:var(--gold3)}
