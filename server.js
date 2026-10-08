@@ -470,7 +470,7 @@ app.get("/api/cart", requireLogin, async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   try {
     const cart = await pool.query(`
-      SELECT c.id, c.product_id, c.quantity, p.name, p.price, p.image_url
+      SELECT c.id, c.product_id, c.quantity, p.name, p.price, p.category, p.image_url
       FROM cart c JOIN products p ON c.product_id = p.id
       WHERE c.user_id = $1 ORDER BY c.id DESC
     `, [req.session.userId]);
@@ -795,6 +795,27 @@ app.get("/api/orders/:id", requireLogin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Could not load order" });
+  }
+});
+
+app.get("/api/orders/:id/items", requireLogin, async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  const orderId = Number(req.params.id);
+  if (!Number.isInteger(orderId) || orderId <= 0) return res.status(400).json({ error: "Invalid order number" });
+  try {
+    const result = await pool.query(
+      `SELECT oi.product_id, oi.quantity, oi.price, p.name, p.category
+       FROM order_items oi
+       JOIN orders o ON o.id = oi.order_id
+       JOIN products p ON p.id = oi.product_id
+       WHERE oi.order_id = $1 AND o.user_id = $2
+       ORDER BY oi.product_id ASC`,
+      [orderId, req.session.userId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Could not load order items" });
   }
 });
 
