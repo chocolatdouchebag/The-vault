@@ -685,7 +685,8 @@ async function runPaymentReservationCleanup() {
   try {
     await cleanupExpiredPaymentReservations({
       pool,
-      apiKey: process.env.MOLLIE_API_KEY
+      apiKey: process.env.MOLLIE_API_KEY,
+      onPaid: sendPaymentConfirmationEmailIfNeeded
     });
   } catch (err) {
     if (err?.code === "42703") {
