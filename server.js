@@ -9,6 +9,12 @@ const {
   releaseReservedStock,
   cleanupExpiredPaymentReservations
 } = require("./payment-cleanup");
+const {
+  isEmailConfigured,
+  sendOrderReceivedEmail,
+  sendPaymentConfirmationEmail,
+  sendWithdrawalConfirmationEmail
+} = require("./email");
 require("dotenv").config();
 
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync("fligaliga-invalid-password", 10);
@@ -24,6 +30,7 @@ if (isProduction && process.env.PAYMENTS_ENABLED === "true") {
   let parsedBaseUrl;
   try { parsedBaseUrl = new URL(configuredBaseUrl); } catch { parsedBaseUrl = null; }
   if (!parsedBaseUrl || parsedBaseUrl.protocol !== "https:") throw new Error("PUBLIC_BASE_URL must be an HTTPS URL when payments are enabled in production");
+  if (!isEmailConfigured()) throw new Error("RESEND_API_KEY and RESEND_FROM must be set when payments are enabled in production");
 }
 app.disable("x-powered-by");
 if (isProduction) app.set("trust proxy", 1);
@@ -493,6 +500,46 @@ app.post("/api/cart/empty", requireSameOrigin, requireLogin, async (req, res) =>
   res.sendStatus(200);
 });
 
+async function sendOrderReceivedEmailIfNeeded(orderId) {
+  const result = await pool.query(
+    `SELECT id, total, customer_name, customer_email, order_received_email_sent_at
+     FROM orders WHERE id = $1`,
+    [orderId]
+  );
+  if (!result.rows.length || result.rows[0].order_received_email_sent_at) return { sent: false, skipped: true };
+  const order = result.rows[0];
+  if (!order.customer_email) return { sent: false, skipped: true, reason: "no_email" };
+
+  const mail = await sendOrderReceivedEmail(order);
+  if (mail.sent) {
+    await pool.query(
+      "UPDATE orders SET order_received_email_sent_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND order_received_email_sent_at IS NULL",
+      [orderId]
+    );
+  }
+  return mail;
+}
+
+async function sendPaymentConfirmationEmailIfNeeded(orderId) {
+  const result = await pool.query(
+    `SELECT id, total, customer_name, customer_email, payment_confirmation_email_sent_at
+     FROM orders WHERE id = $1 AND status = 'paid'`,
+    [orderId]
+  );
+  if (!result.rows.length || result.rows[0].payment_confirmation_email_sent_at) return { sent: false, skipped: true };
+  const order = result.rows[0];
+  if (!order.customer_email) return { sent: false, skipped: true, reason: "no_email" };
+
+  const mail = await sendPaymentConfirmationEmail(order);
+  if (mail.sent) {
+    await pool.query(
+      "UPDATE orders SET payment_confirmation_email_sent_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND status = 'paid' AND payment_confirmation_email_sent_at IS NULL",
+      [orderId]
+    );
+  }
+  return mail;
+}
+
 app.post("/api/checkout", requireSameOrigin, requireLogin, async (req, res) => {
   const paymentsEnabled = process.env.PAYMENTS_ENABLED === "true";
   const apiKey = process.env.MOLLIE_API_KEY;
@@ -615,6 +662,12 @@ app.post("/api/checkout", requireSameOrigin, requireLogin, async (req, res) => {
       [payment.id, orderId]
     );
 
+    try {
+      await sendOrderReceivedEmailIfNeeded(orderId);
+    } catch (emailErr) {
+      console.error("Order received email failed for order", orderId, emailErr);
+    }
+
     res.json({ success: true, orderId, total, checkoutUrl: payment._links.checkout.href });
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
@@ -691,6 +744,11 @@ app.post("/api/payments/mollie-webhook", async (req, res) => {
            WHERE id = $1 AND status <> 'paid'`,
           [order.id]
         );
+        try {
+          await sendPaymentConfirmationEmailIfNeeded(order.id);
+        } catch (emailErr) {
+          console.error("Payment confirmation email failed for order", order.id, emailErr);
+        }
         break;
       case "failed":
         await releaseReservedStock(order.id, "payment_failed");
@@ -784,10 +842,30 @@ app.post("/api/withdrawal", withdrawalRateLimiter, requireSameOrigin, async (req
     const result = await pool.query(
       `INSERT INTO withdrawal_requests (order_id, email, reason)
        VALUES ($1, $2, $3)
-       RETURNING id, submitted_at`,
+       RETURNING id, order_id, email, reason, submitted_at`,
       [orderId, email, reason || null]
     );
-    res.status(201).json({ success: true, requestId: result.rows[0].id, submittedAt: result.rows[0].submitted_at });
+
+    let confirmationEmailSent = false;
+    try {
+      const mail = await sendWithdrawalConfirmationEmail(result.rows[0]);
+      confirmationEmailSent = mail.sent === true;
+      if (confirmationEmailSent) {
+        await pool.query(
+          "UPDATE withdrawal_requests SET confirmation_email_sent_at = CURRENT_TIMESTAMP WHERE id = $1 AND confirmation_email_sent_at IS NULL",
+          [result.rows[0].id]
+        );
+      }
+    } catch (emailErr) {
+      console.error("Withdrawal confirmation email failed for request", result.rows[0].id, emailErr);
+    }
+
+    res.status(201).json({
+      success: true,
+      requestId: result.rows[0].id,
+      submittedAt: result.rows[0].submitted_at,
+      confirmationEmailSent
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Could not submit withdrawal request" });
