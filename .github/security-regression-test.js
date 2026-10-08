@@ -104,7 +104,7 @@ function assert(ok, message) { if (!ok) throw new Error(message); }
 
     const admin = await request("/api/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-Forwarded-Proto": "https" },
       body: JSON.stringify({ username: "test-admin", password: "AdminPassword123!" })
     });
     const cookieHeader = admin.headers["set-cookie"]?.[0] || "";
