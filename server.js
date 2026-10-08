@@ -504,13 +504,25 @@ app.post("/api/cart/empty", requireSameOrigin, requireLogin, async (req, res) =>
 
 async function sendOrderReceivedEmailIfNeeded(orderId) {
   const result = await pool.query(
-    `SELECT id, total, customer_name, customer_email, order_received_email_sent_at
+    `SELECT id, total, customer_name, customer_email,
+            shipping_address_line1, shipping_postcode, shipping_city, shipping_country,
+            order_received_email_sent_at
      FROM orders WHERE id = $1`,
     [orderId]
   );
   if (!result.rows.length || result.rows[0].order_received_email_sent_at) return { sent: false, skipped: true };
   const order = result.rows[0];
   if (!order.customer_email) return { sent: false, skipped: true, reason: "no_email" };
+
+  const itemsResult = await pool.query(
+    `SELECT oi.product_id, oi.quantity, oi.price, p.name, p.category
+     FROM order_items oi
+     JOIN products p ON p.id = oi.product_id
+     WHERE oi.order_id = $1
+     ORDER BY oi.product_id ASC`,
+    [orderId]
+  );
+  order.items = itemsResult.rows;
 
   const mail = await sendOrderReceivedEmail(order);
   if (mail.sent) {
