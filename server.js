@@ -13,7 +13,8 @@ const {
   isEmailConfigured,
   sendOrderReceivedEmail,
   sendPaymentConfirmationEmail,
-  sendWithdrawalConfirmationEmail
+  sendWithdrawalConfirmationEmail,
+  sendContactMessageEmail
 } = require("./email");
 require("dotenv").config();
 
@@ -81,6 +82,7 @@ const PAYMENT_CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
 const loginRateLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, maxRequests: 12 });
 const registerRateLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, maxRequests: 8 });
 const withdrawalRateLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, maxRequests: 10 });
+const contactRateLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, maxRequests: 5 });
 
 app.use("/api", apiRateLimiter);
 app.use(bodyParser.json({ limit: "64kb" }));
@@ -816,6 +818,38 @@ app.get("/api/admin/orders", requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to load orders" });
+  }
+});
+
+app.post("/api/contact", contactRateLimiter, requireSameOrigin, async (req, res) => {
+  const name = String(req.body?.name || "").trim();
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  const message = String(req.body?.message || "").trim();
+
+  if (name.length < 1 || name.length > 120)
+    return res.status(400).json({ error: "Enter your name" });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254)
+    return res.status(400).json({ error: "Enter a valid email address" });
+  if (message.length < 1 || message.length > 5000)
+    return res.status(400).json({ error: "Message must be between 1 and 5000 characters" });
+
+  if (!isEmailConfigured())
+    return res.status(503).json({ error: "The contact service is not configured yet. Please email fligaliga@hotmail.com directly." });
+
+  try {
+    const result = await sendContactMessageEmail({
+      name,
+      email,
+      message,
+      idempotencyKey: req.sessionID + "-" + Date.now() + "-" + Math.random().toString(36).slice(2)
+    });
+    if (!result.sent)
+      return res.status(503).json({ error: "The contact service is not configured yet. Please email fligaliga@hotmail.com directly." });
+
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("Contact email failed:", err);
+    res.status(502).json({ error: "Could not send your message right now. Please email fligaliga@hotmail.com directly." });
   }
 });
 

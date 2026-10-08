@@ -10,7 +10,8 @@ const {
   isEmailConfigured,
   sendOrderReceivedEmail,
   sendPaymentConfirmationEmail,
-  sendWithdrawalConfirmationEmail
+  sendWithdrawalConfirmationEmail,
+  sendContactMessageEmail
 } = require("../email");
 
 assert.equal(isEmailConfigured(), true);
@@ -54,6 +55,19 @@ const fakeFetch = async (url, options) => {
   };
   await sendWithdrawalConfirmationEmail(request, fakeFetch);
   assert.equal(calls[2].options.headers["Idempotency-Key"], "withdrawal-received/77");
+
+  await sendContactMessageEmail({
+    name: "A Curious Traveller <script>",
+    email: "traveller@example.com",
+    message: "Hello <world>",
+    idempotencyKey: "test-contact-1"
+  }, fakeFetch);
+  assert.equal(calls[3].options.headers["Idempotency-Key"], "contact-message/test-contact-1");
+  const contactPayload = JSON.parse(calls[3].options.body);
+  assert.equal(contactPayload.to[0], "fligaliga@hotmail.com");
+  assert.deepEqual(contactPayload.reply_to, ["traveller@example.com"]);
+  assert.match(contactPayload.html, /A Curious Traveller &lt;script&gt;/);
+  assert.match(contactPayload.html, /Hello &lt;world&gt;/);
 
   delete process.env.RESEND_API_KEY;
   const skipped = await sendWithdrawalConfirmationEmail(request, fakeFetch);
