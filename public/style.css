@@ -114,8 +114,8 @@ body{background:var(--bg);color:var(--text)}
   color:#352619;
   text-shadow:0 2px 10px rgba(255,255,255,.40);
 }
-:root[data-theme="light"] .hero-sub{color:#594a3a;text-shadow:none}
-:root[data-theme="light"] .eyebrow{color:#72502b}
+:root[data-theme="light"] .hero-sub{color:#3b2d20;text-shadow:0 1px 4px rgba(255,255,255,.35)}
+:root[data-theme="light"] .eyebrow{color:#5b3c1e;text-shadow:0 1px 3px rgba(255,255,255,.3)}
 
 :root[data-theme="light"] .ornate-btn{
   background:#3e2f20;
@@ -250,8 +250,8 @@ body{background:var(--bg);color:var(--text)}
   .brand-copy strong{font-size:25px}.brand-copy small{font-size:7px}.brand-mark{width:40px;height:40px}
   .category-bar button{min-width:150px}.category-icon{width:46px;height:46px}
 }
-:root[data-theme="light"] .hero{background-image:linear-gradient(90deg,rgba(246,239,226,.90) 0%,rgba(246,239,226,.56) 38%,rgba(246,239,226,.18) 70%,rgba(246,239,226,.04) 100%),url("/assets/ChatGPT%20Image%20Oct%201,%202026,%2003_33_00%20PM.png")}
-:root[data-theme="light"] .hero h1{color:#3d2c1d;text-shadow:0 2px 8px rgba(255,255,255,.55)}
+:root[data-theme="light"] .hero{background-image:linear-gradient(90deg,rgba(246,239,226,.95) 0%,rgba(246,239,226,.82) 42%,rgba(246,239,226,.48) 72%,rgba(246,239,226,.12) 100%),url("/assets/ChatGPT%20Image%20Oct%201,%202026,%2003_33_00%20PM.png")}
+:root[data-theme="light"] .hero h1{color:#2f2419;text-shadow:0 2px 8px rgba(255,255,255,.35)}
 :root[data-theme="light"] .category-bar{background:#e1d6c5}
 :root[data-theme="light"] .category-bar button{color:#4a3a2a}
 :root[data-theme="light"] .category-bar button:hover{background:#d5c7b2}
