@@ -309,19 +309,21 @@ async function main() {
     console.log("5) Check whether the application has an automatic pending-order expiry path");
 
     const serverSource = fs.readFileSync(path.join(process.cwd(), "server.js"), "utf8");
+    // Only count a timer as an expiry mechanism if that same timer callback
+    // actually targets payment_pending orders and calls the stock release path.
     const hasScheduledExpiry =
-      /payment_pending/.test(serverSource) &&
-      /(setInterval|setTimeout|cron|schedule|expired_at|expires_at)/i.test(serverSource) &&
-      /releaseReservedStock/.test(serverSource);
+      /setInterval\\s*\\(\\s*(?:async\\s*)?(?:function\\s*)?\\([^)]*\\)\\s*=>?[\\s\\S]{0,3000}payment_pending[\\s\\S]{0,3000}releaseReservedStock/i.test(serverSource) ||
+      /setTimeout\\s*\\(\\s*(?:async\\s*)?(?:function\\s*)?\\([^)]*\\)\\s*=>?[\\s\\S]{0,3000}payment_pending[\\s\\S]{0,3000}releaseReservedStock/i.test(serverSource);
 
     console.log("  Automatic pending-order expiry logic detected:", hasScheduledExpiry ? "YES" : "NO");
 
     if (hasScheduledExpiry) {
-      console.log("  Result: pending-order expiry path exists in server.js.");
+      console.log("  Result: a timer-based pending-order expiry path was detected in server.js.");
     } else {
-      console.log("  Result: NO automatic pending-order expiry path exists in server.js.");
-      console.log("  NOTE: a customer who abandons payment can leave stock reserved until");
-      console.log("        Mollie reports a terminal payment status or another cleanup path is added.");
+      console.log("  Result: NO timer-based pending-order expiry path was detected in server.js.");
+      console.log("  NOTE: the existing setInterval for session cleanup is unrelated to payment expiry.");
+      console.log("        An abandoned payment_pending order can therefore retain its stock reservation");
+      console.log("        until Mollie reports a terminal status or an explicit cleanup job is added.");
     }
 
     console.log("");
