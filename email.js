@@ -1,12 +1,62 @@
 "use strict";
 
-const RESEND_API_URL = "https://api.resend.com/emails";
+let cachedTransport = null;
+
+function getSmtpConfig() {
+  const host = String(process.env.SMTP_HOST || "smtp.strato.de").trim();
+  const port = Number(process.env.SMTP_PORT || 465);
+  const user = String(process.env.SMTP_USER || "").trim();
+  const pass = String(process.env.SMTP_PASS || "");
+  const from = String(process.env.SMTP_FROM || user).trim();
+  const secureSetting = String(process.env.SMTP_SECURE || "").trim().toLowerCase();
+  const secure = secureSetting
+    ? ["true", "1", "yes", "on"].includes(secureSetting)
+    : port === 465;
+
+  return { host, port, secure, user, pass, from };
+}
 
 function isEmailConfigured() {
+  const config = getSmtpConfig();
   return Boolean(
-    String(process.env.RESEND_API_KEY || "").trim() &&
-    String(process.env.RESEND_FROM || "").trim()
+    config.host &&
+    Number.isInteger(config.port) &&
+    config.port > 0 &&
+    config.port <= 65535 &&
+    config.user &&
+    config.pass &&
+    config.from
   );
+}
+
+function getEmailTransport() {
+  if (cachedTransport) return cachedTransport;
+
+  const config = getSmtpConfig();
+  const nodemailer = require("nodemailer");
+  cachedTransport = nodemailer.createTransport({
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
+    auth: {
+      user: config.user,
+      pass: config.pass
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
+    tls: { minVersion: "TLSv1.2" }
+  });
+
+  return cachedTransport;
+}
+
+async function verifyEmailConnection(transportOverride) {
+  if (!isEmailConfigured()) {
+    throw new Error("SMTP is not configured. Set SMTP_USER and SMTP_PASS in .env first.");
+  }
+  const transport = transportOverride || getEmailTransport();
+  return transport.verify();
 }
 
 function escapeHtml(value) {
@@ -24,43 +74,36 @@ async function sendEmail({
   subject,
   html,
   idempotencyKey,
-  replyTo,
-  fetchImpl = globalThis.fetch
-}) {
+  replyTo
+}, transportOverride) {
   if (!isEmailConfigured()) {
     return { sent: false, skipped: true, reason: "email_not_configured" };
   }
 
-  const response = await fetchImpl(RESEND_API_URL, {
-    method: "POST",
-    headers: {
-      "Authorization": "Bearer " + process.env.RESEND_API_KEY,
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-      ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {})
-    },
-    signal: AbortSignal.timeout(10000),
-    body: JSON.stringify({
-      from: process.env.RESEND_FROM,
-      to: [to],
-      subject,
-      html,
-      ...(replyTo ? { reply_to: [replyTo] } : {})
-    })
+  const config = getSmtpConfig();
+  const transport = transportOverride || getEmailTransport();
+  const headers = idempotencyKey
+    ? { "X-FLIGALIGA-Notification-Key": String(idempotencyKey) }
+    : undefined;
+
+  const info = await transport.sendMail({
+    from: config.from,
+    to: String(to || "").trim(),
+    subject: String(subject || ""),
+    html: String(html || ""),
+    ...(replyTo ? { replyTo: String(replyTo).trim() } : {}),
+    ...(headers ? { headers } : {})
   });
 
-  const payload = await response.json().catch(() => null);
-  if (!response.ok) {
-    const message = payload?.message || payload?.error || "Email provider rejected the request";
-    const error = new Error(message);
-    error.status = response.status;
-    throw error;
-  }
-
-  return { sent: true, skipped: false, id: payload?.id || null };
+  return {
+    sent: true,
+    skipped: false,
+    id: info?.messageId || null,
+    response: info?.response || null
+  };
 }
 
-async function sendOrderReceivedEmail(order, fetchImpl = globalThis.fetch) {
+async function sendOrderReceivedEmail(order, transportOverride) {
   const orderId = Number(order.id);
   const customerName = escapeHtml(order.customer_name || "traveller");
   const total = Number(order.total).toFixed(2);
@@ -115,12 +158,11 @@ async function sendOrderReceivedEmail(order, fetchImpl = globalThis.fetch) {
       "<p>Your payment is being handled securely. You can check the latest order status here:</p>" +
       "<p><a href=\"" + escapeHtml(statusUrl) + "\">View order status</a></p>" +
       "<p>Thank you for travelling with FLIGALIGA.</p>" +
-      "</body></html>",
-    fetchImpl
-  });
+      "</body></html>"
+  }, transportOverride);
 }
 
-async function sendPaymentConfirmationEmail(order, fetchImpl = globalThis.fetch) {
+async function sendPaymentConfirmationEmail(order, transportOverride) {
   const orderId = Number(order.id);
   const customerName = escapeHtml(order.customer_name || "traveller");
   const total = Number(order.total).toFixed(2);
@@ -141,12 +183,11 @@ async function sendPaymentConfirmationEmail(order, fetchImpl = globalThis.fetch)
       "<p>Total paid: <strong>€" + escapeHtml(total) + "</strong></p>" +
       "<p><a href=\"" + escapeHtml(statusUrl) + "\">View your order</a></p>" +
       "<p>Your treasure is now confirmed for processing.</p>" +
-      "</body></html>",
-    fetchImpl
-  });
+      "</body></html>"
+  }, transportOverride);
 }
 
-async function sendWithdrawalConfirmationEmail(request, fetchImpl = globalThis.fetch) {
+async function sendWithdrawalConfirmationEmail(request, transportOverride) {
   const requestId = Number(request.id);
   const orderText = request.order_id ? " for order <strong>#" + escapeHtml(request.order_id) + "</strong>" : "";
   const baseUrl = String(process.env.PUBLIC_BASE_URL || "").replace(/\/$/, "");
@@ -163,12 +204,11 @@ async function sendWithdrawalConfirmationEmail(request, fetchImpl = globalThis.f
       "<p>Request number: <strong>#" + requestId + "</strong></p>" +
       "<p>We will review the request and contact you about the next steps.</p>" +
       "<p>You can revisit the withdrawal information here: <a href=\"" + escapeHtml(withdrawalUrl) + "\">Withdrawal information</a></p>" +
-      "</body></html>",
-    fetchImpl
-  });
+      "</body></html>"
+  }, transportOverride);
 }
 
-async function sendContactMessageEmail(message, fetchImpl = globalThis.fetch) {
+async function sendContactMessageEmail(message, transportOverride) {
   const name = escapeHtml(message.name || "Visitor");
   const email = String(message.email || "").trim().toLowerCase();
   const text = escapeHtml(message.message || "").replace(/\n/g, "<br>");
@@ -186,13 +226,14 @@ async function sendContactMessageEmail(message, fetchImpl = globalThis.fetch) {
       "<p><strong>Email:</strong> " + escapeHtml(email) + "</p>" +
       "<hr>" +
       "<p>" + text + "</p>" +
-      "</body></html>",
-    fetchImpl
-  });
+      "</body></html>"
+  }, transportOverride);
 }
 
 module.exports = {
   isEmailConfigured,
+  getEmailTransport,
+  verifyEmailConnection,
   sendEmail,
   sendOrderReceivedEmail,
   sendPaymentConfirmationEmail,

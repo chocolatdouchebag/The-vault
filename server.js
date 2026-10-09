@@ -31,7 +31,7 @@ if (isProduction && process.env.PAYMENTS_ENABLED === "true") {
   let parsedBaseUrl;
   try { parsedBaseUrl = new URL(configuredBaseUrl); } catch { parsedBaseUrl = null; }
   if (!parsedBaseUrl || parsedBaseUrl.protocol !== "https:") throw new Error("PUBLIC_BASE_URL must be an HTTPS URL when payments are enabled in production");
-  if (!isEmailConfigured()) throw new Error("RESEND_API_KEY and RESEND_FROM must be set when payments are enabled in production");
+  if (!isEmailConfigured()) throw new Error("SMTP email settings must be configured (SMTP_USER and SMTP_PASS are required) when payments are enabled in production");
 }
 app.disable("x-powered-by");
 if (isProduction) app.set("trust proxy", 1);
