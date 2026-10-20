@@ -53,11 +53,21 @@ function normalizeDatabaseError(error) {
   return error;
 }
 
+const BOOLEAN_COLUMNS = new Set([
+  "is_admin", "is_active", "is_featured", "is_new_arrival", "is_primary"
+]);
+
 function sanitizeRows(rows) {
   if (!Array.isArray(rows)) return [];
   return rows.map(row => {
     if (!row || typeof row !== "object" || Array.isArray(row) || Buffer.isBuffer(row)) return row;
     const copy = { ...row };
+    // Preserve PostgreSQL's boolean JSON representation instead of exposing MySQL TINYINT values.
+    for (const column of BOOLEAN_COLUMNS) {
+      if (Object.hasOwn(copy, column) && copy[column] !== null && copy[column] !== undefined) {
+        copy[column] = copy[column] === true || copy[column] === 1 || copy[column] === "1";
+      }
+    }
     // MySQL needs these generated columns to emulate PostgreSQL partial uniqueness.
     // They are implementation details and are not part of the original application schema.
     delete copy.unique_name_image_hash;
