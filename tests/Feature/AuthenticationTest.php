@@ -79,6 +79,9 @@ class AuthenticationTest extends TestCase
                 'username' => 'old-customer',
                 'isAdmin' => false,
             ]);
+
+        $normalizedHash = DB::table('users')->where('id', $userId)->value('password');
+        $this->assertStringStartsWith('$2y
     }
 
     public function test_invalid_login_is_generic_and_does_not_start_a_session(): void
@@ -89,7 +92,50 @@ class AuthenticationTest extends TestCase
         ])->assertUnauthorized()
             ->assertJsonPath('error', 'Invalid login');
 
+        $this->getJson('/api/me')->assertOk()->assertContent('null');
+    }
+
+    public function test_expired_authentication_session_is_treated_as_logged_out(): void
+    {
+        $this->withSession([
+            'userId' => 999,
+            'isAdmin' => true,
+            'authExpiresAt' => now()->subMinute()->timestamp,
+        ])->getJson('/api/me')
+            ->assertOk()
+            ->assertExactJson(null);
+    }
+
+    public function test_logout_invalidates_the_session(): void
+    {
+        $id = DB::table('users')->insertGetId([
+            'username' => 'logout-customer',
+            'password' => Hash::make('A-Strong-Password-2026'),
+            'is_admin' => false,
+        ]);
+
+        $this->withSession([
+            'userId' => $id,
+            'isAdmin' => false,
+            'authExpiresAt' => now()->addDay()->timestamp,
+        ]);
+
+        $this->postJson('/api/logout')->assertOk();
         $this->getJson('/api/me')->assertOk()->assertExactJson(null);
+    }
+}
+, $normalizedHash);
+    }
+
+    public function test_invalid_login_is_generic_and_does_not_start_a_session(): void
+    {
+        $this->postJson('/api/login', [
+            'username' => 'nobody',
+            'password' => 'Wrong-Password-2026',
+        ])->assertUnauthorized()
+            ->assertJsonPath('error', 'Invalid login');
+
+        $this->getJson('/api/me')->assertOk()->assertContent('null');
     }
 
     public function test_expired_authentication_session_is_treated_as_logged_out(): void
