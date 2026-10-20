@@ -39,7 +39,7 @@ Keep `PAYMENTS_ENABLED=false`. Do not add live keys, enable checkout or claim a 
 
 Requirements: PHP 8.3 or newer, Composer, the Laravel-required PHP extensions, and PDO support for the local/test database. The checked-in CI tests use SQLite; CI additionally runs the schema/tests against MySQL 8.4 and MariaDB 10.11.
 
-1. Copy `.env.laravel.example` to `.env`.
+1. Copy `.env.example` to `.env`.
 2. Run `composer install` and `php artisan key:generate`.
 3. Use a disposable local SQLite/MySQL/MariaDB database. Never configure this Laravel copy to use the PostgreSQL rollback source.
 4. Run `php artisan test`.
