@@ -1,7 +1,10 @@
 "use strict";
 
 require("dotenv").config();
-const { Pool } = require("pg");
+const { Pool, types } = require("pg");
+
+// Preserve civil timestamps exactly (including microseconds) during transfer.
+types.setTypeParser(1114, value => value);
 const mysql = require("mysql2/promise");
 
 const TABLES_IN_FK_ORDER = [
@@ -121,7 +124,7 @@ function targetConnection() {
     password: process.env.MYSQL_PASSWORD || "",
     connectTimeout: Math.max(1000, Math.min(30000, Number(process.env.MYSQL_CONNECT_TIMEOUT_MS) || 10000)),
     charset: "utf8mb4",
-    timezone: process.env.MYSQL_TIMEZONE || "local",
+    timezone: process.env.MYSQL_TIMEZONE || "Z",
     supportBigNumbers: true,
     bigNumberStrings: false,
     decimalNumbers: false,
@@ -185,6 +188,11 @@ async function verifyExpectedTables(source, target, database) {
     if (!targetNames.has(name)) throw new Error("MySQL target is missing table: " + name + ". Apply the MySQL baseline first.");
   }
 
+  if (sourceNames.size !== TABLES_IN_FK_ORDER.length) {
+    const unhandled = [...sourceNames].filter(name => !TABLES_IN_FK_ORDER.some(table => table.name === name));
+    throw new Error("PostgreSQL source has additional tables not included in the transfer: " + unhandled.join(", ") + ".");
+  }
+
   if (targetNames.size !== TABLES_IN_FK_ORDER.length) {
     throw new Error("MySQL target has an unexpected table count. Use a fresh database containing only the 10-table baseline.");
   }
@@ -231,6 +239,7 @@ async function main() {
     console.log("Preflight passed: expected tables exist and all target tables are empty.");
     console.log("Preparing transfer; row values and credentials will not be printed.");
 
+    await target.query("SET time_zone = '+00:00'");
     await target.beginTransaction();
     transactionStarted = true;
     const copiedCounts = {};
@@ -296,6 +305,17 @@ async function main() {
       if (Number(countRows[0].row_count) !== rows.length) {
         throw new Error("Row-count mismatch detected after copying table " + table + ".");
       }
+
+      // Verify that the source primary keys, including explicit IDs, survived transfer.
+      const [targetKeys] = await target.query(
+        "SELECT `" + identifier(tableInfo.key) + "` AS transfer_key FROM `" + table + "` ORDER BY `" + identifier(tableInfo.key) + "`"
+      );
+      for (let index = 0; index < rows.length; index++) {
+        if (String(targetKeys[index]?.transfer_key) !== String(rows[index][tableInfo.key])) {
+          throw new Error("Primary-key mismatch detected after copying table " + table + ".");
+        }
+      }
+
       copiedCounts[table] = rows.length;
       console.log("Prepared", table + ":", rows.length, "row(s)");
     }
