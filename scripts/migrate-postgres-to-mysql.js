@@ -57,7 +57,7 @@ function validateValue(table, column, value, targetColumn, sourceColumn) {
     }
     const integerDigits = match[1].replace(/^0+/, "").length;
     const fraction = match[2] || "";
-    const significantFractionOverflow = fraction.slice(scale).some(digit => digit !== "0");
+    const significantFractionOverflow = /[1-9]/.test(fraction.slice(scale));
     if (integerDigits > precision - scale || significantFractionOverflow) {
       throw new Error(
         "Numeric value would lose precision at " + label +
