@@ -6,7 +6,8 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "db:migrate-postgres-to-laravel-mysql": "node scripts/migrate-postgres-to-laravel-mysql.js"
+    "db:migrate-postgres-to-laravel-mysql": "node scripts/migrate-postgres-to-laravel-mysql.js",
+    "db:verify-postgres-laravel-mysql": "node scripts/verify-postgres-laravel-mysql.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
