@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('username', 64)->unique();
+            $table->string('username', 64)->collation('utf8mb4_bin')->unique();
             $table->string('password');
             $table->boolean('is_admin')->default(false);
         });

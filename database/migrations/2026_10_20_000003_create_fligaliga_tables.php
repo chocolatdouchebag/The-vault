@@ -11,8 +11,8 @@ return new class extends Migration
     {
         Schema::create('categories', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('name', 255)->unique();
-            $table->string('slug', 255)->unique();
+            $table->string('name', 255)->collation('utf8mb4_bin')->unique();
+            $table->string('slug', 255)->collation('utf8mb4_bin')->unique();
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamp('created_at', 6)->useCurrent();
@@ -58,7 +58,7 @@ return new class extends Migration
         Schema::create('product_variants', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('product_id');
-            $table->string('sku', 255)->nullable()->unique('unique_product_variant_sku');
+            $table->string('sku', 255)->collation('utf8mb4_bin')->nullable()->unique('unique_product_variant_sku');
             $table->text('name')->nullable();
             $table->decimal('price', 12, 2)->default(0);
             $table->integer('stock')->default(0);
@@ -98,16 +98,16 @@ return new class extends Migration
             $table->increments('id');
             $table->unsignedInteger('user_id')->nullable();
             $table->decimal('total', 30, 10);
-            $table->string('status', 64)->nullable()->default('pending');
+            $table->string('status', 64)->collation('utf8mb4_bin')->nullable()->default('pending');
             $table->timestamp('created_at', 6)->nullable()->useCurrent();
             $table->timestamp('updated_at', 6)->useCurrent();
             $table->text('customer_name')->nullable();
-            $table->string('customer_email', 254)->nullable();
+            $table->string('customer_email', 254)->collation('utf8mb4_bin')->nullable();
             $table->text('shipping_address_line1')->nullable();
             $table->text('shipping_postcode')->nullable();
             $table->text('shipping_city')->nullable();
             $table->string('shipping_country', 255)->nullable()->default('NL');
-            $table->string('payment_id', 255)->nullable()->unique('idx_orders_payment_id');
+            $table->string('payment_id', 255)->collation('utf8mb4_bin')->nullable()->unique('idx_orders_payment_id');
             $table->timestamp('paid_at', 6)->nullable();
             $table->timestamp('stock_released_at', 6)->nullable();
             $table->timestamp('payment_expires_at', 6)->nullable();
@@ -150,7 +150,7 @@ return new class extends Migration
         });
 
         Schema::create('session', function (Blueprint $table) {
-            $table->string('sid', 255)->primary();
+            $table->string('sid', 255)->collation('utf8mb4_bin')->primary();
             $table->json('sess');
             $table->timestamp('expire', 6);
             $table->index('expire', 'idx_session_expire');
@@ -159,9 +159,9 @@ return new class extends Migration
         Schema::create('withdrawal_requests', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('order_id')->nullable();
-            $table->string('email', 254);
+            $table->string('email', 254)->collation('utf8mb4_bin');
             $table->text('reason')->nullable();
-            $table->string('status', 32)->default('received');
+            $table->string('status', 32)->collation('utf8mb4_bin')->default('received');
             $table->timestamp('submitted_at', 6)->useCurrent();
             $table->timestamp('confirmation_email_sent_at', 6)->nullable();
             $table->index('order_id', 'idx_withdrawal_order');

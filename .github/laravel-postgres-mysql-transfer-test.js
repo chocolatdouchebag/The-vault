@@ -68,6 +68,42 @@ async function main() {
       assert.equal(String(rows[0]?.transfer_key), String(expected), table + " primary key should be preserved");
     }
 
+    // PostgreSQL text equality and unique indexes are case-sensitive by default.
+    // Explicit binary collations must preserve that behavior on MySQL/MariaDB.
+    const caseSensitiveProbes = [
+      ["username", "SELECT COUNT(*) AS matches FROM users WHERE username = ?", "TRANSFER-TEST-USER"],
+      ["category name", "SELECT COUNT(*) AS matches FROM categories WHERE name = ?", "TRANSFER TEST CATEGORY"],
+      ["category slug", "SELECT COUNT(*) AS matches FROM categories WHERE slug = ?", "TRANSFER-TEST-CATEGORY"],
+      ["session ID", "SELECT COUNT(*) AS matches FROM `session` WHERE sid = ?", "TRANSFER-FIXTURE-SESSION"],
+      ["order status", "SELECT COUNT(*) AS matches FROM orders WHERE status = ?", "PAYMENT_PENDING"],
+      ["customer email", "SELECT COUNT(*) AS matches FROM orders WHERE customer_email = ?", "TRANSFER-TEST@EXAMPLE.TEST"],
+      ["withdrawal email", "SELECT COUNT(*) AS matches FROM withdrawal_requests WHERE email = ?", "TRANSFER-TEST@EXAMPLE.TEST"]
+    ];
+    for (const [label, sql, value] of caseSensitiveProbes) {
+      const [rows] = await connection.query(sql, [value]);
+      assert.equal(Number(rows[0].matches), 0, label + " equality must remain case-sensitive");
+    }
+
+    await connection.query(
+      "INSERT INTO product_variants (id, product_id, sku, name, price, stock, attributes, is_active, created_at, updated_at) " +
+      "VALUES (999, 44, ?, 'Collation probe', 1.00, 1, JSON_OBJECT(), 1, NOW(6), NOW(6))",
+      ["MiXeD-SKU"]
+    );
+    try {
+      const [rows] = await connection.query("SELECT COUNT(*) AS matches FROM product_variants WHERE sku = ?", ["mixed-sku"]);
+      assert.equal(Number(rows[0].matches), 0, "variant SKU equality must remain case-sensitive");
+    } finally {
+      await connection.query("DELETE FROM product_variants WHERE id = 999");
+    }
+
+    await connection.query("UPDATE orders SET payment_id = ? WHERE id = 47", ["MiXeD-Payment-ID"]);
+    try {
+      const [rows] = await connection.query("SELECT COUNT(*) AS matches FROM orders WHERE payment_id = ?", ["mixed-payment-id"]);
+      assert.equal(Number(rows[0].matches), 0, "payment ID equality must remain case-sensitive");
+    } finally {
+      await connection.query("UPDATE orders SET payment_id = NULL WHERE id = 47");
+    }
+
     const [products] = await connection.query(
       "SELECT name, CAST(price AS CHAR) AS price, stock, category_id, is_featured, " +
       "DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s.%f') AS created_at " +
