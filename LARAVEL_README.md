@@ -1,32 +1,60 @@
-# FLIGALIGA Laravel edition (development branch)
+# FLIGALIGA Laravel edition
 
-This is the isolated Laravel/PHP port of the custom FLIGALIGA Vault storefront. It is work in progress and is not production-ready.
+This is the isolated Laravel/PHP port of the custom FLIGALIGA Vault storefront. It is a work in progress and is not production-ready.
 
-## Safety / branch separation
+## Protected versions and data
 
-- This work lives on \`feature/laravel-shared-hosting\`.
-- \`main\` and \`backup/node-postgres-2026-10-20\` preserve the original Node.js/PostgreSQL app.
-- \`mysql-migration\` remains a separate database migration experiment/reference.
-- The PostgreSQL source database and its local backup are not modified by this application scaffold.
-- Never commit a real \`.env\`, PostgreSQL dump, customer records or live payment/email credentials.
+- Develop only on `feature/laravel-shared-hosting`.
+- `main` and `backup/node-postgres-2026-10-20` preserve the Node.js/PostgreSQL website.
+- `mysql-migration` remains a separate migration reference branch.
+- The PostgreSQL database and private local dump are recovery sources; Laravel development must not write to them.
+- Never commit `.env`, PostgreSQL dumps, customer records, real Mollie keys or email credentials.
 
-## Local setup
+## Current ported features
 
-Requirements: PHP >= 8.3 and Laravel's documented PHP extensions; Composer; PDO MySQL for a STRATO-like database, or PDO SQLite for the isolated tests.
+- Existing Vault frontend shell, CSS, browser JavaScript and static assets.
+- Public product catalogue and shareable product detail routes.
+- Registration, login, logout, session-backed identity and admin authorization.
+- Compatibility with existing Node.js bcrypt hashes, with rehash only after successful login.
+- Admin product listing/create/update/soft-disable endpoints.
+- Cart listing/add/update/empty with per-user ownership and stock-limit checks.
+- Customer order read endpoints and an admin order summary.
+- Checkout endpoint is intentionally disabled and returns an explicit not-configured response without creating orders or reserving stock.
 
-1. Copy \`.env.laravel.example\` to \`.env\`.
-2. Install PHP dependencies with \`composer install\` (the first dependency resolution creates \`composer.lock\`; commit it after reviewing the resolved versions).
-3. Run \`php artisan key:generate\`.
-4. For a local sandbox only, use a disposable MySQL/MariaDB database and configure its credentials in \`.env\`. Do not use the existing PostgreSQL database as the Laravel target.
-5. Run \`php artisan migrate\` only after confirming \`DB_DATABASE\` refers to a new disposable database.
-6. Run \`php artisan test\`, then \`php artisan serve\` and visit \`http://127.0.0.1:8000\`.
+## Deliberately deferred
 
-The existing static Vault frontend assets remain in \`public/\`. This first milestone ports only the health endpoint and public product catalogue. Authentication, cart, admin, checkout, Mollie lifecycle, notifications and withdrawals must be ported and tested before the application is usable as a full webshop.
+The store is not finished. The owner does not yet have Mollie or KvK details, so these are not current development blockers:
+
+- Mollie checkout, webhooks, payment status transitions and stock reservation/release on payment outcomes.
+- Production transactional email, Resend credentials and delivery idempotency.
+- Withdrawal workflow, contact-message delivery, dedicated image/variant management and remaining admin pages.
+- Final business identity, legal/merchant launch content and production cutover.
+
+Keep `PAYMENTS_ENABLED=false`. Do not add live keys, enable checkout or claim a customer payment is accepted until the payment lifecycle is implemented and end-to-end tested.
+
+## Local development
+
+Requirements: PHP 8.3 or newer, Composer, the Laravel-required PHP extensions, and PDO support for the local/test database. The checked-in CI tests use SQLite; CI additionally runs the schema/tests against MySQL 8.4 and MariaDB 10.11.
+
+1. Copy `.env.laravel.example` to `.env`.
+2. Run `composer install` and `php artisan key:generate`.
+3. Use a disposable local SQLite/MySQL/MariaDB database. Never configure this Laravel copy to use the PostgreSQL rollback source.
+4. Run `php artisan test`.
+5. Run `php artisan serve` and open `http://127.0.0.1:8000`.
+
+Before a reusable/release build, commit and review `composer.lock` so dependency versions are reproducible.
 
 ## STRATO deployment gates
 
-Before purchase or deployment, confirm the exact package, PHP version/extensions, database engine/version, database limits, SSH/SFTP and Composer availability, document-root configuration and scheduled-task capability. Point the web document root at Laravel's \`public/\` directory; never expose the project root or \`.env\`. STRATO's newer shared-hosting platform may not provide cron jobs, so payment reservation cleanup requires an approved alternative.
+Before purchase or deployment, verify the exact package, PHP extensions (especially `pdo_mysql`), MySQL/MariaDB engine and version, database limits, SFTP/SSH and Composer availability, document-root layout, writable `storage/` and `bootstrap/cache/`, request limits and scheduled-task support.
 
-## Tests and migration
+Laravel's document root must expose only the `public/` directory. Never expose the project root, `.env`, `vendor/` or private storage. STRATO's newer shared-hosting platform may not offer cron jobs; an approved alternative is required for scheduled maintenance before payment processing is implemented.
 
-Tests use SQLite in memory; the real target schema must also be tested against the exact MySQL/MariaDB version from the STRATO account. The current PostgreSQL database dump is a rollback asset; no cutover is authorized until route-level, payment, row-count, integrity and rollback tests pass.
+## Next development milestones
+
+1. Finish the remaining non-payment APIs and admin workflows and add regression tests.
+2. Verify shared-hosting feasibility using the actual STRATO package before trying a deployment.
+3. Match the Laravel schema to the exact STRATO database service, then build a one-way migration utility with ID preservation and data-integrity checks.
+4. Perform staging migration only after a fresh verified PostgreSQL dump; compare row counts, IDs, relationships, inventory and totals.
+5. Implement Mollie and production email only when the owner confirms readiness, with external calls mocked in CI and a complete staging lifecycle test.
+6. Cut over only with a final backup, controlled write freeze, explicit owner approval and a documented rollback to Node.js/PostgreSQL.
