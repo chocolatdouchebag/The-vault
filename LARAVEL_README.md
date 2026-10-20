@@ -33,7 +33,7 @@ The store is not finished. The owner does not yet have Mollie or KvK details, so
 
 - Mollie checkout, webhooks, payment status transitions and stock reservation/release on payment outcomes.
 - Production transactional email, Resend credentials and delivery idempotency.
-- Contact-message and transactional email delivery (deferred), dedicated image/variant management UI, and remaining admin pages.
+- Contact-message and transactional email delivery (deferred), actual product image-file uploads (the current gallery manages image URLs), and remaining admin pages.
 - Final business identity, legal/merchant launch content and production cutover.
 
 Keep `PAYMENTS_ENABLED=false`. Do not add live keys, enable checkout or claim a customer payment is accepted until the payment lifecycle is implemented and end-to-end tested.
