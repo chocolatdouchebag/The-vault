@@ -10,6 +10,8 @@ on:
       - ".github/postgres-mysql-transfer-test.js"
       - "scripts/migrate-postgres-to-mysql.js"
       - ".github/mysql-db-integration-test.js"
+      - ".github/mysql-checkout-integration-test.js"
+      - ".github/mock-mollie-fetch.js"
       - "db.js"
       - "server.js"
       - "payment-cleanup.js"
@@ -27,6 +29,8 @@ on:
       - ".github/postgres-mysql-transfer-test.js"
       - "scripts/migrate-postgres-to-mysql.js"
       - ".github/mysql-db-integration-test.js"
+      - ".github/mysql-checkout-integration-test.js"
+      - ".github/mock-mollie-fetch.js"
       - "db.js"
       - "server.js"
       - "payment-cleanup.js"
@@ -133,6 +137,9 @@ jobs:
 
       - name: Test application MySQL DB adapter and session store
         run: node .github/mysql-db-integration-test.js
+
+      - name: Test checkout and failed-payment webhook with mocked Mollie
+        run: node .github/mysql-checkout-integration-test.js
 
       - name: Load synthetic PostgreSQL source fixture
         env:
