@@ -103,7 +103,7 @@ CREATE TABLE product_images (
   is_primary TINYINT(1) NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   primary_product_id INT
-    GENERATED ALWAYS AS (CASE WHEN is_primary = 1 THEN product_id ELSE NULL END) STORED,
+    GENERATED ALWAYS AS (CASE WHEN is_primary = 1 THEN product_id ELSE NULL END) VIRTUAL,
   PRIMARY KEY (id),
   CONSTRAINT product_images_sort_order_non_negative CHECK (sort_order >= 0),
   CONSTRAINT product_images_url_not_blank CHECK (CHAR_LENGTH(TRIM(image_url)) > 0),
