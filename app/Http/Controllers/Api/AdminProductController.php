@@ -1,11 +1,11 @@
 <?php
 
-namespace App\\Http\\Controllers\\Api;
+namespace App\Http\Controllers\Api;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Models\\Product;
-use Illuminate\\Http\\JsonResponse;
-use Illuminate\\Http\\Request;
+use App\Http\Controllers\Controller;
+use App\Models\Product;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Throwable;
 
 class AdminProductController extends Controller
@@ -71,7 +71,7 @@ class AdminProductController extends Controller
         }
     }
 
-    public function destroy(string $id): JsonResponse|\\Illuminate\\Http\\Response
+    public function destroy(string $id): JsonResponse|\Illuminate\Http\Response
     {
         if (!ctype_digit($id) || (int) $id < 1) {
             return response()->json(['error' => 'Invalid product'], 400);
@@ -83,8 +83,7 @@ class AdminProductController extends Controller
                 return response()->json(['error' => 'Treasure not found'], 404);
             }
 
-            // Keep historical orders and references intact: removal from the public
-            // catalogue is a soft-disable rather than a destructive delete.
+            // Preserve order references: remove from the catalogue without deleting history.
             $product->is_active = false;
             $product->save();
 
