@@ -1,10 +1,10 @@
 <?php
 
-use App\\Http\\Controllers\\Api\\AdminProductController;
-use App\\Http\\Controllers\\Api\\AuthController;
-use App\\Http\\Controllers\\Api\\HealthController;
-use App\\Http\\Controllers\\Api\\ProductController;
-use Illuminate\\Support\\Facades\\Route;
+use App\Http\Controllers\Api\AdminProductController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\ProductController;
+use Illuminate\Support\Facades\Route;
 
 // The original frontend expects cookie-backed sessions on its /api endpoints.
 // Keep the API prefix and response format, but explicitly add Laravel's web
