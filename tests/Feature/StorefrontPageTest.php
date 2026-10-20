@@ -19,4 +19,41 @@ class StorefrontPageTest extends TestCase
             ->assertOk()
             ->assertSee('FLIGALIGA');
     }
+
+    public function test_all_existing_storefront_page_routes_return_the_frontend_shell(): void
+    {
+        $pages = [
+            '/treasures',
+            '/new-arrivals',
+            '/ledger',
+            '/merchant',
+            '/faq',
+            '/contact',
+            '/shipping',
+            '/returns',
+            '/privacy',
+            '/terms',
+            '/withdrawal',
+            '/accessibility',
+            '/payment-result',
+        ];
+
+        foreach ($pages as $path) {
+            $this->get($path)
+                ->assertOk()
+                ->assertSee('FLIGALIGA');
+        }
+    }
+
+    public function test_statutory_model_withdrawal_form_file_is_preserved(): void
+    {
+        $path = public_path('withdrawal-form.html');
+
+        $this->assertFileExists($path);
+        $this->assertFileIsReadable($path);
+        $this->assertStringContainsString(
+            'FLIGALIGA',
+            (string) file_get_contents($path)
+        );
+    }
 }
