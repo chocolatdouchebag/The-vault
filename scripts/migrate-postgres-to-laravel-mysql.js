@@ -347,8 +347,11 @@ async function main() {
             const targetColumn = targetMetaByName.get(name);
             const sourceType = String(sourceColumn.data_type || "").toLowerCase();
             const targetType = String(targetColumn.DATA_TYPE || "").toLowerCase();
+            // MariaDB exposes JSON columns as LONGTEXT plus a JSON_VALID constraint,
+            // while MySQL exposes DATA_TYPE as "json". Serialize source JSON for both.
             if (value !== null && value !== undefined &&
-                ["json", "jsonb"].includes(sourceType) && targetType === "json") {
+                ["json", "jsonb"].includes(sourceType) &&
+                ["json", "longtext", "text"].includes(targetType)) {
               return JSON.stringify(value);
             }
             return value;
