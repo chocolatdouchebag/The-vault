@@ -184,7 +184,7 @@ return new class extends Migration
                 "ALTER TABLE `product_variants` ADD CONSTRAINT `product_variants_attributes_object` CHECK (JSON_TYPE(`attributes`) = 'OBJECT')",
                 "ALTER TABLE `product_images` ADD CONSTRAINT `product_images_sort_order_non_negative` CHECK (`sort_order` >= 0)",
                 "ALTER TABLE `product_images` ADD CONSTRAINT `product_images_url_not_blank` CHECK (CHAR_LENGTH(TRIM(`image_url`)) > 0)",
-                "ALTER TABLE `product_images` ADD CONSTRAINT `product_images_primary_state_valid` CHECK ((`is_primary` = 1 AND `primary_slot` = 1) OR (`is_primary` = 0 AND `primary_slot` IS NULL))",
+                "ALTER TABLE `product_images` ADD CONSTRAINT `product_images_primary_state_valid` CHECK ((`is_primary` = 1 AND `primary_slot` IS NOT NULL AND `primary_slot` = 1) OR (`is_primary` = 0 AND `primary_slot` IS NULL))",
                 "ALTER TABLE `orders` ADD CONSTRAINT `orders_total_non_negative` CHECK (`total` >= 0)",
                 "ALTER TABLE `cart` ADD CONSTRAINT `cart_quantity_positive` CHECK (`quantity` > 0)",
                 "ALTER TABLE `order_items` ADD CONSTRAINT `order_items_quantity_positive` CHECK (`quantity` > 0)",
