@@ -343,6 +343,10 @@ async function main() {
       error.message.startsWith("Set MySQL")
     ) ? error.message : null;
     console.error("PostgreSQL-to-MySQL transfer failed:", safeMessage || ("database error " + (error?.code || "unknown")));
+    if (process.env.MYSQL_MIGRATION_DEBUG_ERRORS === "true" && error) {
+      // Enable only for synthetic CI fixtures; database errors can contain SQL values.
+      console.error("Synthetic transfer diagnostic:", error.stack || error.message || "no diagnostic available");
+    }
     console.error("The MySQL transaction was rolled back when it had started. No source data was changed.");
     process.exitCode = 1;
   } finally {
