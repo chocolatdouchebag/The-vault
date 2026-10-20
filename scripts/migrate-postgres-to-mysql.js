@@ -250,7 +250,7 @@ async function main() {
       const targetColumns = await getTargetColumns(target, process.env.MYSQL_DATABASE, table);
       const writableTargetColumns = targetColumns.filter(column =>
         !String(column.GENERATION_EXPRESSION || "").trim() &&
-        !String(column.EXTRA || "").toLowerCase().includes("generated")
+        !/(?:virtual|stored) generated/i.test(String(column.EXTRA || ""))
       );
       const targetByName = new Map(writableTargetColumns.map(column => [column.COLUMN_NAME, column]));
       const sourceNames = new Set(sourceColumns.map(column => column.column_name));
