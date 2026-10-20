@@ -63,6 +63,7 @@ This is a query inventory, not a substitute for the live schema export.
 - [x] Create isolated `mysql-migration` branch from `main`.
 - [x] Inventory database drivers, session storage, payment cleanup, SQL dialect features and existing migration files.
 - [ ] Obtain and inspect a schema-only PostgreSQL export; do not commit it if it contains sensitive schema comments or other secrets.
+- [x] Add `npm run db:export-postgres-schema`, which reads the local `.env` without displaying credentials, writes schema DDL only to a private `/tmp` file, and lists table names.
 - [ ] Confirm target host's MySQL/MariaDB product and exact version, supported Node.js version, and whether the Express app can run there.
 - [ ] Add a checked-in MySQL baseline schema and version-specific migration set.
 - [ ] Add a repeatable PostgreSQL-to-MySQL data transfer script with explicit table ordering and ID preservation.
@@ -73,13 +74,17 @@ This is a query inventory, not a substitute for the live schema export.
 
 ## Local schema export (run in the FLIGALIGA project directory)
 
-This exports **schema only**, not customer rows. It prompts for the PostgreSQL password if needed. Keep the resulting file local and do not commit it.
+The repository includes a helper that reads the existing local `.env` automatically. From the checked-out `mysql-migration` branch, run:
 
 ```bash
-pg_dump --schema-only --no-owner --no-privileges -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" > /tmp/fligaliga-postgres-schema.sql
+npm run db:export-postgres-schema
 ```
 
-If `DB_HOST`, `DB_USER`, and `DB_NAME` are only in `.env`, load those non-secret settings in your shell first. Do not paste or upload your `.env` file. Inspect or share only the schema dump, after checking it for secrets.
+It uses the installed `pg_dump` client with `--schema-only`, `--no-owner`, `--no-privileges`, and `--no-comments`. It writes the DDL to `/tmp/fligaliga-postgres-schema.sql` with owner-only file permissions. No table rows are exported, and credentials are never printed.
+
+Do not commit or paste the `.env` file. Once the export succeeds, attach the generated schema SQL file to the conversation or share the `CREATE TABLE` definitions for the core tables (`users`, `products`, `cart`, `orders`, `order_items`) and related foreign keys/indexes. The export may also show whether each follow-up PostgreSQL migration has already been applied.
+
+If the helper reports that `pg_dump` is not installed, install the PostgreSQL client tools on the local machine and rerun it. If it reports a connection error, verify that the configured database is reachable; do not paste database credentials.
 
 ## Completion criteria
 
