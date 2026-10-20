@@ -18,8 +18,8 @@ jobs:
         run: node --check server.js
       - name: Check PostgreSQL schema export helper
         run: node --check scripts/export-postgres-schema.js
-      - name: Check MySQL compatibility layer
-        run: node --check mysql-compat.js && node --check db.js && node --check session-store.js
+      - name: Check MySQL compatibility and migration scripts
+        run: node --check mysql-compat.js && node --check db.js && node --check session-store.js && node --check scripts/apply-mysql-schema.js && node --check scripts/migrate-postgres-to-mysql.js
       - name: Test MySQL compatibility layer
         run: node .github/mysql-compat-regression-test.js
       - name: Check browser JavaScript
