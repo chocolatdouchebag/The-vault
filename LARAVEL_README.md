@@ -39,7 +39,7 @@ Keep `PAYMENTS_ENABLED=false`. Do not add live keys, enable checkout or claim a 
 
 Requirements: PHP 8.3 or newer, Composer, the Laravel-required PHP extensions, and PDO support for the local/test database. The checked-in CI tests use SQLite; CI additionally runs the schema/tests against MySQL 8.4 and MariaDB 10.11.
 
-1. Copy `.env.example` to `.env` for local SQLite development.
+1. Copy `.env.example` to `.env` for local SQLite development. It deliberately leaves `DB_DATABASE` unset so Laravel resolves its database file through `database_path()` rather than a relative working-directory path.
 2. Run `composer install` and `php artisan key:generate`.
 3. Create the new local database file with `touch database/database.sqlite`, then run `php artisan migrate --seed` if you want demo catalogue items.
 4. Run `php artisan test`.
