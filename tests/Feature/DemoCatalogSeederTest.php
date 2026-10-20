@@ -42,7 +42,7 @@ class DemoCatalogSeederTest extends TestCase
 
     public function test_demo_catalogue_seeder_refuses_non_development_environments(): void
     {
-        $this->app['env'] = 'production';
+        $this->app->detectEnvironment(fn () => 'production');
 
         try {
             $this->seed(\Database\Seeders\DemoCatalogSeeder::class);
@@ -53,7 +53,7 @@ class DemoCatalogSeederTest extends TestCase
                 $exception->getMessage()
             );
         } finally {
-            $this->app['env'] = 'testing';
+            $this->app->detectEnvironment(fn () => 'testing');
         }
 
         $this->assertSame(0, DB::table('products')->count());
