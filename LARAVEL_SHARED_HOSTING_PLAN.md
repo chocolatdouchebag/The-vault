@@ -34,6 +34,19 @@ Laravel 13's official database docs list first-party support for MariaDB 10.3+ a
 - Install Composer dependencies with production settings. If shared hosting does not provide Composer/SSH, validate whether a local production dependency build can be uploaded safely and repeatably via SFTP/Git.
 - Replace in-process Node.js timer cleanup with a supported shared-hosting approach. Because cron is missing on STRATO's newer platform, assess (a) an authenticated external scheduler with a rotated secret and replay/rate limits, (b) supported legacy-plan cron, or (c) safe on-demand expiry reconciliation. Do not silently omit payment-reservation cleanup.
 
+## Current development scope (pre-launch)
+
+The webshop is not finished yet. Treat payment processing, merchant onboarding and business-registration-dependent tasks as deferred milestones, not blockers for the current foundation. The owner does not yet have a Mollie account or KvK registration.
+
+Current priority:
+1. Make the existing Vault frontend load under Laravel and keep the current routes/JSON contracts working.
+2. Port and test authentication, sessions, product catalogue, product administration, image/variant management, cart and non-payment order/admin scaffolding.
+3. Keep payment initiation disabled by default. Do not add live credentials or enable live checkout. A placeholder UI may remain, but it must not claim that a payment is being processed or accepted.
+4. Defer Mollie checkout/webhooks, production payment email workflow, business registration details, and legal/merchant launch checks until the owner confirms readiness. Preserve clear TODOs and the design notes for later.
+5. Once the owner has a Mollie account and KvK details, implement the actual payment and notification flows behind tests, then run a complete staging checkout before launch.
+
+This is a development sequence only, not a claim that the website or checkout is production-ready.
+
 ## Key existing application features to preserve
 
 - Public storefront, product detail routes, search/filtering, catalogue sections and assets.
