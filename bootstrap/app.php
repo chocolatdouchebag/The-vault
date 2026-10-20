@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\EnsureSameOrigin;
+use App\Http\Middleware\RequireAdmin;
+use App\Http\Middleware\RequireLogin;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,6 +18,14 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(SecurityHeaders::class);
+        $middleware->alias([
+            'login.required' => RequireLogin::class,
+            'admin.required' => RequireAdmin::class,
+            'same.origin' => EnsureSameOrigin::class,
+        ]);
+        // Browser-side JavaScript keeps the existing same-origin protection
+        // implemented by EnsureSameOrigin for mutating /api requests.
+        $middleware->validateCsrfTokens(except: ['api/*']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
