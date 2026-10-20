@@ -75,7 +75,9 @@ This is a development sequence only, not a claim that the website or checkout is
 
 ### 1. Laravel foundation
 - [x] Scaffold a clean Laravel application on this branch.
+- [x] Constrain Composer dependency resolution to the declared PHP 8.3 minimum and test the feature suite on PHP 8.3 and 8.4. CI run 114 passed; the reviewed lockfile resolves Symfony 7.4 components compatible with PHP 8.3.
 - [x] Add safe environment examples, deployment notes and CI dependency/test steps; no real secrets.
+- [ ] Commit the reviewed `composer.lock` to Git so production installs are reproducible; CI currently exports the resolved lockfile as an artifact rather than tracking it in the branch.
 - [x] Create baseline native Laravel migrations for the existing data tables, plus User and Product models; add further domain models as order and withdrawal features expand.
 - [x] Add schema and feature-test matrix coverage for MySQL 8.4 and MariaDB 10.11 in CI. The exact STRATO engine/version remains a hosting-feasibility gate.
 - [x] Include a synthetic demo catalogue seeder that refuses to run outside local/testing; no customer, order or payment data is seeded.
