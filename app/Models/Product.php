@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Product extends Model
@@ -24,6 +25,14 @@ class Product extends Model
             'is_featured' => 'boolean',
             'is_new_arrival' => 'boolean',
         ];
+    }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class, 'product_id')
+            ->orderByDesc('is_primary')
+            ->orderBy('sort_order')
+            ->orderBy('id');
     }
 
     public function getSlugAttribute(): string
