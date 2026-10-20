@@ -667,7 +667,7 @@ app.post("/api/checkout", requireSameOrigin, requireLogin, async (req, res) => {
 
     const payment = await paymentResponse.json().catch(() => null);
     if (!paymentResponse.ok || !payment?.id || !payment?._links?.checkout?.href) {
-      await releaseReservedStock(orderId, "payment_creation_failed");
+      await releaseReservedStock(pool, orderId, "payment_creation_failed");
       return res.status(502).json({ error: "Could not start the payment. Your reserved stock has been released." });
     }
 
@@ -685,7 +685,7 @@ app.post("/api/checkout", requireSameOrigin, requireLogin, async (req, res) => {
     res.json({ success: true, orderId, total, checkoutUrl: payment._links.checkout.href });
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
-    if (orderId) await releaseReservedStock(orderId, "checkout_error").catch(() => {});
+    if (orderId) await releaseReservedStock(pool, orderId, "checkout_error").catch(() => {});
     console.error(err);
     res.status(500).json({ error: "Checkout failed" });
   } finally {
@@ -766,13 +766,13 @@ app.post("/api/payments/mollie-webhook", async (req, res) => {
         }
         break;
       case "failed":
-        await releaseReservedStock(order.id, "payment_failed");
+        await releaseReservedStock(pool, order.id, "payment_failed");
         break;
       case "canceled":
-        await releaseReservedStock(order.id, "canceled");
+        await releaseReservedStock(pool, order.id, "canceled");
         break;
       case "expired":
-        await releaseReservedStock(order.id, "expired");
+        await releaseReservedStock(pool, order.id, "expired");
         break;
       default:
         if (!order.stock_released_at && order.status !== "paid") {
