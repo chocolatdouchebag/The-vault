@@ -45,6 +45,17 @@ class StorefrontPageTest extends TestCase
         }
     }
 
+    public function test_apache_default_document_uses_laravel_front_controller(): void
+    {
+        $path = public_path('.htaccess');
+
+        $this->assertFileExists($path);
+        $this->assertStringContainsString(
+            'DirectoryIndex index.php',
+            (string) file_get_contents($path)
+        );
+    }
+
     public function test_statutory_model_withdrawal_form_file_is_preserved(): void
     {
         $path = public_path('withdrawal-form.html');
