@@ -45,6 +45,20 @@ class StorefrontPageTest extends TestCase
         }
     }
 
+    public function test_admin_gallery_controls_are_wired_into_the_existing_storefront(): void
+    {
+        $html = (string) file_get_contents(public_path('index.html'));
+        $javascript = (string) file_get_contents(public_path('script.js'));
+
+        $this->assertStringContainsString('id="admin-image-management"', $html);
+        $this->assertStringContainsString('id="admin-gallery-images"', $html);
+        $this->assertStringContainsString('id="gallery-add-image"', $html);
+        $this->assertStringContainsString('async function loadAdminGalleryImages', $javascript);
+        $this->assertStringContainsString('async function addAdminGalleryImage', $javascript);
+        $this->assertStringContainsString('data-admin-gallery-primary', $javascript);
+        $this->assertStringContainsString('data-admin-gallery-delete', $javascript);
+    }
+
     public function test_apache_default_document_uses_laravel_front_controller(): void
     {
         $path = public_path('.htaccess');
