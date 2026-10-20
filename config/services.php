@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'fligaliga' => [
+        // Public values only. Never put credentials in this section.
+        'public_url' => env('PUBLIC_BASE_URL'),
+        'analytics_measurement_id' => env('GA_MEASUREMENT_ID'),
+    ],
+
 ];
