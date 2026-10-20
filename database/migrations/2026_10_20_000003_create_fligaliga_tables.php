@@ -78,19 +78,15 @@ return new class extends Migration
             $table->text('alt_text')->nullable();
             $table->integer('sort_order')->default(0);
             $table->boolean('is_primary')->default(false);
+            // MySQL/MariaDB generated columns cannot safely reference this cascading FK
+            // in all supported configurations. Store a nullable slot: 1 for primary,
+            // NULL for ordinary images. The write service and import mapper must sync it.
+            $table->unsignedTinyInteger('primary_slot')->nullable();
             $table->timestamp('created_at', 6)->useCurrent();
+            $table->unique(['product_id', 'primary_slot'], 'unique_primary_product_image');
             $table->index(['product_id', 'sort_order'], 'idx_product_images_product');
             $table->foreign('product_id')->references('id')->on('products')->cascadeOnDelete();
         });
-
-        if (DB::getDriverName() !== 'sqlite') {
-            Schema::table('product_images', function (Blueprint $table) {
-                $table->unsignedInteger('primary_product_id')
-                    ->nullable()
-                    ->storedAs('CASE WHEN is_primary = 1 THEN product_id ELSE NULL END');
-                $table->unique('primary_product_id', 'unique_primary_product_image');
-            });
-        }
 
         Schema::create('orders', function (Blueprint $table) {
             $table->increments('id');
