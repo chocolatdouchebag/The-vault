@@ -4,6 +4,8 @@
     </IfModule>
 
     RewriteEngine On
+    # Route the homepage through Laravel so security headers and route handling apply.
+    DirectoryIndex index.php
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
