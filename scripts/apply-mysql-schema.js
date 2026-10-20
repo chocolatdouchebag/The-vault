@@ -61,8 +61,8 @@ async function main() {
     }
 
     const schemaPath = path.join(__dirname, "..", "migrations", "mysql", "001_baseline.sql");
-    const schema = fs.readFileSync(schemaPath, "utf8");
-    // This checked-in baseline intentionally contains no semicolons inside quoted values.
+    const schema = fs.readFileSync(schemaPath, "utf8").replace(/^\\s*--.*$/gm, "");
+    // Strip line comments before splitting; the baseline contains no semicolons inside quoted values.
     const statements = schema.split(/;\s*(?:\r?\n|$)/).map(part => part.trim()).filter(Boolean);
     for (const statement of statements) {
       await connection.query(statement);
