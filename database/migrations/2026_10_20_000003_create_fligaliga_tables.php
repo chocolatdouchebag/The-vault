@@ -1,0 +1,183 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('categories', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('name', 255)->unique();
+            $table->string('slug', 255)->unique();
+            $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamp('created_at', 6)->useCurrent();
+            $table->timestamp('updated_at', 6)->useCurrent();
+        });
+
+        Schema::create('products', function (Blueprint $table) {
+            $table->increments('id');
+            $table->text('name');
+            $table->decimal('price', 30, 10);
+            $table->text('image_url')->nullable();
+            $table->integer('stock')->default(0);
+            $table->text('description')->nullable();
+            $table->text('category')->nullable();
+            $table->timestamp('created_at', 6)->useCurrent();
+            $table->timestamp('updated_at', 6)->useCurrent();
+            $table->boolean('is_active')->default(true);
+            $table->unsignedInteger('category_id')->nullable();
+            $table->string('status', 32)->default('active');
+            $table->string('fulfillment_method', 32)->default('stock');
+            $table->text('rarity')->nullable();
+            $table->text('origin')->nullable();
+            $table->text('condition')->nullable();
+            $table->text('provenance')->nullable();
+            $table->boolean('is_featured')->default(false);
+            $table->boolean('is_new_arrival')->default(false);
+            $table->index('is_active', 'idx_products_active');
+            $table->index('category_id', 'idx_products_category_id');
+            $table->foreign('category_id')->references('id')->on('categories')->nullOnDelete();
+        });
+
+        // Generated columns preserve the original PostgreSQL uniqueness rules on
+        // MySQL/MariaDB without attempting to index unrestricted TEXT columns.
+        if (DB::getDriverName() !== 'sqlite') {
+            Schema::table('products', function (Blueprint $table) {
+                $table->char('unique_name_image_hash', 64)
+                    ->nullable()
+                    ->storedAs("CASE WHEN image_url IS NULL THEN NULL ELSE SHA2(CONCAT(CAST(name AS BINARY), 0x00, CAST(image_url AS BINARY)), 256) END");
+                $table->unique('unique_name_image_hash', 'unique_name_image');
+            });
+        }
+
+        Schema::create('product_variants', function (Blueprint $table) {
+            $table->increments('id');
+            $table->unsignedInteger('product_id');
+            $table->string('sku', 255)->nullable()->unique('unique_product_variant_sku');
+            $table->text('name')->nullable();
+            $table->decimal('price', 12, 2)->default(0);
+            $table->integer('stock')->default(0);
+            $table->json('attributes')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamp('created_at', 6)->useCurrent();
+            $table->timestamp('updated_at', 6)->useCurrent();
+            $table->index('product_id', 'idx_product_variants_product');
+            $table->index('is_active', 'idx_product_variants_active');
+            $table->foreign('product_id')->references('id')->on('products')->cascadeOnDelete();
+        });
+
+        Schema::create('product_images', function (Blueprint $table) {
+            $table->increments('id');
+            $table->unsignedInteger('product_id');
+            $table->text('image_url');
+            $table->text('alt_text')->nullable();
+            $table->integer('sort_order')->default(0);
+            $table->boolean('is_primary')->default(false);
+            $table->timestamp('created_at', 6)->useCurrent();
+            $table->index(['product_id', 'sort_order'], 'idx_product_images_product');
+            $table->foreign('product_id')->references('id')->on('products')->cascadeOnDelete();
+        });
+
+        if (DB::getDriverName() !== 'sqlite') {
+            Schema::table('product_images', function (Blueprint $table) {
+                $table->unsignedInteger('primary_product_id')
+                    ->nullable()
+                    ->storedAs('CASE WHEN is_primary = 1 THEN product_id ELSE NULL END');
+                $table->unique('primary_product_id', 'unique_primary_product_image');
+            });
+        }
+
+        Schema::create('orders', function (Blueprint $table) {
+            $table->increments('id');
+            $table->unsignedInteger('user_id')->nullable();
+            $table->decimal('total', 30, 10);
+            $table->string('status', 64)->nullable()->default('pending');
+            $table->timestamp('created_at', 6)->nullable()->useCurrent();
+            $table->timestamp('updated_at', 6)->useCurrent();
+            $table->text('customer_name')->nullable();
+            $table->string('customer_email', 254)->nullable();
+            $table->text('shipping_address_line1')->nullable();
+            $table->text('shipping_postcode')->nullable();
+            $table->text('shipping_city')->nullable();
+            $table->string('shipping_country', 255)->nullable()->default('NL');
+            $table->string('payment_id', 255)->nullable()->unique('idx_orders_payment_id');
+            $table->timestamp('paid_at', 6)->nullable();
+            $table->timestamp('stock_released_at', 6)->nullable();
+            $table->timestamp('payment_expires_at', 6)->nullable();
+            $table->timestamp('order_received_email_sent_at', 6)->nullable();
+            $table->timestamp('payment_confirmation_email_sent_at', 6)->nullable();
+            $table->index('user_id', 'idx_orders_user');
+            $table->index('created_at', 'idx_orders_created_at');
+            $table->index('customer_email', 'idx_orders_customer_email');
+            $table->index(['status', 'stock_released_at', 'payment_expires_at', 'id'], 'idx_orders_payment_pending_expiry');
+            $table->foreign('user_id')->references('id')->on('users');
+        });
+
+        Schema::create('cart', function (Blueprint $table) {
+            $table->increments('id');
+            $table->unsignedInteger('product_id')->nullable();
+            $table->integer('quantity')->default(1);
+            $table->unsignedInteger('user_id')->nullable();
+            $table->unsignedInteger('variant_id')->nullable();
+            $table->unique(['user_id', 'product_id'], 'unique_cart_item');
+            $table->index('user_id', 'idx_cart_user');
+            $table->index('variant_id', 'idx_cart_variant');
+            $table->foreign('product_id')->references('id')->on('products');
+            $table->foreign('user_id')->references('id')->on('users');
+            $table->foreign('variant_id')->references('id')->on('product_variants')->restrictOnDelete();
+        });
+
+        Schema::create('order_items', function (Blueprint $table) {
+            $table->increments('id');
+            $table->unsignedInteger('order_id')->nullable();
+            $table->unsignedInteger('product_id')->nullable();
+            $table->integer('quantity');
+            $table->decimal('price', 30, 10);
+            $table->decimal('price_each', 30, 10)->default(0);
+            $table->unsignedInteger('variant_id')->nullable();
+            $table->index('order_id', 'idx_order_items_order');
+            $table->index('variant_id', 'idx_order_items_variant');
+            $table->foreign('order_id')->references('id')->on('orders');
+            $table->foreign('product_id')->references('id')->on('products');
+            $table->foreign('variant_id')->references('id')->on('product_variants')->restrictOnDelete();
+        });
+
+        Schema::create('session', function (Blueprint $table) {
+            $table->string('sid', 255)->primary();
+            $table->json('sess');
+            $table->timestamp('expire', 6);
+            $table->index('expire', 'idx_session_expire');
+        });
+
+        Schema::create('withdrawal_requests', function (Blueprint $table) {
+            $table->increments('id');
+            $table->unsignedInteger('order_id')->nullable();
+            $table->string('email', 254);
+            $table->text('reason')->nullable();
+            $table->string('status', 32)->default('received');
+            $table->timestamp('submitted_at', 6)->useCurrent();
+            $table->timestamp('confirmation_email_sent_at', 6)->nullable();
+            $table->index('order_id', 'idx_withdrawal_order');
+            $table->index('submitted_at', 'idx_withdrawal_submitted_at');
+            $table->foreign('order_id')->references('id')->on('orders')->nullOnDelete();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('withdrawal_requests');
+        Schema::dropIfExists('session');
+        Schema::dropIfExists('order_items');
+        Schema::dropIfExists('cart');
+        Schema::dropIfExists('orders');
+        Schema::dropIfExists('product_images');
+        Schema::dropIfExists('product_variants');
+        Schema::dropIfExists('products');
+        Schema::dropIfExists('categories');
+    }
+};
