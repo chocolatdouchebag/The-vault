@@ -68,15 +68,16 @@ The live schema-only export was inspected to create the checked-in baseline. Thi
 - [x] Add guarded scripts to create a baseline in an empty MySQL database and transfer rows with ID preservation, type/length checks, and transactional rollback.
 - [x] Switch the application's DB pool/session store to MySQL and add SQL-compatibility regression tests.
 - [x] Test the DB adapter and session store against MySQL 8.4, including boolean return types, positional parameters, `RETURNING`, duplicate-key handling and row locking.
-- [x] Test payment-failure stock restoration and idempotent retries with InnoDB transactions.
+- [x] Test authentication, cart addition, checkout and a failed-payment webhook end-to-end against MySQL with a test-only mocked Mollie API.
+- [x] Verify payment-failure stock restoration and idempotent webhook retries with InnoDB transactions. Fixed the existing server route calls to pass the database pool into `releaseReservedStock`.
 - [x] Test a synthetic PostgreSQL-to-MySQL transfer end-to-end, checking row counts, primary keys, JSON, decimals, timestamp microseconds, foreign keys and new nullable email-tracking columns.
-- [ ] Refresh `package-lock.json` with the added `mysql2` dependency so installs using `npm ci` work.
+- [ ] Refresh `package-lock.json` with the added `mysql2` dependency so installs using `npm ci` work. The migration CI currently installs from `package.json` without relying on the outdated lockfile.
 - [ ] Confirm target host's MySQL/MariaDB product and exact version, supported Node.js version, and whether the Express app can run there.
 - [x] Add a checked-in MySQL baseline schema targeting MySQL 8.0.16+.
 - [x] Add a guarded PostgreSQL-to-MySQL transfer script with foreign-key-safe table ordering, explicit ID preservation, metadata-driven column matching, target-length/decimal preflight checks, and a transaction rollback on failure.
 - [x] Convert connection setup and session storage; add an adapter for the remaining PostgreSQL-style parameter, `RETURNING`, lock, interval, and duplicate-key syntax while application route SQL is being converted/tested.
 - [ ] Replace the transitional compatibility adapter with native MySQL SQL after route-level regression tests cover all write operations.
-- [ ] Expand route-level regression coverage for authentication, full cart/checkout, payment webhooks, email idempotency and withdrawal flows on a staging database.
+- [ ] Expand route-level regression coverage for paid-payment webhook handling, email idempotency and withdrawal flows on a staging database.
 - [ ] Compare row counts, primary keys, foreign keys, stock quantities and order totals on a staging database.
 - [ ] Perform production cutover only with a final backup, write freeze, verification, and documented rollback route.
 
