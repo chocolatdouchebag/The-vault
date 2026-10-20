@@ -62,7 +62,13 @@ return new class extends Migration
             $table->text('name')->nullable();
             $table->decimal('price', 12, 2)->default(0);
             $table->integer('stock')->default(0);
-            $table->json('attributes')->nullable();
+            if (DB::getDriverName() === 'sqlite') {
+                $table->json('attributes')->default('{}');
+            } else {
+                // Match the PostgreSQL NOT NULL DEFAULT '{}'::jsonb contract.
+                // MySQL JSON defaults must be expressions; JSON_OBJECT() works on MySQL/MariaDB.
+                $table->json('attributes')->default(DB::raw('(JSON_OBJECT())'));
+            }
             $table->boolean('is_active')->default(true);
             $table->timestamp('created_at', 6)->useCurrent();
             $table->timestamp('updated_at', 6)->useCurrent();
@@ -162,6 +168,36 @@ return new class extends Migration
             $table->index('submitted_at', 'idx_withdrawal_submitted_at');
             $table->foreign('order_id')->references('id')->on('orders')->nullOnDelete();
         });
+
+        // Preserve the PostgreSQL source's CHECK constraints on the actual
+        // MySQL/MariaDB target. Laravel's SQLite tests intentionally skip these
+        // engine-specific ALTER TABLE statements; database compatibility CI
+        // exercises them against both supported target engines.
+        if (DB::getDriverName() !== 'sqlite') {
+            $checks = [
+                "ALTER TABLE `products` ADD CONSTRAINT `products_price_non_negative` CHECK (`price` >= 0)",
+                "ALTER TABLE `products` ADD CONSTRAINT `products_stock_non_negative` CHECK (`stock` >= 0)",
+                "ALTER TABLE `products` ADD CONSTRAINT `products_status_valid` CHECK (BINARY `status` IN ('draft', 'active', 'archived'))",
+                "ALTER TABLE `products` ADD CONSTRAINT `products_fulfillment_method_valid` CHECK (BINARY `fulfillment_method` IN ('stock', 'made_to_order', 'print_on_demand', 'external'))",
+                "ALTER TABLE `product_variants` ADD CONSTRAINT `product_variants_price_non_negative` CHECK (`price` >= 0)",
+                "ALTER TABLE `product_variants` ADD CONSTRAINT `product_variants_stock_non_negative` CHECK (`stock` >= 0)",
+                "ALTER TABLE `product_variants` ADD CONSTRAINT `product_variants_attributes_object` CHECK (JSON_TYPE(`attributes`) = 'OBJECT')",
+                "ALTER TABLE `product_images` ADD CONSTRAINT `product_images_sort_order_non_negative` CHECK (`sort_order` >= 0)",
+                "ALTER TABLE `product_images` ADD CONSTRAINT `product_images_url_not_blank` CHECK (CHAR_LENGTH(TRIM(`image_url`)) > 0)",
+                "ALTER TABLE `product_images` ADD CONSTRAINT `product_images_primary_state_valid` CHECK ((`is_primary` = 1 AND `primary_slot` = 1) OR (`is_primary` = 0 AND `primary_slot` IS NULL))",
+                "ALTER TABLE `orders` ADD CONSTRAINT `orders_total_non_negative` CHECK (`total` >= 0)",
+                "ALTER TABLE `cart` ADD CONSTRAINT `cart_quantity_positive` CHECK (`quantity` > 0)",
+                "ALTER TABLE `order_items` ADD CONSTRAINT `order_items_quantity_positive` CHECK (`quantity` > 0)",
+                "ALTER TABLE `order_items` ADD CONSTRAINT `order_items_price_non_negative` CHECK (`price` >= 0)",
+                "ALTER TABLE `order_items` ADD CONSTRAINT `order_items_price_each_non_negative` CHECK (`price_each` >= 0)",
+                "ALTER TABLE `withdrawal_requests` ADD CONSTRAINT `withdrawal_status_valid` CHECK (BINARY `status` IN ('received', 'reviewing', 'completed', 'rejected'))",
+                "ALTER TABLE `withdrawal_requests` ADD CONSTRAINT `withdrawal_email_not_blank` CHECK (CHAR_LENGTH(TRIM(`email`)) > 3)"
+            ];
+
+            foreach ($checks as $check) {
+                DB::statement($check);
+            }
+        }
     }
 
     public function down(): void
