@@ -1,27 +1,20 @@
-# FLIGALIGA — The Vault (V3 polished)
+# FLIGALIGA — The Vault (Laravel/PHP migration)
 
-A dark antique-curiosity ecommerce storefront built around the FLIGALIGA Vault concept.
+This branch is the isolated Laravel/PHP edition intended for later shared-hosting evaluation. It preserves the existing custom storefront assets while porting the API and data layer to Laravel and MySQL/MariaDB.
 
-## V3 polish
-- Dedicated shareable product pages at `/product/<slug>-<id>`
-- Consistent cinematic artifact imagery for common treasure types
-- Stronger ivory/gold typography and improved contrast
-- Cinzel Decorative branding for the FLIGALIGA wordmark
-- Functional pages for Treasures, New Arrivals, The Ledger, About the Merchant, FAQ, Contact, Shipping, Returns and Privacy
-- Footer and service-strip links now navigate to real pages
-- `THE VAULT` returns to the homepage; `ENTER THE VAULT` opens the treasure catalogue
-- Search opens the Treasures page with a query
-- Responsive product catalogue and information pages
+## Important recovery rule
 
-## Before launch
-Replace placeholder business/contact/shipping/return/privacy text with the real company information and policies. Dutch online shops have information obligations around business identity, contact details, prices, delivery, returns and privacy; check the final site against current Dutch/EU requirements.
+- The original Node.js/PostgreSQL website remains a protected recovery source on `main` and `backup/node-postgres-2026-10-20`.
+- Work on the Laravel port only on `feature/laravel-shared-hosting`.
+- Do not point Laravel at the original PostgreSQL database. Keep its backup private and unchanged.
+- Checkout/payment processing remains disabled until the payment lifecycle and hosting have been deliberately verified.
 
-## Run
-Copy your real `.env` file into the project root, then:
+## Start here
 
-```bash
-npm install
-node server.js
-```
+Read **[LARAVEL_README.md](LARAVEL_README.md)** for local setup, current feature coverage, transfer commands, and hosting safety gates. The detailed execution checklist lives in **[LARAVEL_SHARED_HOSTING_PLAN.md](LARAVEL_SHARED_HOSTING_PLAN.md)**.
 
-Open `http://localhost:3000`.
+For local development, use PHP 8.3+ and Composer with the example's SQLite database, then run `php artisan serve`. `npm start` is intentionally guarded on this branch so it cannot accidentally start the legacy Node application; npm is retained for the isolated PostgreSQL-to-Laravel transfer and validation tools.
+
+## Current status
+
+Laravel feature tests run in CI on PHP 8.3 and 8.4. Database schema and synthetic transfer checks run on MySQL 8.4 and MariaDB 10.11. These tests are not a substitute for a real staging transfer, hosting compatibility check, or production cutover review. No hosting package has been selected yet.
