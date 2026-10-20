@@ -1,9 +1,12 @@
 node_modules/
 /vendor/
+/database/*.sqlite
 /.env
 /.env.*
 !/.env.example
 !/.env.laravel.example
+!/.env.strato.example
+!/.env.node-postgres.example
 *.log
 .DS_Store
 .phpunit.cache/
