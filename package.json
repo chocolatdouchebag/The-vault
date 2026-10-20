@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node server.js",
     "db:export-postgres-schema": "node scripts/export-postgres-schema.js",
-    "test:mysql-compat": "node .github/mysql-compat-regression-test.js"
+    "test:mysql-compat": "node .github/mysql-compat-regression-test.js",
+    "db:apply-mysql-schema": "node scripts/apply-mysql-schema.js",
+    "db:migrate-postgres-to-mysql": "node scripts/migrate-postgres-to-mysql.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
