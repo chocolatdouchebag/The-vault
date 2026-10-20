@@ -53,7 +53,7 @@ Before a reusable/release build, commit and review `composer.lock` so dependency
 
 ## STRATO deployment gates
 
-Before purchase or deployment, verify the exact package, PHP extensions (especially `pdo_mysql`), MySQL/MariaDB engine and version, database limits, SFTP/SSH and Composer availability, document-root layout, writable `storage/` and `bootstrap/cache/`, request limits and scheduled-task support.
+STRATO currently lists PHP 8.4 and the PDO/`pdo_mysql` extensions for shared hosting, and documents internal domain forwarding to a selected webspace folder. Before deployment, verify these against the chosen account, confirm its exact MySQL/MariaDB version, and test mapping a non-production subdomain to the Laravel `public/` folder. Also confirm SSH/Composer access; if Composer is unavailable on the server, build `vendor/` locally from the reviewed lockfile and upload it via SFTP. New-platform STRATO packages do not offer cron jobs, so payment reservation cleanup needs a supported alternative before payments are implemented.
 
 Laravel's document root must expose only the `public/` directory. Never expose the project root, `.env`, `vendor/` or private storage. STRATO's newer shared-hosting platform may not offer cron jobs; an approved alternative is required for scheduled maintenance before payment processing is implemented.
 

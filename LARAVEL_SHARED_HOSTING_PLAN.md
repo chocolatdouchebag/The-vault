@@ -14,9 +14,14 @@ Build a separate Laravel/PHP version of the custom FLIGALIGA Vault application f
 
 No migration, restore, schema update, or production write is permitted against the original PostgreSQL database during Laravel development.
 
-## Current hosting research
+## Current hosting research (official documentation checked 20 October 2026)
 
-STRATO's official shared-hosting documentation says PHP and MySQL/MariaDB are available. STRATO recommends PHP 8.4. Its current documentation also says cron jobs are unavailable on its new shared-hosting platform (they are available only on some legacy plans). Exact feature availability must be verified for the user's actual package in the control panel before deployment.
+- STRATO currently advertises PHP 8.4 for shared hosting, and its PHP extension list includes PDO and `pdo_mysql`. Confirm the active PHP version/extensions from the actual package before deployment.
+- STRATO's database documentation describes its shared-hosting databases as MySQL or MariaDB. The exact server product/version must be read from the user's STRATO database details; do not assume it is the CI version.
+- STRATO's control panel supports an internal domain forward to a selected webspace folder. Proposed safe layout: keep the Laravel project in a dedicated folder and map only its `public/` subfolder to the website domain. Verify this configuration with a temporary non-production subdomain before exposing the app.
+- STRATO documents SSH/SFTP access creation in the customer control panel. Whether shell access and Composer are usable for this package must be confirmed in that account. If Composer cannot run there, build dependencies locally from the reviewed `composer.lock` with production settings, then upload the resulting `vendor/` via SFTP.
+- STRATO cron jobs are available on its legacy platform only from Hosting Advanced / PowerWeb Advanced; cron is not available on the new platform used for hosting packages ordered on or after 28 May 2025. If this is a new-platform package, a supported alternative for scheduled payment-reservation cleanup must be designed before payments exist.
+- References: https://www.strato.nl/faq/hosting/php-gebruiken-deze-extensies-biedt-strato-aan/ ; https://www.strato.nl/faq/hosting/het-inrichten-van-databases/ ; https://www.strato.nl/faq/domeinnaam/belangrijke-informatie-over-domeinomleiding/ ; https://www.strato.nl/faq/hosting/zo-gebruik-je-ssh-sftp/ ; https://www.strato.nl/faq/hosting/cronjobs-instellen/ ; https://www.strato.nl/faq/hosting/hoe-herken-ik-het-platform-van-mijn-hostingpakket/
 
 Laravel 13's official deployment requirements include PHP >= 8.3 and the Ctype, cURL, DOM, Fileinfo, Filter, Hash, Mbstring, OpenSSL, PCRE, PDO, Session, Tokenizer and XML extensions. The hosting plan must provide the needed extensions (especially `pdo_mysql`) and allow Laravel's storage/cache directories to be writable.
 
@@ -62,9 +67,9 @@ This is a development sequence only, not a claim that the website or checkout is
 
 ### 0. Hosting feasibility — do this before coding or buying anything
 - [ ] Confirm exact STRATO package and whether it uses new or legacy shared-hosting platform.
-- [ ] Confirm PHP 8.4 availability and required Laravel extensions via official package details or a minimal, temporary diagnostic page that is removed immediately afterward.
+- [ ] Verify the chosen package actually runs PHP 8.4 with all required Laravel extensions (including `pdo_mysql`) using package details or a temporary diagnostic page that is removed immediately afterward.
 - [ ] Confirm exact database product/version (MySQL or MariaDB), database limits, remote-access policy and supported TLS settings.
-- [ ] Confirm document-root layout, SFTP/SSH/Git availability, Composer deployment path, application file permissions, request timeouts and max upload size.
+- [ ] Verify a test subdomain can be internally forwarded to a dedicated Laravel `public/` folder; confirm SFTP/SSH availability, whether Composer can run, application file permissions, request timeouts and upload size.
 - [ ] Confirm how scheduled expiry cleanup can run on this plan without storing secrets in a readable cron command.
 - [ ] Produce a small non-production Laravel health-check deployment against a disposable database. Do not point it at PostgreSQL or the live website.
 
