@@ -131,7 +131,7 @@ class AdminProductVariantTest extends TestCase
             ->assertCreated();
         $variantId = (int) $created->json('variant.id');
 
-        $this->patchJson('/api/admin/product/'.$productId.'/variants/'.$variantId, $this->payload([
+        $updated = $this->patchJson('/api/admin/product/'.$productId.'/variants/'.$variantId, $this->payload([
             'sku' => 'AW-BLUE-002',
             'name' => 'Blue finish',
             'price' => '21.50',
@@ -144,8 +144,7 @@ class AdminProductVariantTest extends TestCase
             ->assertJsonPath('variant.name', 'Blue finish')
             ->assertJsonPath('variant.stock', 7)
             ->assertJsonPath('variant.attributes.finish', 'blue');
-        $updatedVariant = json_decode($this->lastResponse->getContent(), true);
-        $this->assertEquals(21.50, (float) ($updatedVariant['variant']['price'] ?? 0));
+        $this->assertEquals(21.50, (float) $updated->json('variant.price'));
 
         $this->deleteJson('/api/admin/product/'.$productId.'/variants/'.$variantId)
             ->assertOk()
