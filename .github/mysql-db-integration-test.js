@@ -60,6 +60,9 @@ async function main() {
     );
     assert.equal(updated.rows.length, 1, "UPDATE ... RETURNING * should return the updated row");
     assert.equal(updated.rows[0].description, "Verified through the MySQL compatibility adapter");
+    assert.equal(typeof updated.rows[0].is_active, "boolean", "boolean columns should preserve PostgreSQL response types");
+    assert.equal(updated.rows[0].is_active, true);
+    assert.equal(updated.rows[0].is_featured, false);
     assert.equal(Object.hasOwn(updated.rows[0], "unique_name_image_hash"), false);
 
     const client = await pool.connect();
