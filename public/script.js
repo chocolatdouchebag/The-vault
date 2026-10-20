@@ -300,42 +300,51 @@ async function addAdminGalleryImage(){
     return;
   }
 
-  const response=await fetch('/api/admin/product/'+productId+'/images',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      image_url:url,
-      alt_text:String($('gallery-image-alt').value||'').trim(),
-      is_primary:$('gallery-image-primary').checked
-    })
-  });
-  const data=await response.json().catch(()=>({}));
-  if(!response.ok){
-    alert(data.error||t('galleryAddFailed','Could not add gallery image.'));
-    return;
-  }
+  try{
+    const response=await fetch('/api/admin/product/'+productId+'/images',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        image_url:url,
+        alt_text:String($('gallery-image-alt').value||'').trim(),
+        is_primary:$('gallery-image-primary').checked
+      })
+    });
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok){
+      alert(data.error||t('galleryAddFailed','Could not add gallery image.'));
+      return;
+    }
 
-  $('gallery-image-url').value='';
-  $('gallery-image-alt').value='';
-  $('gallery-image-primary').checked=false;
-  await loadAdminGalleryImages(productId);
+    $('gallery-image-url').value='';
+    $('gallery-image-alt').value='';
+    $('gallery-image-primary').checked=false;
+    await loadAdminGalleryImages(productId);
+  }catch{
+    alert(t('galleryAddFailed','Could not add gallery image.'));
+  }
 }
 async function setAdminGalleryPrimary(imageId){
   const panel=$('admin-image-management');
   const productId=Number(panel?.dataset.productId);
   const id=Number(imageId);
   if(!Number.isInteger(productId)||productId<1||!Number.isInteger(id)||id<1)return;
-  const response=await fetch('/api/admin/product/'+productId+'/images/'+id+'/primary',{
-    method:'PATCH',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({})
-  });
-  const data=await response.json().catch(()=>({}));
-  if(!response.ok){
-    alert(data.error||t('galleryPrimaryFailed','Could not set the primary image.'));
-    return;
+
+  try{
+    const response=await fetch('/api/admin/product/'+productId+'/images/'+id+'/primary',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({})
+    });
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok){
+      alert(data.error||t('galleryPrimaryFailed','Could not set the primary image.'));
+      return;
+    }
+    await loadAdminGalleryImages(productId);
+  }catch{
+    alert(t('galleryPrimaryFailed','Could not set the primary image.'));
   }
-  await loadAdminGalleryImages(productId);
 }
 async function deleteAdminGalleryImage(imageId){
   const panel=$('admin-image-management');
@@ -343,13 +352,18 @@ async function deleteAdminGalleryImage(imageId){
   const id=Number(imageId);
   if(!Number.isInteger(productId)||productId<1||!Number.isInteger(id)||id<1)return;
   if(!window.confirm(t('galleryConfirmDelete','Remove this image from the gallery? This cannot be undone.')))return;
-  const response=await fetch('/api/admin/product/'+productId+'/images/'+id,{method:'DELETE'});
-  const data=await response.json().catch(()=>({}));
-  if(!response.ok){
-    alert(data.error||t('galleryDeleteFailed','Could not delete the image.'));
-    return;
+
+  try{
+    const response=await fetch('/api/admin/product/'+productId+'/images/'+id,{method:'DELETE'});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok){
+      alert(data.error||t('galleryDeleteFailed','Could not delete the image.'));
+      return;
+    }
+    await loadAdminGalleryImages(productId);
+  }catch{
+    alert(t('galleryDeleteFailed','Could not delete the image.'));
   }
-  await loadAdminGalleryImages(productId);
 }
 function resetAdminForm(){state.adminEditingId=null;const galleryPanel=$('admin-image-management');if(galleryPanel){galleryPanel.classList.add('hidden');galleryPanel.dataset.productId='';$('admin-gallery-images').innerHTML='';}$('admin-product-form').reset();$('admin-form-title').textContent=t('addTreasure','ADD TREASURE');$('admin-save-btn').textContent=t('catalogueTreasure','CATALOGUE TREASURE');$('admin-cancel-edit').classList.add('hidden');}
 function startAdminEdit(id){const p=state.adminProducts.find(item=>Number(item.id)===Number(id));if(!p)return;state.adminEditingId=Number(id);const galleryPanel=$('admin-image-management');if(galleryPanel){galleryPanel.dataset.productId=String(p.id);galleryPanel.classList.remove('hidden');loadAdminGalleryImages(Number(p.id));}$('prod-name').value=p.name||'';$('prod-description').value=p.description||'';$('prod-price').value=p.price??'';$('prod-stock').value=p.stock??'';$('prod-image').value=p.image_url||'';$('prod-category').value=p.category||'';$('prod-rarity').value=p.rarity||'';$('prod-origin').value=p.origin||'';$('prod-condition').value=p.condition||'';$('prod-provenance').value=p.provenance||'';$('prod-featured').checked=!!p.is_featured;$('prod-new').checked=!!p.is_new_arrival;$('admin-form-title').textContent=t('editTreasure','EDIT TREASURE');$('admin-save-btn').textContent=t('saveChanges','SAVE CHANGES');$('admin-cancel-edit').classList.remove('hidden');$('prod-name').focus();window.scrollTo({top:$('admin-product-form').getBoundingClientRect().top+window.scrollY-25,left:0,behavior:'smooth'});}
