@@ -69,20 +69,20 @@ This is a development sequence only, not a claim that the website or checkout is
 - [ ] Produce a small non-production Laravel health-check deployment against a disposable database. Do not point it at PostgreSQL or the live website.
 
 ### 1. Laravel foundation
-- [ ] Scaffold a clean Laravel application on this branch.
-- [ ] Add safe environment examples, deployment notes and CI dependency/test steps; no real secrets.
-- [ ] Create initial native Laravel migrations and Eloquent models for the existing data model.
-- [ ] Write schema compatibility tests against the exact target database engine.
+- [x] Scaffold a clean Laravel application on this branch.
+- [x] Add safe environment examples, deployment notes and CI dependency/test steps; no real secrets.
+- [x] Create baseline native Laravel migrations for the existing data tables, plus User and Product models; add further domain models as order and withdrawal features expand.
+- [x] Add schema and feature-test matrix coverage for MySQL 8.4 and MariaDB 10.11 in CI. The exact STRATO engine/version remains a hosting-feasibility gate.
 - [ ] Include a non-production sample data seeder; never seed real user/customer data into tests.
 
 ### 2. Port and test features in low-risk-to-high-risk order
-- [ ] Product catalogue/detail API and frontend asset serving.
-- [ ] Registration, login, logout, session behavior and admin gate.
-- [ ] Admin product CRUD, catalogue fields, images and variant handling.
-- [ ] Cart operations and stock validation.
-- [ ] Orders/withdrawals/admin order views.
-- [ ] Mollie checkout and webhook lifecycle, stock reservation/release, retries and duplicate webhook idempotency.
-- [ ] Resend email templates and idempotency tracking.
+- [x] Product catalogue/detail API and existing frontend asset serving.
+- [x] Registration, login, logout, cookie-backed session behavior and admin authorization; Node bcrypt migration path covered by regression tests.
+- [x] Admin product create/list/update/soft-disable API and catalogue fields. Dedicated product-image/variant management UI and routes remain future work.
+- [x] Cart read/add/update/empty operations with ownership checks, stock bounds and transactional row locking.
+- [x] Customer order read endpoints and admin order summary with item details. Withdrawal-request routes and workflow remain not yet ported.
+- [ ] Mollie checkout and webhook lifecycle, stock reservation/release, retries and duplicate webhook idempotency (deliberately deferred until the owner has Mollie and approves payment work).
+- [ ] Resend email templates and idempotency tracking (deferred; no email credentials configured).
 - [ ] Contact flow, rate limiting, security headers, sitemap and analytics configuration.
 - [ ] Automated route tests plus integration tests with mocked external providers.
 
