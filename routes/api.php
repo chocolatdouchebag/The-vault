@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ContactPlaceholderController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\PublicConfigController;
 use App\Http\Controllers\Api\WithdrawalController;
 use Illuminate\Support\Facades\Route;
 
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 // middleware so sessions and cookies work on shared hosting.
 Route::middleware(['web', 'throttle:api'])->group(function (): void {
     Route::get('/health', HealthController::class)->name('api.health');
+    Route::get('/public-config', PublicConfigController::class)->name('api.public-config');
     Route::get('/products', [ProductController::class, 'index'])->name('api.products.index');
     Route::get('/products/{idOrSlug}', [ProductController::class, 'show'])->name('api.products.show');
 
@@ -75,8 +77,8 @@ Route::middleware(['web', 'throttle:api'])->group(function (): void {
         ->middleware(['same.origin', 'throttle:contact'])
         ->name('api.contact');
 
-    // Withdrawal requests can be submitted by customers without an account,
-    // using the email associated with an optional order to validate ownership.
+    // Withdrawal requests can be submitted without an account, using the email
+    // associated with an optional order to validate ownership.
     Route::post('/withdrawal', [WithdrawalController::class, 'store'])
         ->middleware(['same.origin', 'throttle:withdrawal'])
         ->name('api.withdrawal.store');
