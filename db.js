@@ -29,13 +29,20 @@ const mysqlPool = mysql.createPool({
   queueLimit: 0,
   connectTimeout: Math.max(1000, Math.min(30000, Number(process.env.MYSQL_CONNECT_TIMEOUT_MS) || 10000)),
   charset: "utf8mb4",
-  timezone: process.env.MYSQL_TIMEZONE || "local",
+  timezone: "Z",
   supportBigNumbers: true,
   bigNumberStrings: false,
   decimalNumbers: false,
   ssl: process.env.MYSQL_SSL === "true"
     ? { rejectUnauthorized: process.env.MYSQL_SSL_REJECT_UNAUTHORIZED !== "false" }
     : undefined
+});
+
+// Store DATETIME values and CURRENT_TIMESTAMP consistently in UTC regardless of host defaults.
+mysqlPool.pool.on("connection", connection => {
+  connection.query("SET time_zone = '+00:00'", error => {
+    if (error) console.error("Could not set MySQL session timezone to UTC:", error.code || "unknown error");
+  });
 });
 
 function normalizeDatabaseError(error) {
