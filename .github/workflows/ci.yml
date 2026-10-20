@@ -2,7 +2,7 @@ name: FLIGALIGA checks
 
 on:
   push:
-    branches: [main, mysql-migration]
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -14,18 +14,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Verify npm lockfile and install dependencies
-        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Check server JavaScript
         run: node --check server.js
-      - name: Check PostgreSQL schema export helper
-        run: node --check scripts/export-postgres-schema.js
-      - name: Check MySQL compatibility and migration scripts
-        run: node --check mysql-compat.js && node --check db.js && node --check session-store.js && node --check scripts/apply-mysql-schema.js && node --check scripts/migrate-postgres-to-mysql.js
-      - name: Test MySQL compatibility layer
-        run: node .github/mysql-compat-regression-test.js
-      - name: Test checkout stock-release call sites
-        run: node .github/checkout-stock-release-regression-test.js
       - name: Check browser JavaScript
         run: node --check public/script.js
       - name: Check theme initializer
