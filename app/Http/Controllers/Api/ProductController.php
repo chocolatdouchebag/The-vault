@@ -100,6 +100,9 @@ class ProductController extends Controller
                 return $variant;
             });
 
+        $product->setAttribute('has_variants', DB::table('product_variants')
+            ->where('product_id', $product->id)
+            ->exists());
         $product->setAttribute('variants', $variants);
 
         return $product;

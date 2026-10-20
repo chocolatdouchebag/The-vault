@@ -10,6 +10,36 @@ class PublicProductVariantTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_product_with_only_disabled_variants_is_still_marked_as_variant_based(): void
+    {
+        $productId = DB::table('products')->insertGetId([
+            'name' => 'Retired Options Compass',
+            'price' => '24.9900000000',
+            'stock' => 10,
+            'category' => 'Artifacts',
+            'is_active' => true,
+            'status' => 'active',
+        ]);
+
+        DB::table('product_variants')->insert([
+            'product_id' => $productId,
+            'sku' => 'COMPASS-RETIRED',
+            'name' => 'Retired option',
+            'price' => '29.50',
+            'stock' => 3,
+            'attributes' => json_encode(['finish' => 'retired']),
+            'is_active' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->getJson('/api/products/retired-options-compass-'.$productId)
+            ->assertOk()
+            ->assertJsonPath('has_variants', true)
+            ->assertJsonCount(0, 'variants')
+            ->assertJsonMissing(['name' => 'Retired option']);
+    }
+
     public function test_product_detail_returns_active_variants_and_hides_disabled_variants(): void
     {
         $productId = DB::table('products')->insertGetId([
@@ -48,6 +78,7 @@ class PublicProductVariantTest extends TestCase
         $response = $this->getJson('/api/products/astral-compass-'.$productId)
             ->assertOk()
             ->assertJsonPath('id', $productId)
+            ->assertJsonPath('has_variants', true)
             ->assertJsonCount(1, 'variants')
             ->assertJsonPath('variants.0.name', 'Gold finish')
             ->assertJsonPath('variants.0.stock', 3)
