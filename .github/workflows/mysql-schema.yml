@@ -6,11 +6,23 @@ on:
     paths:
       - "migrations/mysql/**"
       - ".github/workflows/mysql-schema.yml"
+      - ".github/mysql-db-integration-test.js"
+      - "db.js"
+      - "mysql-compat.js"
+      - "session-store.js"
+      - "package.json"
+      - "scripts/apply-mysql-schema.js"
   pull_request:
     branches: [main]
     paths:
       - "migrations/mysql/**"
       - ".github/workflows/mysql-schema.yml"
+      - ".github/mysql-db-integration-test.js"
+      - "db.js"
+      - "mysql-compat.js"
+      - "session-store.js"
+      - "package.json"
+      - "scripts/apply-mysql-schema.js"
 
 jobs:
   mysql-schema:
@@ -28,8 +40,22 @@ jobs:
           --health-interval=5s
           --health-timeout=3s
           --health-retries=30
+    env:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: fligaliga_test
+      MYSQL_USER: root
+      MYSQL_PASSWORD: test-root-password
+      MYSQL_SSL: "false"
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Node dependencies for MySQL runtime tests
+        run: npm install --no-save --package-lock=false --ignore-scripts
 
       - name: Install MySQL client
         run: sudo apt-get update && sudo apt-get install -y mysql-client
@@ -78,3 +104,6 @@ jobs:
           else
             echo "SKU uniqueness enforced"
           fi
+
+      - name: Test application MySQL DB adapter and session store
+        run: node .github/mysql-db-integration-test.js
