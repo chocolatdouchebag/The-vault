@@ -35,6 +35,12 @@ jobs:
           if-no-files-found: error
       - name: Check PHP syntax
         run: find app bootstrap config database routes tests -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Check Laravel branch start guard syntax
+        run: node --check scripts/laravel-branch-start.js
+      - name: Check migration utility syntax
+        run: |
+          node --check scripts/migrate-postgres-to-laravel-mysql.js
+          node --check scripts/verify-postgres-laravel-mysql.js
       - name: Check existing storefront JavaScript syntax
         run: node --check public/script.js
       - name: Run Laravel tests
