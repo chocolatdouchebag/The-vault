@@ -51,6 +51,17 @@ Requirements: PHP 8.3 or newer, Composer, the Laravel-required PHP extensions, a
 
 Before a reusable/release build, commit and review `composer.lock` so dependency versions are reproducible.
 
+## PostgreSQL transfer safety (maintainers)
+
+The transfer tool and the verifier are separate commands. Use only a disposable, freshly migrated Laravel MySQL/MariaDB target for transfer testing; never point the target at the live site or the PostgreSQL recovery source.
+
+- `npm run db:migrate-postgres-to-laravel-mysql` is a **write** operation against the target. It requires `LARAVEL_MIGRATION_CONFIRM=TRANSFER_DATA_TO_EMPTY_LARAVEL_DATABASE` and refuses non-empty business tables.
+- `npm run db:verify-postgres-laravel-mysql` is a **read-only** comparison of every shared source column across the ten business tables. It uses read-only transactions, compares in batches, and requires `LARAVEL_MIGRATION_VERIFY=COMPARE_POSTGRES_LARAVEL_DATA_READ_ONLY`.
+- Both commands take PostgreSQL source settings from `PG_SOURCE_HOST`, `PG_SOURCE_PORT`, `PG_SOURCE_DATABASE`, `PG_SOURCE_USER`, and `PG_SOURCE_PASSWORD` (or `PG_SOURCE_URL`). The Laravel target is configured using `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD`.
+
+CI validates these utilities using a synthetic database fixture on MySQL 8.4 and MariaDB 10.11. This is not evidence that real customer data has been transferred: real-data staging verification and the hosting-specific deployment checks are still required. Keep all real credentials, customer data, and database dumps out of Git.
+
+
 ## STRATO deployment gates
 
 STRATO currently lists PHP 8.4 and the PDO/`pdo_mysql` extensions for shared hosting, and documents internal domain forwarding to a selected webspace folder. Before deployment, verify these against the chosen account, confirm its exact MySQL/MariaDB version, and test mapping a non-production subdomain to the Laravel `public/` folder. Also confirm SSH/Composer access; if Composer is unavailable on the server, build `vendor/` locally from the reviewed lockfile and upload it via SFTP. New-platform STRATO packages do not offer cron jobs, so payment reservation cleanup needs a supported alternative before payments are implemented.
