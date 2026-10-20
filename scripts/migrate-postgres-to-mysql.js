@@ -144,7 +144,7 @@ async function getSourceColumns(source, table) {
 async function getTargetColumns(target, database, table) {
   const [rows] = await target.query(
     "SELECT COLUMN_NAME, DATA_TYPE, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, " +
-    "CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, EXTRA, IS_GENERATED " +
+    "CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, EXTRA, GENERATION_EXPRESSION " +
     "FROM information_schema.columns WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION",
     [database, table]
   );
@@ -240,7 +240,7 @@ async function main() {
       const sourceColumns = await getSourceColumns(source, table);
       const targetColumns = await getTargetColumns(target, process.env.MYSQL_DATABASE, table);
       const writableTargetColumns = targetColumns.filter(column =>
-        String(column.IS_GENERATED || "NEVER").toUpperCase() !== "ALWAYS" &&
+        !String(column.GENERATION_EXPRESSION || "").trim() &&
         !String(column.EXTRA || "").toLowerCase().includes("generated")
       );
       const targetByName = new Map(writableTargetColumns.map(column => [column.COLUMN_NAME, column]));
