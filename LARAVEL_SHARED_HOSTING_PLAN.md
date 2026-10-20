@@ -81,7 +81,8 @@ This is a development sequence only, not a claim that the website or checkout is
 - [x] Admin product create/list/update/soft-disable API and catalogue fields.
 - [x] Product detail gallery API/UI: image rows load primary-first, with accessible thumbnails and the legacy image URL kept as fallback.
 - [x] Protected admin gallery management API/UI: list/add/set-primary/remove, URL validation, primary-image slot synchronization and automatic promotion after deleting the primary image. It manages image URLs rather than file uploads.
-- [ ] Product variant management UI and variant-aware cart/checkout integration remain future work.
+- [x] Protected admin product variant API/UI: list, create, edit, validate unique SKUs and JSON attributes, and soft-disable; covered by regression tests.
+- [ ] Customer-facing variant selection and variant-aware cart operations remain future work; checkout stays disabled.
 - [x] Cart read/add/update/empty operations with ownership checks, stock bounds and transactional row locking.
 - [x] Customer order read endpoints and admin order summary with item details.
 - [x] Withdrawal request submission with optional order-email ownership check, admin listing/status update, plus tests; confirmation email remains disabled until a provider is configured.
