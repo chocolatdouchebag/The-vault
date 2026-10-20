@@ -297,7 +297,7 @@ async function main() {
     for (const tableInfo of TABLES_IN_FK_ORDER) {
       const table = tableInfo.name;
       const sourceColumns = await getSourceColumns(source, table);
-      const targetColumns = await getTargetColumns(target, process.env.MYSQL_DATABASE, table);
+      const targetColumns = await getTargetColumns(target, process.env.DB_DATABASE, table);
       const writableTargetColumns = targetColumns.filter(column =>
         !String(column.GENERATION_EXPRESSION || "").trim() &&
         !/(?:virtual|stored) generated/i.test(String(column.EXTRA || ""))
