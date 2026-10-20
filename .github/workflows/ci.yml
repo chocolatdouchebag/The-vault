@@ -22,6 +22,8 @@ jobs:
         run: node --check mysql-compat.js && node --check db.js && node --check session-store.js && node --check scripts/apply-mysql-schema.js && node --check scripts/migrate-postgres-to-mysql.js
       - name: Test MySQL compatibility layer
         run: node .github/mysql-compat-regression-test.js
+      - name: Test checkout stock-release call sites
+        run: node .github/checkout-stock-release-regression-test.js
       - name: Check browser JavaScript
         run: node --check public/script.js
       - name: Check theme initializer
