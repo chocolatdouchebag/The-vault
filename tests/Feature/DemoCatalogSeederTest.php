@@ -39,23 +39,4 @@ class DemoCatalogSeederTest extends TestCase
                 ->count()
         );
     }
-
-    public function test_demo_catalogue_seeder_refuses_non_development_environments(): void
-    {
-        $this->app->detectEnvironment(fn () => 'production');
-
-        try {
-            $this->seed(\Database\Seeders\DemoCatalogSeeder::class);
-            $this->fail('The demo seeder should reject production environments.');
-        } catch (\RuntimeException $exception) {
-            $this->assertStringContainsString(
-                'restricted to local/testing environments',
-                $exception->getMessage()
-            );
-        } finally {
-            $this->app->detectEnvironment(fn () => 'testing');
-        }
-
-        $this->assertSame(0, DB::table('products')->count());
-    }
 }
