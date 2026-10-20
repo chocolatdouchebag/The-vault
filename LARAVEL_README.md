@@ -19,6 +19,9 @@ This is the isolated Laravel/PHP port of the custom FLIGALIGA Vault storefront. 
 - Admin product listing/create/update/soft-disable endpoints.
 - Cart listing/add/update/empty with per-user ownership and stock-limit checks.
 - Customer order read endpoints and an admin order summary.
+- Withdrawal request submissions with optional order-email verification, and admin listing/status management. Confirmation email remains disabled.
+- Public analytics configuration endpoint and a dynamic sitemap.
+- Contact endpoint explicitly reports that email delivery is not configured; it does not pretend to send anything.
 - Checkout endpoint is intentionally disabled and returns an explicit not-configured response without creating orders or reserving stock.
 
 ## Deliberately deferred
@@ -27,7 +30,7 @@ The store is not finished. The owner does not yet have Mollie or KvK details, so
 
 - Mollie checkout, webhooks, payment status transitions and stock reservation/release on payment outcomes.
 - Production transactional email, Resend credentials and delivery idempotency.
-- Withdrawal workflow, contact-message delivery, dedicated image/variant management and remaining admin pages.
+- Contact-message and transactional email delivery (deferred), dedicated image/variant management UI, and remaining admin pages.
 - Final business identity, legal/merchant launch content and production cutover.
 
 Keep `PAYMENTS_ENABLED=false`. Do not add live keys, enable checkout or claim a customer payment is accepted until the payment lifecycle is implemented and end-to-end tested.
