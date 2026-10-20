@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class ProductController extends Controller
@@ -69,6 +70,8 @@ class ProductController extends Controller
                 return response()->json(['error' => 'Treasure not found'], 404);
             }
 
+            $product = $this->attachActiveVariants($product);
+
             return response()
                 ->json($product)
                 ->header('Cache-Control', 'public, max-age=10, stale-while-revalidate=30');
@@ -80,4 +83,26 @@ class ProductController extends Controller
             ], 503);
         }
     }
+
+    private function attachActiveVariants(Product $product): Product
+    {
+        $variants = DB::table('product_variants')
+            ->where('product_id', $product->id)
+            ->where('is_active', true)
+            ->orderBy('id')
+            ->get(['id', 'name', 'price', 'stock', 'attributes'])
+            ->map(function (object $variant): object {
+                $decoded = json_decode((string) ($variant->attributes ?? '{}'));
+                $variant->attributes = $decoded instanceof \stdClass ? $decoded : new \stdClass();
+                $variant->id = (int) $variant->id;
+                $variant->stock = (int) $variant->stock;
+
+                return $variant;
+            });
+
+        $product->setAttribute('variants', $variants);
+
+        return $product;
+    }
+
 }
