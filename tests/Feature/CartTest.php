@@ -112,6 +112,102 @@ class CartTest extends TestCase
         $this->assertDatabaseMissing('cart', ['id' => $cartId]);
     }
 
+    private function variant(int $productId, string $name, string $price, int $stock, bool $active = true): int
+    {
+        return DB::table('product_variants')->insertGetId([
+            'product_id' => $productId,
+            'sku' => strtoupper(str_replace(' ', '-', $name)),
+            'name' => $name,
+            'price' => $price,
+            'stock' => $stock,
+            'attributes' => json_encode(['finish' => $name]),
+            'is_active' => $active,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    public function test_variant_products_require_a_variant_and_keep_each_option_in_a_separate_cart_row(): void
+    {
+        $userId = $this->signIn();
+        $productId = $this->product(50);
+        $gold = $this->variant($productId, 'Gold finish', '10.50', 2);
+        $silver = $this->variant($productId, 'Silver finish', '12.75', 4);
+
+        $this->postJson('/api/cart', ['product_id' => $productId])
+            ->assertBadRequest()
+            ->assertJsonPath('error', 'Select a product option before adding it to cart');
+
+        $this->postJson('/api/cart', ['product_id' => $productId, 'variant_id' => $gold])->assertOk();
+        $this->postJson('/api/cart', ['product_id' => $productId, 'variant_id' => $gold])->assertOk();
+        $this->postJson('/api/cart', ['product_id' => $productId, 'variant_id' => $gold])
+            ->assertConflict()
+            ->assertJsonPath('error', 'You cannot add more than the available stock');
+        $this->postJson('/api/cart', ['product_id' => $productId, 'variant_id' => $silver])->assertOk();
+
+        $this->assertSame(2, DB::table('cart')->where('user_id', $userId)->count());
+        $this->assertDatabaseHas('cart', [
+            'user_id' => $userId,
+            'product_id' => $productId,
+            'variant_id' => $gold,
+            'quantity' => 2,
+        ]);
+        $this->assertDatabaseHas('cart', [
+            'user_id' => $userId,
+            'product_id' => $productId,
+            'variant_id' => $silver,
+            'quantity' => 1,
+        ]);
+
+        $cart = $this->getJson('/api/cart')->assertOk()->json();
+        $goldRow = collect($cart)->firstWhere('variant_id', $gold);
+        $silverRow = collect($cart)->firstWhere('variant_id', $silver);
+        $this->assertSame('Gold finish', $goldRow['variant_name']);
+        $this->assertSame(2, $goldRow['quantity']);
+        $this->assertEquals(10.50, (float) $goldRow['price']);
+        $this->assertSame('Silver finish', $silverRow['variant_name']);
+        $this->assertEquals(12.75, (float) $silverRow['price']);
+    }
+
+    public function test_variant_cart_updates_enforce_variant_stock_instead_of_product_stock(): void
+    {
+        $userId = $this->signIn();
+        $productId = $this->product(100);
+        $variantId = $this->variant($productId, 'Limited finish', '15.25', 2);
+        $cartId = DB::table('cart')->insertGetId([
+            'user_id' => $userId,
+            'product_id' => $productId,
+            'variant_id' => $variantId,
+            'quantity' => 1,
+        ]);
+
+        $this->postJson('/api/cart/update', ['id' => $cartId, 'quantity' => 3])
+            ->assertConflict()
+            ->assertJsonPath('error', 'Requested quantity exceeds available stock');
+
+        $this->postJson('/api/cart/update', ['id' => $cartId, 'quantity' => 2])->assertOk();
+        $this->assertDatabaseHas('cart', ['id' => $cartId, 'quantity' => 2]);
+    }
+
+    public function test_unavailable_and_foreign_variants_cannot_be_added_to_cart(): void
+    {
+        $this->signIn();
+        $productId = $this->product();
+        $otherProductId = $this->product(3);
+        $disabled = $this->variant($productId, 'Disabled finish', '8.00', 3, false);
+        $foreign = $this->variant($otherProductId, 'Foreign finish', '9.00', 3);
+
+        $this->postJson('/api/cart', ['product_id' => $productId, 'variant_id' => $disabled])
+            ->assertNotFound()
+            ->assertJsonPath('error', 'Selected product option is not available');
+
+        $this->postJson('/api/cart', ['product_id' => $productId, 'variant_id' => $foreign])
+            ->assertNotFound()
+            ->assertJsonPath('error', 'Selected product option is not available');
+
+        $this->assertSame(0, DB::table('cart')->count());
+    }
+
     public function test_empty_cart_only_removes_the_current_users_items(): void
     {
         $userId = $this->signIn();

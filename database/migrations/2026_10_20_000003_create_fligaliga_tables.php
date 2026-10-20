@@ -120,7 +120,7 @@ return new class extends Migration
             $table->integer('quantity')->default(1);
             $table->unsignedInteger('user_id')->nullable();
             $table->unsignedInteger('variant_id')->nullable();
-            $table->unique(['user_id', 'product_id'], 'unique_cart_item');
+            $table->unique(['user_id', 'product_id', 'variant_id'], 'unique_cart_user_product_variant');
             $table->index('user_id', 'idx_cart_user');
             $table->index('variant_id', 'idx_cart_variant');
             $table->foreign('product_id')->references('id')->on('products');
