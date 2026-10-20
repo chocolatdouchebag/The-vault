@@ -5,7 +5,7 @@
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node server.js",
+    "start": "node scripts/laravel-branch-start.js",
     "db:migrate-postgres-to-laravel-mysql": "node scripts/migrate-postgres-to-laravel-mysql.js",
     "db:verify-postgres-laravel-mysql": "node scripts/verify-postgres-laravel-mysql.js"
   },
