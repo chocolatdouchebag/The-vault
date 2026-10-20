@@ -134,7 +134,37 @@ async function main() {
     const [cacheRows] = await connection.query("SELECT COUNT(*) AS row_count FROM cache");
     assert.equal(Number(cacheRows[0].row_count), 0, "cache remains empty after transfer");
 
-    console.log("PostgreSQL-to-Laravel-MySQL synthetic transfer checks passed.");
+    // Prove that the MySQL/MariaDB target still enforces the PostgreSQL source's
+    // database-level integrity rules instead of relying only on application validation.
+    const invalidWrites = [
+      ["products_price_non_negative", "UPDATE products SET price = -1 WHERE id = 44"],
+      ["products_stock_non_negative", "UPDATE products SET stock = -1 WHERE id = 44"],
+      ["products_status_valid", "UPDATE products SET status = 'deleted' WHERE id = 44"],
+      ["products_fulfillment_method_valid", "UPDATE products SET fulfillment_method = 'unknown' WHERE id = 44"],
+      ["product_variants_price_non_negative", "UPDATE product_variants SET price = -1 WHERE id = 45"],
+      ["product_variants_stock_non_negative", "UPDATE product_variants SET stock = -1 WHERE id = 45"],
+      ["product_variants_attributes_object", "UPDATE product_variants SET attributes = JSON_ARRAY('not-an-object') WHERE id = 45"],
+      ["product_images_sort_order_non_negative", "UPDATE product_images SET sort_order = -1 WHERE id = 46"],
+      ["product_images_url_not_blank", "UPDATE product_images SET image_url = '   ' WHERE id = 46"],
+      ["product_images_primary_state_valid", "UPDATE product_images SET primary_slot = NULL WHERE id = 46"],
+      ["orders_total_non_negative", "UPDATE orders SET total = -1 WHERE id = 47"],
+      ["cart_quantity_positive", "UPDATE cart SET quantity = 0 WHERE id = 48"],
+      ["order_items_quantity_positive", "UPDATE order_items SET quantity = 0 WHERE id = 49"],
+      ["order_items_price_non_negative", "UPDATE order_items SET price = -1 WHERE id = 49"],
+      ["order_items_price_each_non_negative", "UPDATE order_items SET price_each = -1 WHERE id = 49"],
+      ["withdrawal_status_valid", "UPDATE withdrawal_requests SET status = 'void' WHERE id = 50"],
+      ["withdrawal_email_not_blank", "UPDATE withdrawal_requests SET email = 'a' WHERE id = 50"]
+    ];
+
+    for (const [constraint, sql] of invalidWrites) {
+      await assert.rejects(
+        () => connection.query(sql),
+        /constraint/i,
+        constraint + " must reject invalid data"
+      );
+    }
+
+    console.log("PostgreSQL-to-Laravel-MySQL synthetic transfer and constraint checks passed.");
   } finally {
     await connection.end();
   }
