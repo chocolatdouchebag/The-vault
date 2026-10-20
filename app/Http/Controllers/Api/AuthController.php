@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Throwable;
@@ -16,7 +17,7 @@ class AuthController extends Controller
     // Used when no matching user exists to reduce username-enumeration timing leaks.
     private const DUMMY_PASSWORD_HASH = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.';
 
-    public function register(Request $request): JsonResponse|\Illuminate\Http\Response
+    public function register(Request $request): JsonResponse|Response
     {
         $username = trim((string) $request->input('username', ''));
         $password = (string) $request->input('password', '');
@@ -57,7 +58,7 @@ class AuthController extends Controller
         }
     }
 
-    public function login(Request $request): JsonResponse|\Illuminate\Http\Response
+    public function login(Request $request): JsonResponse|Response
     {
         $username = trim((string) $request->input('username', ''));
         $password = (string) $request->input('password', '');
@@ -118,7 +119,7 @@ class AuthController extends Controller
         }
     }
 
-    public function logout(Request $request): \Illuminate\Http\Response
+    public function logout(Request $request): Response
     {
         $request->session()->invalidate();
         $request->session()->regenerateToken();
@@ -126,9 +127,13 @@ class AuthController extends Controller
         return response('', 200);
     }
 
-    public function me(Request $request): JsonResponse
+    public function me(Request $request): JsonResponse|Response
     {
-        $response = response()->json(null)->header('Cache-Control', 'no-store');
+        // Preserve the exact JSON null payload expected by the existing Node frontend.
+        $response = response('null', 200, [
+            'Content-Type' => 'application/json; charset=UTF-8',
+            'Cache-Control' => 'no-store',
+        ]);
         $userId = $request->session()->get('userId');
         $expiresAt = (int) $request->session()->get('authExpiresAt', 0);
 
