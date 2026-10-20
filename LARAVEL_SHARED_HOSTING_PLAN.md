@@ -100,6 +100,7 @@ This is a development sequence only, not a claim that the website or checkout is
 - [ ] Real contact/withdrawal/order email delivery and idempotency tracking (deferred until email provider setup).
 - [x] Automated feature tests for storefront routes, authentication/session compatibility, catalogue, detail galleries and public variants, admin products/gallery/variant management, base and variant-aware cart, customer/admin orders, withdrawal requests, public config, sitemap, security headers and same-origin write protection. CI also checks storefront JavaScript syntax.
 - [x] Synthetic PostgreSQL-to-Laravel transfer regression tests against MySQL 8.4 and MariaDB 10.11 (IDs, row counts, decimal scale, timestamp microseconds, JSON, foreign keys and primary-image uniqueness slot). The current latest run also passes Laravel gallery tests and storefront JS syntax checks.
+- [x] Add a separate read-only post-transfer comparator that checks every shared source column for all ten tables in batches, preserves timestamp/JSON comparisons, normalizes fixed decimal padding, and validates primary-image slots. Synthetic comparison passes on MySQL 8.4 and MariaDB 10.11 in CI run 123.
 - [ ] External payment/email provider integration tests remain deferred because those flows are not implemented/configured yet.
 
 ### 3. Staging data migration and cutover (only after milestones above)
@@ -107,7 +108,7 @@ This is a development sequence only, not a claim that the website or checkout is
 - [ ] Create an empty staging database on the exact STRATO engine/version.
 - [x] Build a guarded one-way transfer utility for the ten PostgreSQL business tables into a fully migrated but otherwise empty Laravel MySQL/MariaDB target; validates source/target tables and types, preserves IDs/JSON/precise timestamps, handles primary-image uniqueness, checks row counts/keys and rolls back failed data transactions. Synthetic MySQL 8.4 and MariaDB 10.11 transfer tests pass.
 - [ ] Run a real-data staging transfer and compare business data before any cutover; not attempted.
-- [ ] Verify counts, IDs, relationships, stock quantities, product pricing and order totals; check password-hash compatibility without revealing hashes.
+- [ ] Run the read-only comparator against the real staging source/target after a verified staging transfer; separately review counts, IDs, relationships, stock, product pricing/order totals and password-hash compatibility without revealing hashes. The comparator has only been tested with synthetic CI data so far.
 - [ ] Run checkout and payment lifecycle end-to-end in a staging environment.
 - [ ] Document freeze, final backup, DNS/deployment cutover, and rollback to the Node.js/PostgreSQL version.
 - [ ] Do not cut over or enable live payments until the owner explicitly approves it.
