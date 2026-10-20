@@ -39,11 +39,12 @@ Keep `PAYMENTS_ENABLED=false`. Do not add live keys, enable checkout or claim a 
 
 Requirements: PHP 8.3 or newer, Composer, the Laravel-required PHP extensions, and PDO support for the local/test database. The checked-in CI tests use SQLite; CI additionally runs the schema/tests against MySQL 8.4 and MariaDB 10.11.
 
-1. Copy `.env.example` to `.env`.
+1. Copy `.env.example` to `.env` for local SQLite development.
 2. Run `composer install` and `php artisan key:generate`.
-3. Use a disposable local SQLite/MySQL/MariaDB database. Never configure this Laravel copy to use the PostgreSQL rollback source.
+3. Create the new local database file with `touch database/database.sqlite`, then run `php artisan migrate --seed` if you want demo catalogue items.
 4. Run `php artisan test`.
 5. Run `php artisan serve` and open `http://127.0.0.1:8000`.
+6. For STRATO deployment, use `.env.strato.example` only as a reference for the MySQL/MariaDB settings; create a separate production `.env` with real host credentials, `APP_DEBUG=false`, HTTPS URLs and a secure session cookie. Never configure this Laravel copy to use the PostgreSQL rollback source.
 
 Before a reusable/release build, commit and review `composer.lock` so dependency versions are reproducible.
 
