@@ -27,7 +27,7 @@ jobs:
       - name: Check existing storefront JavaScript syntax
         run: node --check public/script.js
       - name: Run Laravel tests
-        run: php artisan test
+        run: vendor/bin/phpunit --display-warnings
 
   database-compatibility:
     name: Database schema (${{ matrix.database.name }})
