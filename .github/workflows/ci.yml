@@ -2,7 +2,7 @@ name: FLIGALIGA checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, mysql-migration]
   pull_request:
     branches: [main]
 
@@ -16,6 +16,8 @@ jobs:
           node-version: 22
       - name: Check server JavaScript
         run: node --check server.js
+      - name: Check PostgreSQL schema export helper
+        run: node --check scripts/export-postgres-schema.js
       - name: Check browser JavaScript
         run: node --check public/script.js
       - name: Check theme initializer
