@@ -24,6 +24,20 @@ class SecurityAndOriginTest extends TestCase
         $this->assertStringContainsString('https://www.googletagmanager.com', $policy);
     }
 
+    public function test_missing_origin_and_referer_are_rejected_before_writing_a_user(): void
+    {
+        $this->withHeader('Origin', '')
+            ->withHeader('Referer', '')
+            ->postJson('/api/register', [
+                'username' => 'headerless-user',
+                'password' => 'A-Strong-Password-2026',
+            ])
+            ->assertForbidden()
+            ->assertJsonPath('error', 'Cross-site request blocked');
+
+        $this->assertSame(0, DB::table('users')->count());
+    }
+
     public function test_cross_origin_registration_is_rejected_before_writing_a_user(): void
     {
         $this->withHeader('Origin', 'https://attacker.example')
