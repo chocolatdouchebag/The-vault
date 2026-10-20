@@ -2,7 +2,7 @@
 
 ## Decision
 
-Build a separate Laravel/PHP version of the custom FLIGALIGA Vault application for STRATO shared hosting. On this branch, `.env.example` uses a fresh local SQLite database, `.env.strato.example` documents the STRATO MySQL/MariaDB target, and the legacy Node/PostgreSQL example is preserved as `.env.node-postgres.example`. Preserve the current Node.js + PostgreSQL version as a recovery source until the Laravel version has passed staging and a deliberate cutover is approved.
+Build a separate Laravel/PHP version of the custom FLIGALIGA Vault application for STRATO shared hosting. On this branch, `.env.example` uses a fresh local SQLite database, `.env.strato.example` documents the STRATO MySQL/MariaDB target, and the legacy Node/PostgreSQL example is preserved as `.env.node-postgres.example`. Preserve the current Node.js + PostgreSQL version as a recovery source until the Laravel version has passed staging and a deliberate cutover is approved. The intended future hosting package is STRATO Standard; it has not been purchased. Current order: finish hardening the migration and polish the Laravel/MySQL version locally first, then validate hosting feasibility. The PostgreSQL code and dump are archival recovery sources, not the intended final website.
 
 ## Protected recovery points
 
@@ -65,7 +65,9 @@ This is a development sequence only, not a claim that the website or checkout is
 
 ## Milestones and acceptance criteria
 
-### 0. Hosting feasibility — do this before coding or buying anything
+### 0. Hosting feasibility — before test deployment or production setup
+
+This check is intentionally deferred until the local Laravel/MySQL version is ready for a hosting trial. Do not buy hosting or attempt cutover just to continue migration development.
 - [ ] Confirm exact STRATO package and whether it uses new or legacy shared-hosting platform.
 - [ ] Verify the chosen package actually runs PHP 8.4 with all required Laravel extensions (including `pdo_mysql`) using package details or a temporary diagnostic page that is removed immediately afterward.
 - [ ] Confirm exact database product/version (MySQL or MariaDB), database limits, remote-access policy and supported TLS settings.
