@@ -24,6 +24,8 @@ jobs:
         run: composer install --no-interaction --prefer-dist --no-progress
       - name: Check PHP syntax
         run: find app bootstrap config database routes tests -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Check existing storefront JavaScript syntax
+        run: node --check public/script.js
       - name: Run Laravel tests
         run: php artisan test
 
