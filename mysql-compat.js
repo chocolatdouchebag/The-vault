@@ -41,7 +41,7 @@ function translateQuery(statement, parameters = []) {
     sql = sql.replace(/\$(\d+)/g, "?");
   }
 
-  return { sql, values, returning, originalSql };
+  return { sql, values, returning, originalSql, originalParameters: parameters };
 }
 
 function buildReturningSelect({ originalSql, returning, parameters, insertId }) {
