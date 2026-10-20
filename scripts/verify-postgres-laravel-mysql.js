@@ -36,6 +36,16 @@ function mysqlIdentifier(value) {
   return quote + identifier(value) + quote;
 }
 
+function sourceKeyExpression(value) {
+  const key = pgIdentifier(value);
+  return value === "sid" ? "(" + key + ' COLLATE "C")' : key;
+}
+
+function targetKeyExpression(value) {
+  const key = mysqlIdentifier(value);
+  return value === "sid" ? "BINARY " + key : key;
+}
+
 function sourceConnection() {
   if (process.env.PG_SOURCE_URL) {
     let url;
@@ -208,7 +218,7 @@ function normalize(value, sourceColumn, table) {
 }
 
 async function nextSourceBatch(source, tableInfo, columns, cursor) {
-  const key = pgIdentifier(tableInfo.key);
+  const key = sourceKeyExpression(tableInfo.key);
   const projection = columns.map(sourceExpression).join(", ");
   if (cursor === undefined) {
     return source.query(
@@ -225,7 +235,7 @@ async function nextSourceBatch(source, tableInfo, columns, cursor) {
 }
 
 async function nextTargetBatch(target, tableInfo, columns, sourceColumns, cursor) {
-  const key = mysqlIdentifier(tableInfo.key);
+  const key = targetKeyExpression(tableInfo.key);
   const projection = columns.map(column => targetExpression({
     column_name: column,
     data_type: sourceColumns.find(source => source.column_name === column).data_type
@@ -241,7 +251,7 @@ async function nextTargetBatch(target, tableInfo, columns, sourceColumns, cursor
   }
   const [rows] = await target.query(
     "SELECT " + projection + " FROM " + mysqlIdentifier(tableInfo.name) +
-    " WHERE " + key + " > ? ORDER BY " + key + " LIMIT ?",
+    " WHERE " + key + " > " + (tableInfo.key === "sid" ? "BINARY ?" : "?") + " ORDER BY " + key + " LIMIT ?",
     [cursor, BATCH_SIZE]
   );
   return rows;
