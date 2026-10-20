@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminProductController;
+use App\Http\Controllers\Api\AdminProductImageController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CheckoutPlaceholderController;
@@ -44,6 +45,19 @@ Route::middleware(['web', 'throttle:api'])->group(function (): void {
     Route::delete('/admin/product/{id}', [AdminProductController::class, 'destroy'])
         ->middleware(['same.origin', 'admin.required'])
         ->name('api.admin.products.destroy');
+
+    Route::get('/admin/product/{productId}/images', [AdminProductImageController::class, 'index'])
+        ->middleware('admin.required')
+        ->name('api.admin.product-images.index');
+    Route::post('/admin/product/{productId}/images', [AdminProductImageController::class, 'store'])
+        ->middleware(['same.origin', 'admin.required'])
+        ->name('api.admin.product-images.store');
+    Route::patch('/admin/product/{productId}/images/{imageId}/primary', [AdminProductImageController::class, 'setPrimary'])
+        ->middleware(['same.origin', 'admin.required'])
+        ->name('api.admin.product-images.primary');
+    Route::delete('/admin/product/{productId}/images/{imageId}', [AdminProductImageController::class, 'destroy'])
+        ->middleware(['same.origin', 'admin.required'])
+        ->name('api.admin.product-images.destroy');
 
     Route::get('/cart', [CartController::class, 'index'])
         ->middleware('login.required')
