@@ -4,7 +4,10 @@
   "description": "FLIGALIGA — The Vault ecommerce storefront",
   "main": "server.js",
   "type": "commonjs",
-  "scripts": {"start": "node server.js"},
+  "scripts": {
+    "start": "node server.js",
+    "db:export-postgres-schema": "node scripts/export-postgres-schema.js"
+  },
   "dependencies": {
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.1",
