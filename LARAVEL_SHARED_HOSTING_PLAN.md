@@ -40,7 +40,7 @@ The webshop is not finished yet. Treat payment processing, merchant onboarding a
 
 Current priority:
 1. Make the existing Vault frontend load under Laravel and keep the current routes/JSON contracts working.
-2. Port and test authentication, sessions, product catalogue, product administration, image/variant management, cart and non-payment order/admin scaffolding.
+2. Port and test authentication, sessions, product catalogue, product administration, cart, customer/admin order views, withdrawal requests and the safe non-payment placeholders. Dedicated product-image/variant management remains future work.
 3. Keep payment initiation disabled by default. Do not add live credentials or enable live checkout. A placeholder UI may remain, but it must not claim that a payment is being processed or accepted.
 4. Defer Mollie checkout/webhooks, production payment email workflow, business registration details, and legal/merchant launch checks until the owner confirms readiness. Preserve clear TODOs and the design notes for later.
 5. Once the owner has a Mollie account and KvK details, implement the actual payment and notification flows behind tests, then run a complete staging checkout before launch.
@@ -54,8 +54,8 @@ This is a development sequence only, not a claim that the website or checkout is
 - Product administration, stock management, product variants and product images.
 - Cart, checkout validation, stock reservation, immutable order totals/items and delivery details.
 - Mollie payment initiation, webhook verification, paid/failed/cancelled/expired transitions and idempotency.
-- Order receipt and payment-confirmation emails via Resend, plus contact and withdrawal confirmation emails.
-- Customer order status, admin order overview, withdrawal workflow, sitemap, privacy/security headers, rate limits and analytics-consent integration.
+- Order receipt, payment-confirmation, contact and withdrawal confirmation emails are part of the original Node.js version; the Laravel port intentionally defers sending them until the owner is ready to configure/test a provider.
+- Customer order status, admin order overview, withdrawal request/admin status workflow, sitemap, privacy/security headers, rate limits, public analytics configuration endpoint and existing analytics-consent frontend.
 - Dutch/EU business and customer-policy text remains a pre-launch content task.
 
 ## Milestones and acceptance criteria
@@ -80,10 +80,13 @@ This is a development sequence only, not a claim that the website or checkout is
 - [x] Registration, login, logout, cookie-backed session behavior and admin authorization; Node bcrypt migration path covered by regression tests.
 - [x] Admin product create/list/update/soft-disable API and catalogue fields. Dedicated product-image/variant management UI and routes remain future work.
 - [x] Cart read/add/update/empty operations with ownership checks, stock bounds and transactional row locking.
-- [x] Customer order read endpoints and admin order summary with item details. Withdrawal-request routes and workflow remain not yet ported.
+- [x] Customer order read endpoints and admin order summary with item details.
+- [x] Withdrawal request submission with optional order-email ownership check, admin listing/status update, plus tests; confirmation email remains disabled until a provider is configured.
 - [ ] Mollie checkout and webhook lifecycle, stock reservation/release, retries and duplicate webhook idempotency (deliberately deferred until the owner has Mollie and approves payment work).
 - [ ] Resend email templates and idempotency tracking (deferred; no email credentials configured).
-- [ ] Contact flow, rate limiting, security headers, sitemap and analytics configuration.
+- [x] Public analytics configuration endpoint, dynamic sitemap, existing security headers and rate limit definitions.
+- [x] Contact endpoint safely reports that delivery is not configured; no false success response.
+- [ ] Real contact/withdrawal/order email delivery and idempotency tracking (deferred until email provider setup).
 - [ ] Automated route tests plus integration tests with mocked external providers.
 
 ### 3. Staging data migration and cutover (only after milestones above)
