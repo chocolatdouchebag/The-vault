@@ -152,6 +152,7 @@ jobs:
           DB_PASS: transfer-test-password
           MYSQL_DATABASE: fligaliga_transfer_test
           MYSQL_MIGRATION_CONFIRM: TRANSFER_DATA_TO_EMPTY_MYSQL_TARGET
+          MYSQL_MIGRATION_DEBUG_ERRORS: "true"
         run: npm run db:migrate-postgres-to-mysql
 
       - name: Verify transferred values and data fidelity
