@@ -37,7 +37,12 @@ jobs:
       - name: Create schema from a fresh baseline
         env:
           MYSQL_PWD: test-root-password
-        run: mysql --protocol=tcp -h 127.0.0.1 -uroot fligaliga_test < migrations/mysql/001_baseline.sql
+        shell: bash
+        run: |
+          if ! mysql --protocol=tcp -h 127.0.0.1 -uroot fligaliga_test < migrations/mysql/001_baseline.sql; then
+            mysql --protocol=tcp -h 127.0.0.1 -uroot fligaliga_test -e "SHOW ENGINE INNODB STATUS\\G" || true
+            exit 1
+          fi
 
       - name: Verify schema tables and important constraints
         env:
