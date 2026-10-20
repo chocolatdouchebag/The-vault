@@ -10,11 +10,18 @@ use Throwable;
 
 class ProductController extends Controller
 {
-    private function publicProducts(): Builder
+    private function publicProducts(bool $withImages = false): Builder
     {
-        return Product::query()
+        $query = Product::query()
             ->where('is_active', true)
             ->where('status', 'active');
+
+        if ($withImages) {
+            // Only expose public image fields, not the database-only primary_slot.
+            $query->with('images:id,product_id,image_url,alt_text,sort_order,is_primary,created_at');
+        }
+
+        return $query;
     }
 
     public function index(): JsonResponse
@@ -45,14 +52,14 @@ class ProductController extends Controller
             $product = null;
 
             if (ctype_digit($key)) {
-                $product = $this->publicProducts()->whereKey((int) $key)->first();
+                $product = $this->publicProducts(true)->whereKey((int) $key)->first();
             } else {
                 if (preg_match('/(?:^|-)(\d+)$/', $key, $matches) === 1) {
-                    $product = $this->publicProducts()->whereKey((int) $matches[1])->first();
+                    $product = $this->publicProducts(true)->whereKey((int) $matches[1])->first();
                 }
 
                 if (!$product) {
-                    $product = $this->publicProducts()
+                    $product = $this->publicProducts(true)
                         ->get()
                         ->first(fn (Product $candidate) => strtolower($candidate->slug) === $key);
                 }
