@@ -332,7 +332,7 @@ app.post("/api/admin/product", requireSameOrigin, requireAdmin, async (req, res)
 
   try {
     const result = await pool.query(
-      `INSERT INTO products (name, description, price, stock, image_url, category, rarity, origin, `condition`, provenance, is_featured, is_new_arrival)
+      `INSERT INTO products (name, description, price, stock, image_url, category, rarity, origin, \`condition\`, provenance, is_featured, is_new_arrival)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING id`,
       [
@@ -414,7 +414,7 @@ app.patch("/api/admin/product/:id", requireSameOrigin, requireAdmin, async (req,
     const result = await pool.query(
       `UPDATE products
        SET name = $1, description = $2, price = $3, stock = $4, image_url = $5,
-           category = $6, rarity = $7, origin = $8, `condition` = $9, provenance = $10,
+           category = $6, rarity = $7, origin = $8, \`condition\` = $9, provenance = $10,
            is_featured = $11, is_new_arrival = $12, updated_at = CURRENT_TIMESTAMP
        WHERE id = $13
        RETURNING *`,
