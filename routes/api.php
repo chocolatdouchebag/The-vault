@@ -4,9 +4,11 @@ use App\Http\Controllers\Api\AdminProductController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CheckoutPlaceholderController;
+use App\Http\Controllers\Api\ContactPlaceholderController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\WithdrawalController;
 use Illuminate\Support\Facades\Route;
 
 // The original frontend expects cookie-backed sessions on its /api endpoints.
@@ -68,4 +70,20 @@ Route::middleware(['web', 'throttle:api'])->group(function (): void {
     Route::post('/checkout', CheckoutPlaceholderController::class)
         ->middleware(['same.origin', 'login.required'])
         ->name('api.checkout');
+
+    Route::post('/contact', ContactPlaceholderController::class)
+        ->middleware(['same.origin', 'throttle:contact'])
+        ->name('api.contact');
+
+    // Withdrawal requests can be submitted by customers without an account,
+    // using the email associated with an optional order to validate ownership.
+    Route::post('/withdrawal', [WithdrawalController::class, 'store'])
+        ->middleware(['same.origin', 'throttle:withdrawal'])
+        ->name('api.withdrawal.store');
+    Route::get('/admin/withdrawals', [WithdrawalController::class, 'adminIndex'])
+        ->middleware('admin.required')
+        ->name('api.admin.withdrawals.index');
+    Route::patch('/admin/withdrawals/{id}', [WithdrawalController::class, 'update'])
+        ->middleware(['same.origin', 'admin.required'])
+        ->name('api.admin.withdrawals.update');
 });
