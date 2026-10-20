@@ -142,6 +142,8 @@ jobs:
           DB_USERNAME: fligaliga
           DB_PASSWORD: fligaliga
           LARAVEL_MIGRATION_CONFIRM: TRANSFER_DATA_TO_EMPTY_LARAVEL_DATABASE
+          # Diagnostic trace is enabled only for this synthetic disposable fixture.
+          MYSQL_MIGRATION_DEBUG_ERRORS: "true"
         run: npm run db:migrate-postgres-to-laravel-mysql
       - name: Verify transferred values and Laravel schema fidelity
         env:
