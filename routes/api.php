@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AdminProductController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -37,4 +38,17 @@ Route::middleware(['web', 'throttle:api'])->group(function (): void {
     Route::delete('/admin/product/{id}', [AdminProductController::class, 'destroy'])
         ->middleware(['same.origin', 'admin.required'])
         ->name('api.admin.products.destroy');
+
+    Route::get('/cart', [CartController::class, 'index'])
+        ->middleware('login.required')
+        ->name('api.cart.index');
+    Route::post('/cart', [CartController::class, 'store'])
+        ->middleware(['same.origin', 'login.required'])
+        ->name('api.cart.store');
+    Route::post('/cart/update', [CartController::class, 'update'])
+        ->middleware(['same.origin', 'login.required'])
+        ->name('api.cart.update');
+    Route::post('/cart/empty', [CartController::class, 'empty'])
+        ->middleware(['same.origin', 'login.required'])
+        ->name('api.cart.empty');
 });
