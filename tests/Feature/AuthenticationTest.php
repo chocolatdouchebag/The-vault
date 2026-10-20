@@ -57,9 +57,226 @@ class AuthenticationTest extends TestCase
     {
         $password = 'Existing-Password-2026';
         $hash = Hash::make($password);
-        // Node's bcrypt package commonly emits $2b$ prefixes. PHP's password
+        // Test a password digest with the older Node bcrypt identifier.
         // verifier must accept the same digest without resetting customer passwords.
-        $nodeStyleHash = '$2b$'.substr($hash, 4);
+        $nodePrefix = '
+
+        $userId = DB::table('users')->insertGetId([
+            'username' => 'old-customer',
+            'password' => $nodeStyleHash,
+            'is_admin' => false,
+        ]);
+
+        $this->postJson('/api/login', [
+            'username' => 'old-customer',
+            'password' => $password,
+        ])->assertNoContent();
+
+        $this->getJson('/api/me')
+            ->assertOk()
+            ->assertExactJson([
+                'id' => $userId,
+                'username' => 'old-customer',
+                'isAdmin' => false,
+            ]);
+
+        $normalizedHash = DB::table('users')->where('id', $userId)->value('password');
+        $this->assertStringStartsWith('$2y
+    }
+
+    public function test_invalid_login_is_generic_and_does_not_start_a_session(): void
+    {
+        $this->postJson('/api/login', [
+            'username' => 'nobody',
+            'password' => 'Wrong-Password-2026',
+        ])->assertUnauthorized()
+            ->assertJsonPath('error', 'Invalid login');
+
+        $this->getJson('/api/me')->assertOk()->assertContent('null');
+    }
+
+    public function test_expired_authentication_session_is_treated_as_logged_out(): void
+    {
+        $this->withSession([
+            'userId' => 999,
+            'isAdmin' => true,
+            'authExpiresAt' => now()->subMinute()->timestamp,
+        ])->getJson('/api/me')
+            ->assertOk()
+            ->assertExactJson(null);
+    }
+
+    public function test_logout_invalidates_the_session(): void
+    {
+        $id = DB::table('users')->insertGetId([
+            'username' => 'logout-customer',
+            'password' => Hash::make('A-Strong-Password-2026'),
+            'is_admin' => false,
+        ]);
+
+        $this->withSession([
+            'userId' => $id,
+            'isAdmin' => false,
+            'authExpiresAt' => now()->addDay()->timestamp,
+        ]);
+
+        $this->postJson('/api/logout')->assertOk();
+        $this->getJson('/api/me')->assertOk()->assertExactJson(null);
+    }
+}
+, $normalizedHash);
+    }
+
+    public function test_invalid_login_is_generic_and_does_not_start_a_session(): void
+    {
+        $this->postJson('/api/login', [
+            'username' => 'nobody',
+            'password' => 'Wrong-Password-2026',
+        ])->assertUnauthorized()
+            ->assertJsonPath('error', 'Invalid login');
+
+        $this->getJson('/api/me')->assertOk()->assertContent('null');
+    }
+
+    public function test_expired_authentication_session_is_treated_as_logged_out(): void
+    {
+        $this->withSession([
+            'userId' => 999,
+            'isAdmin' => true,
+            'authExpiresAt' => now()->subMinute()->timestamp,
+        ])->getJson('/api/me')
+            ->assertOk()
+            ->assertExactJson(null);
+    }
+
+    public function test_logout_invalidates_the_session(): void
+    {
+        $id = DB::table('users')->insertGetId([
+            'username' => 'logout-customer',
+            'password' => Hash::make('A-Strong-Password-2026'),
+            'is_admin' => false,
+        ]);
+
+        $this->withSession([
+            'userId' => $id,
+            'isAdmin' => false,
+            'authExpiresAt' => now()->addDay()->timestamp,
+        ]);
+
+        $this->postJson('/api/logout')->assertOk();
+        $this->getJson('/api/me')->assertOk()->assertExactJson(null);
+    }
+}
+.'2b'.'
+
+        $userId = DB::table('users')->insertGetId([
+            'username' => 'old-customer',
+            'password' => $nodeStyleHash,
+            'is_admin' => false,
+        ]);
+
+        $this->postJson('/api/login', [
+            'username' => 'old-customer',
+            'password' => $password,
+        ])->assertNoContent();
+
+        $this->getJson('/api/me')
+            ->assertOk()
+            ->assertExactJson([
+                'id' => $userId,
+                'username' => 'old-customer',
+                'isAdmin' => false,
+            ]);
+
+        $normalizedHash = DB::table('users')->where('id', $userId)->value('password');
+        $this->assertStringStartsWith('$2y
+    }
+
+    public function test_invalid_login_is_generic_and_does_not_start_a_session(): void
+    {
+        $this->postJson('/api/login', [
+            'username' => 'nobody',
+            'password' => 'Wrong-Password-2026',
+        ])->assertUnauthorized()
+            ->assertJsonPath('error', 'Invalid login');
+
+        $this->getJson('/api/me')->assertOk()->assertContent('null');
+    }
+
+    public function test_expired_authentication_session_is_treated_as_logged_out(): void
+    {
+        $this->withSession([
+            'userId' => 999,
+            'isAdmin' => true,
+            'authExpiresAt' => now()->subMinute()->timestamp,
+        ])->getJson('/api/me')
+            ->assertOk()
+            ->assertExactJson(null);
+    }
+
+    public function test_logout_invalidates_the_session(): void
+    {
+        $id = DB::table('users')->insertGetId([
+            'username' => 'logout-customer',
+            'password' => Hash::make('A-Strong-Password-2026'),
+            'is_admin' => false,
+        ]);
+
+        $this->withSession([
+            'userId' => $id,
+            'isAdmin' => false,
+            'authExpiresAt' => now()->addDay()->timestamp,
+        ]);
+
+        $this->postJson('/api/logout')->assertOk();
+        $this->getJson('/api/me')->assertOk()->assertExactJson(null);
+    }
+}
+, $normalizedHash);
+    }
+
+    public function test_invalid_login_is_generic_and_does_not_start_a_session(): void
+    {
+        $this->postJson('/api/login', [
+            'username' => 'nobody',
+            'password' => 'Wrong-Password-2026',
+        ])->assertUnauthorized()
+            ->assertJsonPath('error', 'Invalid login');
+
+        $this->getJson('/api/me')->assertOk()->assertContent('null');
+    }
+
+    public function test_expired_authentication_session_is_treated_as_logged_out(): void
+    {
+        $this->withSession([
+            'userId' => 999,
+            'isAdmin' => true,
+            'authExpiresAt' => now()->subMinute()->timestamp,
+        ])->getJson('/api/me')
+            ->assertOk()
+            ->assertExactJson(null);
+    }
+
+    public function test_logout_invalidates_the_session(): void
+    {
+        $id = DB::table('users')->insertGetId([
+            'username' => 'logout-customer',
+            'password' => Hash::make('A-Strong-Password-2026'),
+            'is_admin' => false,
+        ]);
+
+        $this->withSession([
+            'userId' => $id,
+            'isAdmin' => false,
+            'authExpiresAt' => now()->addDay()->timestamp,
+        ]);
+
+        $this->postJson('/api/logout')->assertOk();
+        $this->getJson('/api/me')->assertOk()->assertExactJson(null);
+    }
+}
+;
+        $nodeStyleHash = $nodePrefix.substr($hash, 4);
 
         $userId = DB::table('users')->insertGetId([
             'username' => 'old-customer',

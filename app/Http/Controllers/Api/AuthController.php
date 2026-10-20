@@ -13,8 +13,7 @@ use Throwable;
 
 class AuthController extends Controller
 {
-    // Deliberately not a real user's hash. It keeps the missing-user login path
-    // doing a password verification too, reducing username-enumeration timing leaks.
+    // Used when no matching user exists to reduce username-enumeration timing leaks.
     private const DUMMY_PASSWORD_HASH = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.';
 
     public function register(Request $request): JsonResponse|\Illuminate\Http\Response
@@ -74,7 +73,14 @@ class AuthController extends Controller
 
             // Upgrade compatible Node bcrypt hashes only after successful verification.
             // This is an automatic, one-user-at-a-time conversion; no reset is needed.
-            if (str_starts_with((string) $user->password, '$2b
+            $nodeBcryptPrefix = chr(36).'2b'.chr(36);
+            if (str_starts_with((string) $user->password, $nodeBcryptPrefix)
+                || Hash::needsRehash($user->password)) {
+                $user->password = Hash::make($password);
+                $user->save();
+            }
+
+            $request->session()->regenerate();
             $minutes = $user->is_admin ? 120 : 10080;
             $request->session()->put([
                 'userId' => $user->id,
@@ -93,356 +99,22 @@ class AuthController extends Controller
 
             return response()->json(['error' => 'Login failed'], 500);
         }
-    }
-
-    public function logout(Request $request): \Illuminate\Http\Response
-    {
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return response('', 200);
     }
 
     private function checkPassword(string $password, string $hash): bool
     {
-        // Node's bcrypt package emits $2b$. PHP/Laravel's bcrypt hasher checks
-        // for the $2y$ identifier, even though these modern bcrypt digests are
-        // compatible. Normalize the prefix for verification only.
-        if (str_starts_with($hash, '$2b    {
-        $response = response()->json(null)->header('Cache-Control', 'no-store');
-        $userId = $request->session()->get('userId');
-        $expiresAt = (int) $request->session()->get('authExpiresAt', 0);
-
-        if (!$userId || ($expiresAt > 0 && now()->timestamp >= $expiresAt)) {
-            if ($userId) {
-                $request->session()->forget(['userId', 'isAdmin', 'user', 'authExpiresAt']);
-            }
-
-            return $response;
-        }
-
-        try {
-            $user = User::query()->select(['id', 'username', 'is_admin'])->find($userId);
-
-            if (!$user) {
-                $request->session()->forget(['userId', 'isAdmin', 'user', 'authExpiresAt']);
-
-                return $response;
-            }
-
-            $minutes = $user->is_admin ? 120 : 10080;
-            $request->session()->put([
-                'isAdmin' => (bool) $user->is_admin,
-                'user' => [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'isAdmin' => (bool) $user->is_admin,
-                ],
-                'authExpiresAt' => now()->addMinutes($minutes)->timestamp,
-            ]);
-
-            return response()->json([
-                'id' => $user->id,
-                'username' => $user->username,
-                'isAdmin' => (bool) $user->is_admin,
-            ])->header('Cache-Control', 'no-store');
-        } catch (Throwable $exception) {
-            report($exception);
-
-            return response()->json(['error' => 'Could not load account'], 500)
-                ->header('Cache-Control', 'no-store');
-        }
-    }
-}
-) || Hash::needsRehash($user->password)) {
-                $user->password = Hash::make($password);
-                $user->save();
-            }
-
-            $request->session()->regenerate();
-            $minutes = $user->is_admin ? 120 : 10080;
-            $request->session()->put([
-                'userId' => $user->id,
-                'isAdmin' => (bool) $user->is_admin,
-                'user' => [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'isAdmin' => (bool) $user->is_admin,
-                ],
-                'authExpiresAt' => now()->addMinutes($minutes)->timestamp,
-            ]);
-
-            return response('', 204);
-        } catch (Throwable $exception) {
-            report($exception);
-
-            return response()->json(['error' => 'Login failed'], 500);
-        }
-    }
-
-    public function logout(Request $request): \Illuminate\Http\Response
-    {
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return response('', 200);
-    }
-
-    public function me(Request $request): JsonResponse
-    {
-        $response = response()->json(null)->header('Cache-Control', 'no-store');
-        $userId = $request->session()->get('userId');
-        $expiresAt = (int) $request->session()->get('authExpiresAt', 0);
-
-        if (!$userId || ($expiresAt > 0 && now()->timestamp >= $expiresAt)) {
-            if ($userId) {
-                $request->session()->forget(['userId', 'isAdmin', 'user', 'authExpiresAt']);
-            }
-
-            return $response;
-        }
-
-        try {
-            $user = User::query()->select(['id', 'username', 'is_admin'])->find($userId);
-
-            if (!$user) {
-                $request->session()->forget(['userId', 'isAdmin', 'user', 'authExpiresAt']);
-
-                return $response;
-            }
-
-            $minutes = $user->is_admin ? 120 : 10080;
-            $request->session()->put([
-                'isAdmin' => (bool) $user->is_admin,
-                'user' => [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'isAdmin' => (bool) $user->is_admin,
-                ],
-                'authExpiresAt' => now()->addMinutes($minutes)->timestamp,
-            ]);
-
-            return response()->json([
-                'id' => $user->id,
-                'username' => $user->username,
-                'isAdmin' => (bool) $user->is_admin,
-            ])->header('Cache-Control', 'no-store');
-        } catch (Throwable $exception) {
-            report($exception);
-
-            return response()->json(['error' => 'Could not load account'], 500)
-                ->header('Cache-Control', 'no-store');
-        }
-    }
-}
-)) {
-            $hash = '$2y    {
-        $response = response()->json(null)->header('Cache-Control', 'no-store');
-        $userId = $request->session()->get('userId');
-        $expiresAt = (int) $request->session()->get('authExpiresAt', 0);
-
-        if (!$userId || ($expiresAt > 0 && now()->timestamp >= $expiresAt)) {
-            if ($userId) {
-                $request->session()->forget(['userId', 'isAdmin', 'user', 'authExpiresAt']);
-            }
-
-            return $response;
-        }
-
-        try {
-            $user = User::query()->select(['id', 'username', 'is_admin'])->find($userId);
-
-            if (!$user) {
-                $request->session()->forget(['userId', 'isAdmin', 'user', 'authExpiresAt']);
-
-                return $response;
-            }
-
-            $minutes = $user->is_admin ? 120 : 10080;
-            $request->session()->put([
-                'isAdmin' => (bool) $user->is_admin,
-                'user' => [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'isAdmin' => (bool) $user->is_admin,
-                ],
-                'authExpiresAt' => now()->addMinutes($minutes)->timestamp,
-            ]);
-
-            return response()->json([
-                'id' => $user->id,
-                'username' => $user->username,
-                'isAdmin' => (bool) $user->is_admin,
-            ])->header('Cache-Control', 'no-store');
-        } catch (Throwable $exception) {
-            report($exception);
-
-            return response()->json(['error' => 'Could not load account'], 500)
-                ->header('Cache-Control', 'no-store');
-        }
-    }
-}
-) || Hash::needsRehash($user->password)) {
-                $user->password = Hash::make($password);
-                $user->save();
-            }
-
-            $request->session()->regenerate();
-            $minutes = $user->is_admin ? 120 : 10080;
-            $request->session()->put([
-                'userId' => $user->id,
-                'isAdmin' => (bool) $user->is_admin,
-                'user' => [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'isAdmin' => (bool) $user->is_admin,
-                ],
-                'authExpiresAt' => now()->addMinutes($minutes)->timestamp,
-            ]);
-
-            return response('', 204);
-        } catch (Throwable $exception) {
-            report($exception);
-
-            return response()->json(['error' => 'Login failed'], 500);
-        }
-    }
-
-    public function logout(Request $request): \Illuminate\Http\Response
-    {
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return response('', 200);
-    }
-
-    public function me(Request $request): JsonResponse
-    {
-        $response = response()->json(null)->header('Cache-Control', 'no-store');
-        $userId = $request->session()->get('userId');
-        $expiresAt = (int) $request->session()->get('authExpiresAt', 0);
-
-        if (!$userId || ($expiresAt > 0 && now()->timestamp >= $expiresAt)) {
-            if ($userId) {
-                $request->session()->forget(['userId', 'isAdmin', 'user', 'authExpiresAt']);
-            }
-
-            return $response;
-        }
-
-        try {
-            $user = User::query()->select(['id', 'username', 'is_admin'])->find($userId);
-
-            if (!$user) {
-                $request->session()->forget(['userId', 'isAdmin', 'user', 'authExpiresAt']);
-
-                return $response;
-            }
-
-            $minutes = $user->is_admin ? 120 : 10080;
-            $request->session()->put([
-                'isAdmin' => (bool) $user->is_admin,
-                'user' => [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'isAdmin' => (bool) $user->is_admin,
-                ],
-                'authExpiresAt' => now()->addMinutes($minutes)->timestamp,
-            ]);
-
-            return response()->json([
-                'id' => $user->id,
-                'username' => $user->username,
-                'isAdmin' => (bool) $user->is_admin,
-            ])->header('Cache-Control', 'no-store');
-        } catch (Throwable $exception) {
-            report($exception);
-
-            return response()->json(['error' => 'Could not load account'], 500)
-                ->header('Cache-Control', 'no-store');
-        }
-    }
-}
-.substr($hash, 4);
+        // Modern Node bcrypt uses the identifier built from "$", "2b", "$".
+        // Laravel's configured hasher expects the equivalent PHP "2y" identifier.
+        // Normalize only the identifier for verification; a successful login rehashes.
+        $nodeBcryptPrefix = chr(36).'2b'.chr(36);
+        if (str_starts_with($hash, $nodeBcryptPrefix)) {
+            $hash = chr(36).'2y'.chr(36).substr($hash, 4);
         }
 
         try {
             return Hash::check($password, $hash);
         } catch (\RuntimeException) {
             return false;
-        }
-    }
-
-    public function me(Request $request): JsonResponse
-    {
-        $response = response()->json(null)->header('Cache-Control', 'no-store');
-        $userId = $request->session()->get('userId');
-        $expiresAt = (int) $request->session()->get('authExpiresAt', 0);
-
-        if (!$userId || ($expiresAt > 0 && now()->timestamp >= $expiresAt)) {
-            if ($userId) {
-                $request->session()->forget(['userId', 'isAdmin', 'user', 'authExpiresAt']);
-            }
-
-            return $response;
-        }
-
-        try {
-            $user = User::query()->select(['id', 'username', 'is_admin'])->find($userId);
-
-            if (!$user) {
-                $request->session()->forget(['userId', 'isAdmin', 'user', 'authExpiresAt']);
-
-                return $response;
-            }
-
-            $minutes = $user->is_admin ? 120 : 10080;
-            $request->session()->put([
-                'isAdmin' => (bool) $user->is_admin,
-                'user' => [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'isAdmin' => (bool) $user->is_admin,
-                ],
-                'authExpiresAt' => now()->addMinutes($minutes)->timestamp,
-            ]);
-
-            return response()->json([
-                'id' => $user->id,
-                'username' => $user->username,
-                'isAdmin' => (bool) $user->is_admin,
-            ])->header('Cache-Control', 'no-store');
-        } catch (Throwable $exception) {
-            report($exception);
-
-            return response()->json(['error' => 'Could not load account'], 500)
-                ->header('Cache-Control', 'no-store');
-        }
-    }
-}
-) || Hash::needsRehash($user->password)) {
-                $user->password = Hash::make($password);
-                $user->save();
-            }
-
-            $request->session()->regenerate();
-            $minutes = $user->is_admin ? 120 : 10080;
-            $request->session()->put([
-                'userId' => $user->id,
-                'isAdmin' => (bool) $user->is_admin,
-                'user' => [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'isAdmin' => (bool) $user->is_admin,
-                ],
-                'authExpiresAt' => now()->addMinutes($minutes)->timestamp,
-            ]);
-
-            return response('', 204);
-        } catch (Throwable $exception) {
-            report($exception);
-
-            return response()->json(['error' => 'Login failed'], 500);
         }
     }
 
