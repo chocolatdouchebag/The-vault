@@ -78,7 +78,10 @@ This is a development sequence only, not a claim that the website or checkout is
 ### 2. Port and test features in low-risk-to-high-risk order
 - [x] Product catalogue/detail API and existing frontend asset serving.
 - [x] Registration, login, logout, cookie-backed session behavior and admin authorization; Node bcrypt migration path covered by regression tests.
-- [x] Admin product create/list/update/soft-disable API and catalogue fields. Dedicated product-image/variant management UI and routes remain future work.
+- [x] Admin product create/list/update/soft-disable API and catalogue fields.
+- [x] Product detail gallery API/UI: image rows load primary-first, with accessible thumbnails and the legacy image URL kept as fallback.
+- [x] Protected admin gallery management API/UI: list/add/set-primary/remove, URL validation, primary-image slot synchronization and automatic promotion after deleting the primary image. It manages image URLs rather than file uploads.
+- [ ] Product variant management UI and variant-aware cart/checkout integration remain future work.
 - [x] Cart read/add/update/empty operations with ownership checks, stock bounds and transactional row locking.
 - [x] Customer order read endpoints and admin order summary with item details.
 - [x] Withdrawal request submission with optional order-email ownership check, admin listing/status update, plus tests; confirmation email remains disabled until a provider is configured.
@@ -87,8 +90,8 @@ This is a development sequence only, not a claim that the website or checkout is
 - [x] Public analytics configuration endpoint, dynamic sitemap, existing security headers and rate limit definitions.
 - [x] Contact endpoint safely reports that delivery is not configured; no false success response.
 - [ ] Real contact/withdrawal/order email delivery and idempotency tracking (deferred until email provider setup).
-- [x] Automated feature tests for storefront routes, authentication/session compatibility, catalogue, admin products, cart, customer/admin orders, withdrawal requests, public config, sitemap, security headers and same-origin write protection. CI also checks storefront JavaScript syntax.
-- [x] Synthetic PostgreSQL-to-Laravel transfer regression tests against MySQL 8.4 and MariaDB 10.11 (IDs, row counts, decimal scale, timestamp microseconds, JSON, foreign keys and primary-image uniqueness slot).
+- [x] Automated feature tests for storefront routes, authentication/session compatibility, catalogue and detail galleries, admin products and gallery management, cart, customer/admin orders, withdrawal requests, public config, sitemap, security headers and same-origin write protection. CI also checks storefront JavaScript syntax.
+- [x] Synthetic PostgreSQL-to-Laravel transfer regression tests against MySQL 8.4 and MariaDB 10.11 (IDs, row counts, decimal scale, timestamp microseconds, JSON, foreign keys and primary-image uniqueness slot). The current latest run also passes Laravel gallery tests and storefront JS syntax checks.
 - [ ] External payment/email provider integration tests remain deferred because those flows are not implemented/configured yet.
 
 ### 3. Staging data migration and cutover (only after milestones above)
