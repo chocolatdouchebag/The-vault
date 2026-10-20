@@ -156,6 +156,22 @@ jobs:
           # Diagnostic trace is enabled only for this synthetic disposable fixture.
           MYSQL_MIGRATION_DEBUG_ERRORS: "true"
         run: npm run db:migrate-postgres-to-laravel-mysql
+      - name: Compare every transferred source value in read-only mode
+        env:
+          PG_SOURCE_HOST: 127.0.0.1
+          PG_SOURCE_PORT: 5432
+          PG_SOURCE_DATABASE: laravel_source_test
+          PG_SOURCE_USER: transfer_user
+          PG_SOURCE_PASSWORD: transfer-test-password
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: fligaliga_transfer_test
+          DB_USERNAME: fligaliga
+          DB_PASSWORD: fligaliga
+          LARAVEL_MIGRATION_VERIFY: COMPARE_POSTGRES_LARAVEL_DATA_READ_ONLY
+        run: npm run db:verify-postgres-laravel-mysql
+
       - name: Verify transferred values and Laravel schema fidelity
         env:
           DB_HOST: 127.0.0.1
