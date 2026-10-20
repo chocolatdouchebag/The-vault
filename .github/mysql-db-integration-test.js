@@ -17,7 +17,7 @@ async function main() {
   const sessionId = "mysql-adapter-integration-test-session";
 
   try {
-    const [timezone] = await pool.query("SELECT @@session.time_zone AS time_zone");
+    const timezone = await pool.query("SELECT @@session.time_zone AS time_zone");
     assert.equal(timezone.rows[0]?.time_zone, "+00:00", "application DB session should use UTC");
 
     const userInsert = await pool.query(
