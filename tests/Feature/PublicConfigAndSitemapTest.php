@@ -17,7 +17,7 @@ class PublicConfigAndSitemapTest extends TestCase
         $this->getJson('/api/public-config')
             ->assertOk()
             ->assertJsonPath('analyticsMeasurementId', 'G-TEST123')
-            ->assertHeader('Cache-Control', 'public, max-age=300');
+            ->assertHeader('Cache-Control', 'max-age=300, public');
     }
 
     public function test_public_config_returns_null_when_analytics_is_not_configured(): void
@@ -54,7 +54,7 @@ class PublicConfigAndSitemapTest extends TestCase
         $response = $this->get('/sitemap.xml')
             ->assertOk()
             ->assertHeader('Content-Type', 'application/xml; charset=UTF-8')
-            ->assertHeader('Cache-Control', 'public, max-age=600')
+            ->assertHeader('Cache-Control', 'max-age=600, public')
             ->assertSee('https://fligaliga.example.test/', false)
             ->assertSee(
                 'https://fligaliga.example.test/product/astral-compass-'.$productId,
