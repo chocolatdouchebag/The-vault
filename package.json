@@ -4,13 +4,20 @@
   "description": "FLIGALIGA — The Vault ecommerce storefront",
   "main": "server.js",
   "type": "commonjs",
-  "scripts": {"start": "node server.js"},
+  "scripts": {
+    "start": "node server.js",
+    "db:export-postgres-schema": "node scripts/export-postgres-schema.js",
+    "test:mysql-compat": "node .github/mysql-compat-regression-test.js",
+    "db:apply-mysql-schema": "node scripts/apply-mysql-schema.js",
+    "db:migrate-postgres-to-mysql": "node scripts/migrate-postgres-to-mysql.js"
+  },
   "dependencies": {
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.1",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "express-session": "^1.18.2",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "mysql2": "^3.24.6"
   }
 }

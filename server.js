@@ -1,6 +1,6 @@
 const express = require("express");
 const session = require("express-session");
-const PgSessionStore = require("./session-store");
+const MySqlSessionStore = require("./session-store");
 const bcrypt = require("bcrypt");
 const bodyParser = require("body-parser");
 const path = require("path");
@@ -88,7 +88,7 @@ app.use("/api", apiRateLimiter);
 app.use(bodyParser.json({ limit: "64kb" }));
 app.use(express.urlencoded({ extended: false, limit: "32kb" }));
 app.use(session({
-  store: new PgSessionStore(pool),
+  store: new MySqlSessionStore(pool),
   name: isProduction ? "__Host-fligaliga" : "fligaliga.sid",
   secret: process.env.SESSION_SECRET || "fligaliga-development-secret-change-me",
   resave: false,
@@ -332,7 +332,7 @@ app.post("/api/admin/product", requireSameOrigin, requireAdmin, async (req, res)
 
   try {
     const result = await pool.query(
-      `INSERT INTO products (name, description, price, stock, image_url, category, rarity, origin, condition, provenance, is_featured, is_new_arrival)
+      `INSERT INTO products (name, description, price, stock, image_url, category, rarity, origin, \`condition\`, provenance, is_featured, is_new_arrival)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING id`,
       [
@@ -414,7 +414,7 @@ app.patch("/api/admin/product/:id", requireSameOrigin, requireAdmin, async (req,
     const result = await pool.query(
       `UPDATE products
        SET name = $1, description = $2, price = $3, stock = $4, image_url = $5,
-           category = $6, rarity = $7, origin = $8, condition = $9, provenance = $10,
+           category = $6, rarity = $7, origin = $8, \`condition\` = $9, provenance = $10,
            is_featured = $11, is_new_arrival = $12, updated_at = CURRENT_TIMESTAMP
        WHERE id = $13
        RETURNING *`,
@@ -667,7 +667,7 @@ app.post("/api/checkout", requireSameOrigin, requireLogin, async (req, res) => {
 
     const payment = await paymentResponse.json().catch(() => null);
     if (!paymentResponse.ok || !payment?.id || !payment?._links?.checkout?.href) {
-      await releaseReservedStock(orderId, "payment_creation_failed");
+      await releaseReservedStock(pool, orderId, "payment_creation_failed");
       return res.status(502).json({ error: "Could not start the payment. Your reserved stock has been released." });
     }
 
@@ -685,7 +685,7 @@ app.post("/api/checkout", requireSameOrigin, requireLogin, async (req, res) => {
     res.json({ success: true, orderId, total, checkoutUrl: payment._links.checkout.href });
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
-    if (orderId) await releaseReservedStock(orderId, "checkout_error").catch(() => {});
+    if (orderId) await releaseReservedStock(pool, orderId, "checkout_error").catch(() => {});
     console.error(err);
     res.status(500).json({ error: "Checkout failed" });
   } finally {
@@ -766,13 +766,13 @@ app.post("/api/payments/mollie-webhook", async (req, res) => {
         }
         break;
       case "failed":
-        await releaseReservedStock(order.id, "payment_failed");
+        await releaseReservedStock(pool, order.id, "payment_failed");
         break;
       case "canceled":
-        await releaseReservedStock(order.id, "canceled");
+        await releaseReservedStock(pool, order.id, "canceled");
         break;
       case "expired":
-        await releaseReservedStock(order.id, "expired");
+        await releaseReservedStock(pool, order.id, "expired");
         break;
       default:
         if (!order.stock_released_at && order.status !== "paid") {

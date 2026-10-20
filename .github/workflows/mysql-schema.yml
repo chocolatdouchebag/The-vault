@@ -1,0 +1,174 @@
+name: MySQL schema regression
+
+on:
+  push:
+    branches: [mysql-migration]
+    paths:
+      - "migrations/mysql/**"
+      - ".github/workflows/mysql-schema.yml"
+      - ".github/fixtures/postgres-transfer-source.sql"
+      - ".github/postgres-mysql-transfer-test.js"
+      - "scripts/migrate-postgres-to-mysql.js"
+      - ".github/mysql-db-integration-test.js"
+      - ".github/mysql-checkout-integration-test.js"
+      - ".github/mock-mollie-fetch.js"
+      - "db.js"
+      - "server.js"
+      - "payment-cleanup.js"
+      - ".github/checkout-stock-release-regression-test.js"
+      - "mysql-compat.js"
+      - "session-store.js"
+      - "package.json"
+      - "scripts/apply-mysql-schema.js"
+  pull_request:
+    branches: [main]
+    paths:
+      - "migrations/mysql/**"
+      - ".github/workflows/mysql-schema.yml"
+      - ".github/fixtures/postgres-transfer-source.sql"
+      - ".github/postgres-mysql-transfer-test.js"
+      - "scripts/migrate-postgres-to-mysql.js"
+      - ".github/mysql-db-integration-test.js"
+      - ".github/mysql-checkout-integration-test.js"
+      - ".github/mock-mollie-fetch.js"
+      - "db.js"
+      - "server.js"
+      - "payment-cleanup.js"
+      - ".github/checkout-stock-release-regression-test.js"
+      - "mysql-compat.js"
+      - "session-store.js"
+      - "package.json"
+      - "scripts/apply-mysql-schema.js"
+
+jobs:
+  mysql-schema:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: test-root-password
+          MYSQL_DATABASE: fligaliga_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -ptest-root-password"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=30
+
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: transfer_user
+          POSTGRES_PASSWORD: transfer-test-password
+          POSTGRES_DB: fligaliga_source_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U transfer_user -d fligaliga_source_test"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=30
+    env:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: fligaliga_test
+      MYSQL_USER: root
+      MYSQL_PASSWORD: test-root-password
+      MYSQL_SSL: "false"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Node dependencies for MySQL runtime tests
+        run: npm install --no-save --package-lock=false --ignore-scripts
+
+      - name: Install MySQL client
+        run: sudo apt-get update && sudo apt-get install -y mysql-client postgresql-client
+
+      - name: Create schema from a fresh baseline
+        env:
+          MYSQL_PWD: test-root-password
+        shell: bash
+        run: |
+          if ! mysql --protocol=tcp -h 127.0.0.1 -uroot fligaliga_test < migrations/mysql/001_baseline.sql; then
+            mysql --protocol=tcp -h 127.0.0.1 -uroot fligaliga_test -e "SHOW ENGINE INNODB STATUS\\G" || true
+            exit 1
+          fi
+
+      - name: Verify schema tables and important constraints
+        env:
+          MYSQL_PWD: test-root-password
+        shell: bash
+        run: |
+          set -euo pipefail
+          mysql --protocol=tcp -h 127.0.0.1 -uroot fligaliga_test -Nse "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'fligaliga_test' AND table_type = 'BASE TABLE'" | grep -qx '10'
+
+          mysql --protocol=tcp -h 127.0.0.1 -uroot fligaliga_test -e "INSERT INTO categories (name, slug) VALUES ('Test category', 'test-category')"
+          mysql --protocol=tcp -h 127.0.0.1 -uroot fligaliga_test -e "INSERT INTO products (name, price, stock, image_url, category_id) VALUES ('Test product', 12.50, 3, 'https://example.test/test.jpg', 1)"
+          mysql --protocol=tcp -h 127.0.0.1 -uroot fligaliga_test -e "INSERT INTO product_images (product_id, image_url, is_primary) VALUES (1, 'https://example.test/extra-a.jpg', 0), (1, 'https://example.test/extra-b.jpg', 0)"
+          mysql --protocol=tcp -h 127.0.0.1 -uroot fligaliga_test -e "UPDATE product_images SET is_primary = 1 WHERE id = 1"
+
+          if mysql --protocol=tcp -h 127.0.0.1 -uroot fligaliga_test -e "UPDATE product_images SET is_primary = 1 WHERE id = 2"; then
+            echo "ERROR: multiple primary images for one product were accepted"
+            exit 1
+          else
+            echo "Primary-image uniqueness enforced"
+          fi
+
+          if mysql --protocol=tcp -h 127.0.0.1 -uroot fligaliga_test -e "INSERT INTO products (name, price, stock) VALUES ('Invalid negative-price product', -1, 0)"; then
+            echo "ERROR: negative product price was accepted"
+            exit 1
+          else
+            echo "Product price check enforced"
+          fi
+
+          mysql --protocol=tcp -h 127.0.0.1 -uroot fligaliga_test -e "INSERT INTO product_variants (product_id, sku, name, price, stock, attributes) VALUES (1, 'TEST-SKU', 'Default', 12.50, 3, JSON_OBJECT())"
+          if mysql --protocol=tcp -h 127.0.0.1 -uroot fligaliga_test -e "INSERT INTO product_variants (product_id, sku, name, price, stock, attributes) VALUES (1, 'TEST-SKU', 'Duplicate', 12.50, 3, JSON_OBJECT())"; then
+            echo "ERROR: duplicate non-null SKUs were accepted"
+            exit 1
+          else
+            echo "SKU uniqueness enforced"
+          fi
+
+      - name: Test application MySQL DB adapter and session store
+        run: node .github/mysql-db-integration-test.js
+
+      - name: Test checkout and failed-payment webhook with mocked Mollie
+        run: node .github/mysql-checkout-integration-test.js
+
+      - name: Load synthetic PostgreSQL source fixture
+        env:
+          PGPASSWORD: transfer-test-password
+        run: psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -p 5432 -U transfer_user -d fligaliga_source_test -f .github/fixtures/postgres-transfer-source.sql
+
+      - name: Create fresh MySQL transfer database
+        env:
+          MYSQL_PWD: test-root-password
+        run: mysql --protocol=tcp -h 127.0.0.1 -uroot -e "CREATE DATABASE fligaliga_transfer_test CHARACTER SET utf8mb4 COLLATE utf8mb4_bin"
+
+      - name: Apply guarded MySQL schema helper to fresh database
+        env:
+          MYSQL_DATABASE: fligaliga_transfer_test
+        run: npm run db:apply-mysql-schema
+
+      - name: Transfer synthetic PostgreSQL data
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_NAME: fligaliga_source_test
+          DB_USER: transfer_user
+          DB_PASS: transfer-test-password
+          MYSQL_DATABASE: fligaliga_transfer_test
+          MYSQL_MIGRATION_CONFIRM: TRANSFER_DATA_TO_EMPTY_MYSQL_TARGET
+          MYSQL_MIGRATION_DEBUG_ERRORS: "true"
+        run: npm run db:migrate-postgres-to-mysql
+
+      - name: Verify transferred values and data fidelity
+        env:
+          MYSQL_DATABASE: fligaliga_transfer_test
+        run: node .github/postgres-mysql-transfer-test.js
