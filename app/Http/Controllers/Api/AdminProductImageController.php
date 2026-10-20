@@ -35,7 +35,12 @@ class AdminProductImageController extends Controller
                     'sort_order',
                     'is_primary',
                     'created_at',
-                ]);
+                ])
+                ->map(function (object $image): object {
+                    $image->is_primary = (bool) $image->is_primary;
+                    $image->sort_order = (int) $image->sort_order;
+                    return $image;
+                });
 
             return response()->json($images)->header('Cache-Control', 'no-store');
         } catch (Throwable $exception) {
@@ -265,7 +270,7 @@ class AdminProductImageController extends Controller
 
     private function findImage(int $productId, int $imageId): ?object
     {
-        return DB::table('product_images')
+        $image = DB::table('product_images')
             ->where('product_id', $productId)
             ->where('id', $imageId)
             ->first([
@@ -277,6 +282,13 @@ class AdminProductImageController extends Controller
                 'is_primary',
                 'created_at',
             ]);
+
+        if ($image) {
+            $image->is_primary = (bool) $image->is_primary;
+            $image->sort_order = (int) $image->sort_order;
+        }
+
+        return $image;
     }
 
     private function positiveId(string $value): ?int
