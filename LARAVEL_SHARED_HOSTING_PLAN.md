@@ -40,7 +40,7 @@ The webshop is not finished yet. Treat payment processing, merchant onboarding a
 
 Current priority:
 1. Make the existing Vault frontend load under Laravel and keep the current routes/JSON contracts working.
-2. Port and test authentication, sessions, product catalogue, product administration, cart, customer/admin order views, withdrawal requests and safe non-payment placeholders. Dedicated product-image/variant management remains future work.
+2. Port and test authentication, sessions, product catalogue, product administration, gallery/variant management, variant-aware cart, customer/admin order views, withdrawal requests and safe non-payment placeholders. Variant-aware checkout/order-item snapshots remain future work.
 3. Keep payment initiation disabled by default. Do not add live credentials or enable live checkout. A placeholder UI may remain, but it must not claim that a payment is being processed or accepted.
 4. Defer Mollie checkout/webhooks, production payment email workflow, business registration details, and legal/merchant launch checks until the owner confirms readiness. Preserve clear TODOs and the design notes for later.
 5. Once the owner has a Mollie account and KvK details, implement the actual payment and notification flows behind tests, then run a complete staging checkout before launch.
@@ -82,7 +82,7 @@ This is a development sequence only, not a claim that the website or checkout is
 - [x] Product detail gallery API/UI: image rows load primary-first, with accessible thumbnails and the legacy image URL kept as fallback.
 - [x] Protected admin gallery management API/UI: list/add/set-primary/remove, URL validation, primary-image slot synchronization and automatic promotion after deleting the primary image. It manages image URLs rather than file uploads.
 - [x] Protected admin product variant API/UI: list, create, edit, validate unique SKUs and JSON attributes, and soft-disable; covered by regression tests.
-- [ ] Customer-facing variant selection and variant-aware cart operations remain future work; checkout stays disabled.
+- [x] Customer-facing product-detail variant selection for active options; selected price, stock and attributes update with the choice. Variant-aware cart rows use variant-specific prices/stock; disabled and foreign options are rejected.
 - [x] Cart read/add/update/empty operations with ownership checks, stock bounds and transactional row locking.
 - [x] Customer order read endpoints and admin order summary with item details.
 - [x] Withdrawal request submission with optional order-email ownership check, admin listing/status update, plus tests; confirmation email remains disabled until a provider is configured.
@@ -91,7 +91,7 @@ This is a development sequence only, not a claim that the website or checkout is
 - [x] Public analytics configuration endpoint, dynamic sitemap, existing security headers and rate limit definitions.
 - [x] Contact endpoint safely reports that delivery is not configured; no false success response.
 - [ ] Real contact/withdrawal/order email delivery and idempotency tracking (deferred until email provider setup).
-- [x] Automated feature tests for storefront routes, authentication/session compatibility, catalogue and detail galleries, admin products and gallery management, cart, customer/admin orders, withdrawal requests, public config, sitemap, security headers and same-origin write protection. CI also checks storefront JavaScript syntax.
+- [x] Automated feature tests for storefront routes, authentication/session compatibility, catalogue, detail galleries and public variants, admin products/gallery/variant management, base and variant-aware cart, customer/admin orders, withdrawal requests, public config, sitemap, security headers and same-origin write protection. CI also checks storefront JavaScript syntax.
 - [x] Synthetic PostgreSQL-to-Laravel transfer regression tests against MySQL 8.4 and MariaDB 10.11 (IDs, row counts, decimal scale, timestamp microseconds, JSON, foreign keys and primary-image uniqueness slot). The current latest run also passes Laravel gallery tests and storefront JS syntax checks.
 - [ ] External payment/email provider integration tests remain deferred because those flows are not implemented/configured yet.
 
