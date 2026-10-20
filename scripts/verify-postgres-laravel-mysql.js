@@ -215,7 +215,17 @@ function normalize(value, sourceColumn, table) {
     return String(value);
   }
   if (["numeric", "decimal"].includes(type)) {
-    return String(value);
+    // PostgreSQL NUMERIC can retain a variable scale, while a migrated MySQL
+    // DECIMAL has a fixed scale. Compare exact numeric value, not display padding.
+    const match = String(value).match(/^([+-]?)(\\d+)(?:\\.(\\d*))?$/);
+    if (!match) {
+      throw new Error("Unexpected decimal representation at " + table + "." + sourceColumn.column_name + ".");
+    }
+    const sign = match[1] === "-" ? "-" : "";
+    const integer = match[2].replace(/^0+(?=\\d)/, "");
+    const fraction = (match[3] || "").replace(/0+$/, "");
+    const canonical = integer + (fraction ? "." + fraction : "");
+    return canonical === "0" ? "0" : sign + canonical;
   }
   return String(value);
 }
