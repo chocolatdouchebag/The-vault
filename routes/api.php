@@ -1,9 +1,10 @@
 <?php
 
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\HealthController;
-use App\Http\Controllers\Api\ProductController;
-use Illuminate\Support\Facades\Route;
+use App\\Http\\Controllers\\Api\\AdminProductController;
+use App\\Http\\Controllers\\Api\\AuthController;
+use App\\Http\\Controllers\\Api\\HealthController;
+use App\\Http\\Controllers\\Api\\ProductController;
+use Illuminate\\Support\\Facades\\Route;
 
 // The original frontend expects cookie-backed sessions on its /api endpoints.
 // Keep the API prefix and response format, but explicitly add Laravel's web
@@ -23,4 +24,17 @@ Route::middleware(['web', 'throttle:api'])->group(function (): void {
         ->middleware('same.origin')
         ->name('api.logout');
     Route::get('/me', [AuthController::class, 'me'])->name('api.me');
+
+    Route::get('/admin/products', [AdminProductController::class, 'index'])
+        ->middleware('admin.required')
+        ->name('api.admin.products.index');
+    Route::post('/admin/product', [AdminProductController::class, 'store'])
+        ->middleware(['same.origin', 'admin.required'])
+        ->name('api.admin.products.store');
+    Route::patch('/admin/product/{id}', [AdminProductController::class, 'update'])
+        ->middleware(['same.origin', 'admin.required'])
+        ->name('api.admin.products.update');
+    Route::delete('/admin/product/{id}', [AdminProductController::class, 'destroy'])
+        ->middleware(['same.origin', 'admin.required'])
+        ->name('api.admin.products.destroy');
 });
