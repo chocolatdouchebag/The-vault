@@ -82,12 +82,12 @@ class AdminProductVariantTest extends TestCase
             ->assertJsonPath('variant.product_id', $productId)
             ->assertJsonPath('variant.sku', 'AW-GOLD-001')
             ->assertJsonPath('variant.name', 'Gold finish')
-            ->assertJsonPath('variant.price', '19.99')
             ->assertJsonPath('variant.stock', 4)
             ->assertJsonPath('variant.is_active', true)
             ->assertJsonPath('variant.attributes.finish', 'gold')
             ->assertJsonPath('variant.attributes.size', 'standard');
 
+        $this->assertEquals(19.99, (float) $created->json('variant.price'));
         $variantId = (int) $created->json('variant.id');
         $this->assertGreaterThan(0, $variantId);
 
@@ -142,9 +142,10 @@ class AdminProductVariantTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('variant.sku', 'AW-BLUE-002')
             ->assertJsonPath('variant.name', 'Blue finish')
-            ->assertJsonPath('variant.price', '21.50')
             ->assertJsonPath('variant.stock', 7)
             ->assertJsonPath('variant.attributes.finish', 'blue');
+        $updatedVariant = json_decode($this->lastResponse->getContent(), true);
+        $this->assertEquals(21.50, (float) ($updatedVariant['variant']['price'] ?? 0));
 
         $this->deleteJson('/api/admin/product/'.$productId.'/variants/'.$variantId)
             ->assertOk()
