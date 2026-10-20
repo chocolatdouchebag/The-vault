@@ -13,7 +13,7 @@ return new class extends Migration
         // MySQL/MariaDB need an explicit binary collation to preserve PostgreSQL case-sensitive comparisons.
         $binaryCollation = DB::getDriverName() === 'sqlite' ? 'BINARY' : 'utf8mb4_bin';
 
-        Schema::create('categories', function (Blueprint $table) {
+        Schema::create('categories', function (Blueprint $table) use ($binaryCollation) {
             $table->increments('id');
             $table->string('name', 255)->collation($binaryCollation)->unique();
             $table->string('slug', 255)->collation($binaryCollation)->unique();
@@ -59,7 +59,7 @@ return new class extends Migration
             });
         }
 
-        Schema::create('product_variants', function (Blueprint $table) {
+        Schema::create('product_variants', function (Blueprint $table) use ($binaryCollation) {
             $table->increments('id');
             $table->unsignedInteger('product_id');
             $table->string('sku', 255)->collation($binaryCollation)->nullable()->unique('unique_product_variant_sku');
@@ -98,7 +98,7 @@ return new class extends Migration
             $table->foreign('product_id')->references('id')->on('products')->cascadeOnDelete();
         });
 
-        Schema::create('orders', function (Blueprint $table) {
+        Schema::create('orders', function (Blueprint $table) use ($binaryCollation) {
             $table->increments('id');
             $table->unsignedInteger('user_id')->nullable();
             $table->decimal('total', 30, 10);
@@ -153,14 +153,14 @@ return new class extends Migration
             $table->foreign('variant_id')->references('id')->on('product_variants')->restrictOnDelete();
         });
 
-        Schema::create('session', function (Blueprint $table) {
+        Schema::create('session', function (Blueprint $table) use ($binaryCollation) {
             $table->string('sid', 255)->collation($binaryCollation)->primary();
             $table->json('sess');
             $table->timestamp('expire', 6);
             $table->index('expire', 'idx_session_expire');
         });
 
-        Schema::create('withdrawal_requests', function (Blueprint $table) {
+        Schema::create('withdrawal_requests', function (Blueprint $table) use ($binaryCollation) {
             $table->increments('id');
             $table->unsignedInteger('order_id')->nullable();
             $table->string('email', 254)->collation($binaryCollation);
