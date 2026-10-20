@@ -707,3 +707,14 @@ html:not(.fligaliga-ready) body{visibility:hidden}
   .cookie-settings-actions .ornate-btn,
   .cookie-settings-actions .ghost-btn{width:100%}
 }
+
+
+.product-variant-picker{margin:20px 0;padding:16px;border:1px solid var(--line-soft);background:rgba(13,15,14,.72)}
+.product-variant-picker label{display:grid;gap:9px;color:var(--gold2);font:10px "Cinzel",serif;letter-spacing:1.3px}
+#product-variant-select{width:100%;min-width:0;padding:12px;background:#090a09;border:1px solid #554a39;color:#f3e8d5;font:14px Georgia,serif}
+#product-variant-select:focus-visible{outline:2px solid var(--gold3);outline-offset:3px}
+.variant-picker-note{margin:9px 0 0;color:#a99b86;font-size:12px;line-height:1.5}
+.product-variant-attributes{margin:9px 0 0;color:#d4c2a5;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.cart-variant{color:var(--gold2);font-size:12px}
+.cart-unavailable{color:#d7a89b;font-size:12px}
+.qty button:disabled{opacity:.35;cursor:not-allowed}
