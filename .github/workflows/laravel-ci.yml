@@ -37,6 +37,18 @@ jobs:
         run: find app bootstrap config database routes tests -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Check Laravel branch start guard syntax
         run: node --check scripts/laravel-branch-start.js
+      - name: Verify npm start cannot launch the legacy server
+        shell: bash
+        run: |
+          set +e
+          output="$(npm start 2>&1)"
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
+            echo "ERROR: npm start unexpectedly succeeded on the Laravel branch."
+            exit 1
+          fi
+          echo "$output" | grep -F "legacy Node.js server is intentionally disabled"
       - name: Check migration utility syntax
         run: |
           node --check scripts/migrate-postgres-to-laravel-mysql.js
