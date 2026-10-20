@@ -148,6 +148,9 @@ async function getTargetColumns(target, database, table) {
 function sourceExpression(column) {
   const name = pgIdentifier(column.column_name);
   const type = String(column.data_type || "").toLowerCase();
+  if (type === "json" || type === "jsonb") {
+    return "CASE WHEN " + name + " IS NULL THEN NULL ELSE " + name + "::text END AS " + name;
+  }
   if (type === "date") {
     return "to_char(" + name + ", 'YYYY-MM-DD') AS " + name;
   }
@@ -203,7 +206,7 @@ function normalize(value, sourceColumn, table) {
   const type = String(sourceColumn.data_type || "").toLowerCase();
 
   if (["json", "jsonb"].includes(type)) {
-    return JSON.stringify(stableValue(parseJson(value, table, sourceColumn.column_name)));
+    return JSON.stringify(stableValue(parseJson(String(value), table, sourceColumn.column_name)));
   }
   if (type === "boolean") {
     return value === true || value === 1 || value === "1";
