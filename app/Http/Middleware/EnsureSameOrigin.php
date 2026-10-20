@@ -29,6 +29,10 @@ class EnsureSameOrigin
         }
 
         $referer = $request->headers->get('Referer');
+        if (!$origin && !$referer) {
+            return response()->json(['error' => 'Cross-site request blocked'], 403);
+        }
+
         if (!$origin && $referer) {
             $refererOrigin = parse_url($referer, PHP_URL_SCHEME) && parse_url($referer, PHP_URL_HOST)
                 ? strtolower((string) parse_url($referer, PHP_URL_SCHEME).'://'.(string) parse_url($referer, PHP_URL_HOST)
