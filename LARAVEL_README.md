@@ -17,6 +17,8 @@ This is the isolated Laravel/PHP port of the custom FLIGALIGA Vault storefront. 
 - Registration, login, logout, session-backed identity and admin authorization.
 - Compatibility with existing Node.js bcrypt hashes, with rehash only after successful login.
 - Admin product listing/create/update/soft-disable endpoints.
+- Product detail image gallery with primary-first ordering, accessible thumbnail selection and legacy image fallback.
+- Admin gallery management (list/add/set-primary/remove image URLs) with same-origin/admin protection and primary-image integrity checks; product file uploads and variant management are not yet implemented.
 - Cart listing/add/update/empty with per-user ownership and stock-limit checks.
 - Customer order read endpoints and an admin order summary.
 - Withdrawal request submissions with optional order-email verification, and admin listing/status management. Confirmation email remains disabled.
