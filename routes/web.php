@@ -1,9 +1,9 @@
 <?php
 
+use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 
-// Read the frontend shell as a response body so Laravel's tests (and PHP's
-// shared-hosting handler) can serve the same file as the Node.js edition.
+// Serve the existing custom Vault front end, without changing its assets.
 $storefront = static function () {
     $path = public_path('index.html');
 
@@ -15,6 +15,7 @@ $storefront = static function () {
     ]);
 };
 
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/', $storefront);
 Route::get('/product/{idOrSlug}', $storefront);
 
