@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AdminProductController;
 use App\Http\Controllers\Api\AdminProductImageController;
+use App\Http\Controllers\Api\AdminProductVariantController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CheckoutPlaceholderController;
@@ -45,6 +46,19 @@ Route::middleware(['web', 'throttle:api'])->group(function (): void {
     Route::delete('/admin/product/{id}', [AdminProductController::class, 'destroy'])
         ->middleware(['same.origin', 'admin.required'])
         ->name('api.admin.products.destroy');
+
+    Route::get('/admin/product/{productId}/variants', [AdminProductVariantController::class, 'index'])
+        ->middleware('admin.required')
+        ->name('api.admin.product-variants.index');
+    Route::post('/admin/product/{productId}/variants', [AdminProductVariantController::class, 'store'])
+        ->middleware(['same.origin', 'admin.required'])
+        ->name('api.admin.product-variants.store');
+    Route::patch('/admin/product/{productId}/variants/{variantId}', [AdminProductVariantController::class, 'update'])
+        ->middleware(['same.origin', 'admin.required'])
+        ->name('api.admin.product-variants.update');
+    Route::delete('/admin/product/{productId}/variants/{variantId}', [AdminProductVariantController::class, 'destroy'])
+        ->middleware(['same.origin', 'admin.required'])
+        ->name('api.admin.product-variants.destroy');
 
     Route::get('/admin/product/{productId}/images', [AdminProductImageController::class, 'index'])
         ->middleware('admin.required')
