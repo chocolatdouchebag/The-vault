@@ -40,7 +40,7 @@ The webshop is not finished yet. Treat payment processing, merchant onboarding a
 
 Current priority:
 1. Make the existing Vault frontend load under Laravel and keep the current routes/JSON contracts working.
-2. Port and test authentication, sessions, product catalogue, product administration, cart, customer/admin order views, withdrawal requests and the safe non-payment placeholders. Dedicated product-image/variant management remains future work.
+2. Port and test authentication, sessions, product catalogue, product administration, cart, customer/admin order views, withdrawal requests and safe non-payment placeholders. Dedicated product-image/variant management remains future work.
 3. Keep payment initiation disabled by default. Do not add live credentials or enable live checkout. A placeholder UI may remain, but it must not claim that a payment is being processed or accepted.
 4. Defer Mollie checkout/webhooks, production payment email workflow, business registration details, and legal/merchant launch checks until the owner confirms readiness. Preserve clear TODOs and the design notes for later.
 5. Once the owner has a Mollie account and KvK details, implement the actual payment and notification flows behind tests, then run a complete staging checkout before launch.
@@ -73,7 +73,7 @@ This is a development sequence only, not a claim that the website or checkout is
 - [x] Add safe environment examples, deployment notes and CI dependency/test steps; no real secrets.
 - [x] Create baseline native Laravel migrations for the existing data tables, plus User and Product models; add further domain models as order and withdrawal features expand.
 - [x] Add schema and feature-test matrix coverage for MySQL 8.4 and MariaDB 10.11 in CI. The exact STRATO engine/version remains a hosting-feasibility gate.
-- [ ] Include a non-production sample data seeder; never seed real user/customer data into tests.
+- [x] Include a synthetic demo catalogue seeder that refuses to run outside local/testing; no customer, order or payment data is seeded.
 
 ### 2. Port and test features in low-risk-to-high-risk order
 - [x] Product catalogue/detail API and existing frontend asset serving.
@@ -87,12 +87,15 @@ This is a development sequence only, not a claim that the website or checkout is
 - [x] Public analytics configuration endpoint, dynamic sitemap, existing security headers and rate limit definitions.
 - [x] Contact endpoint safely reports that delivery is not configured; no false success response.
 - [ ] Real contact/withdrawal/order email delivery and idempotency tracking (deferred until email provider setup).
-- [ ] Automated route tests plus integration tests with mocked external providers.
+- [x] Automated feature tests for storefront routes, authentication/session compatibility, catalogue, admin products, cart, customer/admin orders, withdrawal requests, public config, sitemap, security headers and same-origin write protection. CI also checks storefront JavaScript syntax.
+- [x] Synthetic PostgreSQL-to-Laravel transfer regression tests against MySQL 8.4 and MariaDB 10.11 (IDs, row counts, decimal scale, timestamp microseconds, JSON, foreign keys and primary-image uniqueness slot).
+- [ ] External payment/email provider integration tests remain deferred because those flows are not implemented/configured yet.
 
 ### 3. Staging data migration and cutover (only after milestones above)
 - [ ] Make a fresh, verified source PostgreSQL dump.
 - [ ] Create an empty staging database on the exact STRATO engine/version.
-- [ ] Build a one-way migration path with explicit column mapping, ID preservation, type/length/decimal preflight, row-count checks and transaction/rollback handling where the database permits it.
+- [x] Build a guarded one-way transfer utility for the ten PostgreSQL business tables into a fully migrated but otherwise empty Laravel MySQL/MariaDB target; validates source/target tables and types, preserves IDs/JSON/precise timestamps, handles primary-image uniqueness, checks row counts/keys and rolls back failed data transactions. Synthetic MySQL 8.4 and MariaDB 10.11 transfer tests pass.
+- [ ] Run a real-data staging transfer and compare business data before any cutover; not attempted.
 - [ ] Verify counts, IDs, relationships, stock quantities, product pricing and order totals; check password-hash compatibility without revealing hashes.
 - [ ] Run checkout and payment lifecycle end-to-end in a staging environment.
 - [ ] Document freeze, final backup, DNS/deployment cutover, and rollback to the Node.js/PostgreSQL version.
