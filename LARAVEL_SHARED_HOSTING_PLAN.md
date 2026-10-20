@@ -2,7 +2,7 @@
 
 ## Decision
 
-Build a separate Laravel/PHP version of the custom FLIGALIGA Vault application for STRATO shared hosting. On this branch, `.env.example` is the Laravel configuration; the legacy Node/PostgreSQL example is preserved as `.env.node-postgres.example`. Preserve the current Node.js + PostgreSQL version as a recovery source until the Laravel version has passed staging and a deliberate cutover is approved.
+Build a separate Laravel/PHP version of the custom FLIGALIGA Vault application for STRATO shared hosting. On this branch, `.env.example` uses a fresh local SQLite database, `.env.strato.example` documents the STRATO MySQL/MariaDB target, and the legacy Node/PostgreSQL example is preserved as `.env.node-postgres.example`. Preserve the current Node.js + PostgreSQL version as a recovery source until the Laravel version has passed staging and a deliberate cutover is approved.
 
 ## Protected recovery points
 
